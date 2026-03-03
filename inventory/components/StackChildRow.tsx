@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { EyeOff, Zap, Flame, FileText } from 'lucide-react';
+import { EyeOff, Zap, Award, FileText } from 'lucide-react';
 import { Product, Language } from '../types';
 import { InfoModal } from './InfoModal';
 
@@ -51,7 +51,7 @@ export function StackChildRow({
                 <Zap size={14} className="text-orange-500 flex-shrink-0" />
               )}
               {product.trending && (
-                <Flame size={14} className="text-red-500 flex-shrink-0" />
+                <Award size={14} className="text-amber-500 flex-shrink-0" />
               )}
               <input
                 type="text"

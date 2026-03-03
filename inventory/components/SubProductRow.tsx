@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MoreHorizontal, EyeOff, Zap, Flame, Clock, FileText } from 'lucide-react';
+import { MoreHorizontal, EyeOff, Zap, Award, Clock, FileText } from 'lucide-react';
 import { Product, Language } from '../types';
 import { InfoModal } from './InfoModal';
 import { ProductSettingsPopover } from './ProductSettingsPopover';
@@ -124,7 +124,7 @@ export function SubProductRow({
                 <Zap size={14} className="text-orange-500 flex-shrink-0" />
               )}
               {product.trending && (
-                <Flame size={14} className="text-red-500 flex-shrink-0" />
+                <Award size={14} className="text-amber-500 flex-shrink-0" />
               )}
               {isCopiedToExpiry && (
                 <span className="flex-shrink-0 flex items-center" title="Copied to Expiry Items">

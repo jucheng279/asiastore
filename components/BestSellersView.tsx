@@ -5,7 +5,7 @@ import { NavigationProps } from '../types';
 import BottomNav from './BottomNav';
 import ProductCard from './ProductCard';
 
-const TrendingView: React.FC<NavigationProps> = ({
+const BestSellersView: React.FC<NavigationProps> = ({
   currentView,
   onNavigate,
   cartCount,
@@ -17,7 +17,7 @@ const TrendingView: React.FC<NavigationProps> = ({
   onNavigateToProduct,
 }) => {
   const { t } = useTranslation();
-  const { trendingProducts } = useProductData();
+  const { bestSellerProducts } = useProductData();
 
   return (
     <div className="bg-background-light dark:bg-background-dark min-h-screen pb-20 lg:pb-8">
@@ -48,13 +48,13 @@ const TrendingView: React.FC<NavigationProps> = ({
 
       <div className="px-4 py-3">
         <p className="text-sm text-text-sub">
-          {t('common.product', { count: trendingProducts.length })}
+          {t('common.product', { count: bestSellerProducts.length })}
         </p>
       </div>
 
       <main className="flex-1 px-4 lg:px-6 pb-4">
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-[repeat(auto-fill,minmax(160px,200px))]">
-          {trendingProducts.map((product) => (
+          {bestSellerProducts.map((product) => (
             <ProductCard
               key={product.id}
               product={product}
@@ -74,4 +74,4 @@ const TrendingView: React.FC<NavigationProps> = ({
   );
 };
 
-export default TrendingView;
+export default BestSellersView;

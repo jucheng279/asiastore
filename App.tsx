@@ -12,7 +12,7 @@ import OrdersView from './components/OrdersView';
 import PaymentMethodsView from './components/PaymentMethodsView';
 import AddressesView from './components/AddressesView';
 import NotificationsView from './components/NotificationsView';
-import TrendingView from './components/TrendingView';
+import BestSellersView from './components/BestSellersView';
 import PointsView from './components/PointsView';
 import LoginView from './components/LoginView';
 import RegisterView from './components/RegisterView';
@@ -391,8 +391,8 @@ function AppContent() {
         return <AddressesView currentView={currentView} onNavigate={guardedNavigate} cartCount={cartCount} addresses={addresses} onSaveAddress={handleSaveAddress} onDeleteAddress={handleDeleteAddress} />;
       case 'NOTIFICATIONS':
         return <NotificationsView currentView={currentView} onNavigate={guardedNavigate} cartCount={cartCount} emailNewsletter={emailNewsletter} onToggleEmailNewsletter={toggleEmailNewsletter} />;
-      case 'TRENDING':
-        return <TrendingView currentView={currentView} onNavigate={guardedNavigate} cartCount={cartCount} favorites={favorites} onToggleFavorite={handleToggleFavorite} cartQuantities={cartQuantities} onIncreaseQuantity={increaseQuantity} onDecreaseQuantity={decreaseQuantity} onNavigateToProduct={navigateToProduct} />;
+      case 'BEST_SELLERS':
+        return <BestSellersView currentView={currentView} onNavigate={guardedNavigate} cartCount={cartCount} favorites={favorites} onToggleFavorite={handleToggleFavorite} cartQuantities={cartQuantities} onIncreaseQuantity={increaseQuantity} onDecreaseQuantity={decreaseQuantity} onNavigateToProduct={navigateToProduct} />;
       case 'POINTS':
         return <PointsView currentView={currentView} onNavigate={guardedNavigate} cartCount={cartCount} />;
       default:

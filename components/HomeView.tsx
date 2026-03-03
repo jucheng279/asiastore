@@ -8,7 +8,7 @@ import LanguageSwitcher from './LanguageSwitcher';
 
 const HomeView: React.FC<NavigationProps> = ({ currentView, onNavigate, cartCount, favorites = new Set(), onToggleFavorite, cartQuantities = new Map(), onIncreaseQuantity, onDecreaseQuantity, onNavigateWithCategory, onNavigateToProduct }) => {
   const { t } = useTranslation();
-  const { categories, trendingProducts, expiryProducts, flashSaleProducts } = useProductData();
+  const { categories, bestSellerProducts, expiryProducts, flashSaleProducts } = useProductData();
 
   return (
     <div className="bg-background-light dark:bg-background-dark min-h-screen pb-24 lg:pb-8">
@@ -101,14 +101,14 @@ const HomeView: React.FC<NavigationProps> = ({ currentView, onNavigate, cartCoun
 
       <div className="flex justify-between items-center px-4 lg:px-6 pt-6 pb-4 bg-surface-light dark:bg-surface-dark">
         <h2 className="text-text-main dark:text-white text-[20px] font-bold leading-tight tracking-[-0.015em]">{t('home.trendingProducts')}</h2>
-        <a className="text-primary text-sm font-bold flex items-center" href="#" onClick={(e) => { e.preventDefault(); onNavigate('TRENDING'); }}>
+        <a className="text-primary text-sm font-bold flex items-center" href="#" onClick={(e) => { e.preventDefault(); onNavigate('BEST_SELLERS'); }}>
           {t('common.seeAll')} <span className="material-symbols-outlined text-sm ml-1">arrow_forward</span>
         </a>
       </div>
 
       <div className="w-full overflow-x-auto no-scrollbar px-4 lg:px-6 pb-4 bg-surface-light dark:bg-surface-dark">
         <div className="flex gap-4" style={{ width: 'max-content' }}>
-          {trendingProducts.map((product) => (
+          {bestSellerProducts.map((product) => (
             <div key={product.id} className="w-[160px] lg:w-[200px] shrink-0">
               <ProductCard
                 product={product}

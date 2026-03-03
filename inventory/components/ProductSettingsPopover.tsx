@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { EyeOff, Zap, Flame, Trash2 } from 'lucide-react';
+import { EyeOff, Zap, Award, Trash2 } from 'lucide-react';
 
 interface ProductSettingsPopoverProps {
   isVisible: boolean;
@@ -83,13 +83,13 @@ export function ProductSettingsPopover({
       </div>
       <div className="flex items-center justify-between px-4 py-2.5">
         <div className="flex items-center gap-3 text-sm text-slate-700">
-          <Flame size={16} className={isTrending ? 'text-red-500' : 'text-slate-400'} />
-          <span>Trending</span>
+          <Award size={16} className={isTrending ? 'text-amber-500' : 'text-slate-400'} />
+          <span>Best</span>
         </div>
         <button
           onClick={onToggleTrending}
           className={`relative w-10 h-5 rounded-full transition-colors ${
-            isTrending ? 'bg-red-500' : 'bg-slate-200'
+            isTrending ? 'bg-amber-500' : 'bg-slate-200'
           }`}
         >
           <span

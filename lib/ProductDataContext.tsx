@@ -39,7 +39,7 @@ interface ProductDataState {
   catalogProducts: Product[];
   expiryProducts: Product[];
   flashSaleProducts: Product[];
-  trendingProducts: Product[];
+  bestSellerProducts: Product[];
   allProducts: Product[];
   productMap: Map<string, Product>;
   language: Language;
@@ -54,7 +54,7 @@ const ProductDataContext = createContext<ProductDataState>({
   catalogProducts: [],
   expiryProducts: [],
   flashSaleProducts: [],
-  trendingProducts: [],
+  bestSellerProducts: [],
   allProducts: [],
   productMap: new Map(),
   language: 'en',
@@ -120,7 +120,7 @@ export function ProductDataProvider({ children }: { children: React.ReactNode })
   const catalogProducts = data?.catalogProducts || [];
   const expiryProducts = data?.expiryProducts || [];
   const flashSaleProducts = data?.flashSaleProducts || [];
-  const trendingProducts = data?.trendingProducts || [];
+  const bestSellerProducts = data?.bestSellerProducts || [];
 
   const { allProducts, productMap } = useMemo(() => {
     const allChildProducts: Product[] = [];
@@ -152,7 +152,7 @@ export function ProductDataProvider({ children }: { children: React.ReactNode })
         catalogProducts,
         expiryProducts,
         flashSaleProducts,
-        trendingProducts,
+        bestSellerProducts,
         allProducts,
         productMap,
         language,

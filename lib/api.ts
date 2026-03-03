@@ -23,7 +23,7 @@ export interface FetchedData {
   catalogProducts: Product[];
   expiryProducts: Product[];
   flashSaleProducts: Product[];
-  trendingProducts: Product[];
+  bestSellerProducts: Product[];
 }
 
 interface DbProduct {
@@ -131,7 +131,7 @@ function mapDbProduct(row: DbProduct, lang: Language): Product {
     originalPrice: hasSale ? row.price : undefined,
     image: row.image_url,
     tags: row.tags || undefined,
-    isBestSeller: row.is_best_seller,
+    isBestSeller: row.is_best_seller || row.trending,
     isNew: row.is_new,
     isSale: hasSale,
     unit: row.unit || undefined,
@@ -321,7 +321,7 @@ export async function fetchAllData(lang: Language): Promise<FetchedData> {
     }),
   ];
 
-  const trendingProducts: Product[] = catalogProducts.filter((p) => {
+  const bestSellerProducts: Product[] = catalogProducts.filter((p) => {
     const dbProd = allDbProducts.find((d) => d.id === p.id);
     return dbProd?.trending;
   });
@@ -332,6 +332,6 @@ export async function fetchAllData(lang: Language): Promise<FetchedData> {
     catalogProducts,
     expiryProducts,
     flashSaleProducts,
-    trendingProducts,
+    bestSellerProducts,
   };
 }

@@ -54,7 +54,7 @@ export interface Order {
   pointsAmount?: number;
 }
 
-export type ViewState = 'HOME' | 'LISTING' | 'DETAILS' | 'CART' | 'CHECKOUT' | 'DEALS' | 'ACCOUNT' | 'FAVORITES' | 'ORDERS' | 'PAYMENT_METHODS' | 'ADDRESSES' | 'NOTIFICATIONS' | 'TRENDING' | 'POINTS' | 'LOGIN' | 'REGISTER' | 'FORGOT_PASSWORD' | 'RESET_PASSWORD';
+export type ViewState = 'HOME' | 'LISTING' | 'DETAILS' | 'CART' | 'CHECKOUT' | 'DEALS' | 'ACCOUNT' | 'FAVORITES' | 'ORDERS' | 'PAYMENT_METHODS' | 'ADDRESSES' | 'NOTIFICATIONS' | 'BEST_SELLERS' | 'POINTS' | 'LOGIN' | 'REGISTER' | 'FORGOT_PASSWORD' | 'RESET_PASSWORD';
 
 export interface Address {
   id: string;
