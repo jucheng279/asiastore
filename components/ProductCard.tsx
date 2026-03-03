@@ -50,13 +50,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
       onClick={onNavigate}
     >
       <div className="relative aspect-square w-full overflow-hidden bg-gray-100 dark:bg-white/5">
+        {product.isBestSeller && (
+          <div className="absolute right-2 top-2 z-10 rounded bg-amber-400 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-black shadow-sm">
+            {t('product.bestSeller')}
+          </div>
+        )}
         {product.discountPercentage ? (
           <div className="absolute left-2 top-2 z-10 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
             -{product.discountPercentage}%
-          </div>
-        ) : product.isBestSeller ? (
-          <div className="absolute left-2 top-2 z-10 rounded bg-amber-400 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-black shadow-sm">
-            {t('product.bestSeller')}
           </div>
         ) : product.tags && product.tags.includes('Fresh') ? (
           <div className="absolute left-2 top-2 z-10 rounded bg-green-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
