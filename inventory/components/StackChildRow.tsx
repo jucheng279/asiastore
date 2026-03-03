@@ -63,7 +63,7 @@ export function StackChildRow({
               />
             </div>
           </div>
-          <div className="w-20 px-1.5 py-1 border-r border-slate-100">
+          <div className="w-20 flex-shrink-0 px-1.5 py-1 border-r border-slate-100">
             <input
               type="number"
               value={product.price}
@@ -74,7 +74,7 @@ export function StackChildRow({
               placeholder="0.00"
             />
           </div>
-          <div className="w-20 px-1.5 py-1 border-r border-slate-100">
+          <div className="w-20 flex-shrink-0 px-1.5 py-1 border-r border-slate-100">
             <input
               type="number"
               value={product.newPrice}
@@ -85,7 +85,7 @@ export function StackChildRow({
               placeholder="0.00"
             />
           </div>
-          <div className="w-14 px-1.5 py-1 border-r border-slate-100">
+          <div className="w-14 flex-shrink-0 px-1.5 py-1 border-r border-slate-100">
             <input
               type="number"
               value={product.stock}
@@ -94,17 +94,17 @@ export function StackChildRow({
               placeholder="0"
             />
           </div>
-          <div className="w-[5.5rem] px-4 py-1 border-r border-slate-100 flex items-center justify-center">
+          <div className="w-[5.5rem] flex-shrink-0 px-4 py-1 border-r border-slate-100 flex items-center justify-center">
             <span className="text-sm text-slate-500">{product.preserve}</span>
           </div>
-          <div className="w-[5.5rem] px-4 py-1 border-r border-slate-100 flex items-center justify-center">
+          <div className="w-[5.5rem] flex-shrink-0 px-4 py-1 border-r border-slate-100 flex items-center justify-center">
             {(() => {
               const avail = (parseInt(product.stock, 10) || 0) - product.preserve;
               const color = avail <= 0 ? 'text-red-600 font-bold' : avail <= 10 ? 'text-amber-600 font-semibold' : 'text-slate-700 font-medium';
               return <span className={`text-sm ${color}`}>{avail}</span>;
             })()}
           </div>
-          <div className="w-36 px-1.5 py-1 border-r border-slate-100">
+          <div className="w-36 flex-shrink-0 px-1.5 py-1 border-r border-slate-100">
             <input
               type="date"
               value={product.expiration}
@@ -112,7 +112,7 @@ export function StackChildRow({
               className={`w-full px-2 py-1.5 bg-transparent border border-transparent rounded-md text-sm text-slate-700 ${isReadOnly ? 'cursor-default' : ''}`}
             />
           </div>
-          <div className="w-16 px-1.5 py-1 border-r border-slate-100 flex items-center justify-center">
+          <div className="w-16 flex-shrink-0 px-1.5 py-1 border-r border-slate-100 flex items-center justify-center">
             <button
               onClick={() => setIsInfoModalOpen(true)}
               className={`relative p-1.5 rounded-md transition-all ${
@@ -128,11 +128,11 @@ export function StackChildRow({
               )}
             </button>
           </div>
-          <div className="w-14 px-1.5 py-1 border-r border-slate-100">
+          <div className="w-14 flex-shrink-0 px-1.5 py-1 border-r border-slate-100">
             <span className="flex items-center justify-center text-sm text-slate-400">--</span>
           </div>
         </div>
-        <div className="w-14 px-1.5 py-1 flex justify-center">
+        <div className="w-14 flex-shrink-0 px-1.5 py-1 flex justify-center">
           <span className="text-slate-300 text-xs">--</span>
         </div>
       </div>

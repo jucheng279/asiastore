@@ -34,16 +34,16 @@ export function ProductTableHeader({
             onClose={() => setIsLanguageSelectorOpen(false)}
           />
         </div>
-        <div className="w-20 px-2 py-1.5 border-r border-slate-200">Price</div>
-        <div className="w-20 px-2 py-1.5 border-r border-slate-200">Sale</div>
-        <div className="w-14 px-2 py-1.5 border-r border-slate-200 flex items-center justify-center">Stock</div>
-        <div className="w-[5.5rem] px-4 py-1.5 border-r border-slate-200 flex items-center justify-center">Preserve</div>
-        <div className="w-[5.5rem] px-4 py-1.5 border-r border-slate-200 flex items-center justify-center">Available</div>
-        <div className="w-36 px-2 py-1.5 border-r border-slate-200">Expiration</div>
-        <div className="w-16 px-2 py-1.5 border-r border-slate-200 flex items-center justify-center">Info</div>
-        <div className="w-14 px-2 py-1.5 border-r border-slate-200 flex items-center justify-center">Order</div>
+        <div className="w-20 flex-shrink-0 px-1.5 py-1.5 border-r border-slate-200">Price</div>
+        <div className="w-20 flex-shrink-0 px-1.5 py-1.5 border-r border-slate-200">Sale</div>
+        <div className="w-14 flex-shrink-0 px-1.5 py-1.5 border-r border-slate-200 flex items-center justify-center">Stock</div>
+        <div className="w-[5.5rem] flex-shrink-0 px-4 py-1.5 border-r border-slate-200 flex items-center justify-center">Preserve</div>
+        <div className="w-[5.5rem] flex-shrink-0 px-4 py-1.5 border-r border-slate-200 flex items-center justify-center">Available</div>
+        <div className="w-36 flex-shrink-0 px-1.5 py-1.5 border-r border-slate-200">Expiration</div>
+        <div className="w-16 flex-shrink-0 px-1.5 py-1.5 border-r border-slate-200 flex items-center justify-center">Info</div>
+        <div className="w-14 flex-shrink-0 px-1.5 py-1.5 border-r border-slate-200 flex items-center justify-center">Order</div>
       </div>
-      <div className="w-14 px-2 py-1.5"></div>
+      <div className="w-14 flex-shrink-0 px-1.5 py-1.5"></div>
     </div>
   );
 }
