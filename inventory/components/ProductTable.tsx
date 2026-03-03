@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Plus, Package, ImagePlus, X, Loader2 } from 'lucide-react';
+import { Plus, Package, ImagePlus, X, Loader as Loader2 } from 'lucide-react';
 import { Product, Language, SubCategory } from '../types';
 import { ProductTableHeader } from './ProductTableHeader';
 import { ProductRow } from './ProductRow';

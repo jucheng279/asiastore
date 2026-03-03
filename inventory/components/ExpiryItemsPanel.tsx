@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Clock, Calendar, AlertTriangle } from 'lucide-react';
+import { Plus, Clock, Calendar, TriangleAlert as AlertTriangle } from 'lucide-react';
 import { Product, Language, ExpiryItem, ExpirySettings } from '../types';
 import { ProductRow } from './ProductRow';
 import { ExpiryStackRow } from './ExpiryStackRow';
