@@ -23,6 +23,7 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({
   onConfirmOrder,
   onSaveAddress,
   isSubmitting = false,
+  orderingClosed = false,
 }) => {
   const { t } = useTranslation();
   const { language } = useProductData();
@@ -322,16 +323,16 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({
           </div>
           <button
             onClick={handleConfirm}
-            disabled={(attempted && !formValid) || insufficientPoints || isSubmitting}
+            disabled={(attempted && !formValid) || insufficientPoints || isSubmitting || orderingClosed}
             className={`flex w-full items-center justify-center rounded-full py-4 px-6 font-bold text-lg transition-all shadow-lg ${
-              (attempted && !formValid) || insufficientPoints || isSubmitting
+              (attempted && !formValid) || insufficientPoints || isSubmitting || orderingClosed
                 ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed shadow-none'
                 : payWithPoints
                 ? 'bg-amber-500 text-white hover:bg-amber-600 shadow-amber-500/30 active:scale-[0.98]'
                 : 'bg-primary text-white hover:bg-red-700 shadow-primary/30 active:scale-[0.98]'
             }`}
           >
-            {isSubmitting ? (
+            {orderingClosed ? t('store.closedCheckout') : isSubmitting ? (
               <div className="flex items-center gap-2">
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                 <span>{t('checkout.processing')}</span>

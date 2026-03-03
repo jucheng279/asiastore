@@ -32,6 +32,7 @@ const CartView: React.FC<CartViewProps> = ({
   favorites,
   onToggleFavorite,
   onNavigateToProduct,
+  orderingClosed = false,
 }) => {
   const { t } = useTranslation();
   const { language } = useProductData();
@@ -148,12 +149,12 @@ const CartView: React.FC<CartViewProps> = ({
                           <span className="w-4 text-center text-sm font-semibold text-text-main dark:text-white">{item.quantity}</span>
                           <button
                             className={`flex h-6 w-6 items-center justify-center rounded shadow-sm ${
-                              atMax
+                              atMax || orderingClosed
                                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                 : 'bg-primary text-white hover:bg-red-700'
                             }`}
-                            onClick={() => { if (!atMax) onIncreaseQuantity(item.id); }}
-                            disabled={atMax}
+                            onClick={() => { if (!atMax && !orderingClosed) onIncreaseQuantity(item.id); }}
+                            disabled={atMax || orderingClosed}
                           >
                             <span className="material-symbols-outlined text-[16px]">add</span>
                           </button>
@@ -181,6 +182,7 @@ const CartView: React.FC<CartViewProps> = ({
                         onToggleFavorite={() => onToggleFavorite(product.id)}
                         onIncrease={() => onIncreaseQuantity(product.id)}
                         onDecrease={() => onDecreaseQuantity(product.id)}
+                        orderingClosed={orderingClosed}
                       />
                     </div>
                   ))}
@@ -214,15 +216,15 @@ const CartView: React.FC<CartViewProps> = ({
 
               <button
                 className={`hidden lg:flex w-full items-center justify-between rounded-xl px-6 py-4 font-bold text-white shadow-lg transition-transform mt-4 ${
-                  hasOverstock
+                  hasOverstock || orderingClosed
                     ? 'bg-gray-400 cursor-not-allowed'
                     : 'bg-primary shadow-primary/20 active:scale-[0.98] hover:bg-red-600'
                 }`}
                 onClick={onPlaceOrder}
-                disabled={hasOverstock}
+                disabled={hasOverstock || orderingClosed}
               >
-                <span>{t('cart.checkout')}</span>
-                <span className="font-medium opacity-90">{formatPrice(total, language)}</span>
+                <span>{orderingClosed ? t('store.closedCheckout') : t('cart.checkout')}</span>
+                {!orderingClosed && <span className="font-medium opacity-90">{formatPrice(total, language)}</span>}
               </button>
             </div>
           </div>
@@ -234,15 +236,15 @@ const CartView: React.FC<CartViewProps> = ({
           <div className="mx-auto max-w-md">
             <button
               className={`flex w-full items-center justify-between rounded-xl px-6 py-4 font-bold text-white shadow-lg transition-transform ${
-                hasOverstock
+                hasOverstock || orderingClosed
                   ? 'bg-gray-400 cursor-not-allowed'
                   : 'bg-primary shadow-primary/20 active:scale-[0.98] hover:bg-red-600'
               }`}
               onClick={onPlaceOrder}
-              disabled={hasOverstock}
+              disabled={hasOverstock || orderingClosed}
             >
-              <span>{t('cart.checkout')}</span>
-              <span className="font-medium opacity-90">{formatPrice(total, language)}</span>
+              <span>{orderingClosed ? t('store.closedCheckout') : t('cart.checkout')}</span>
+              {!orderingClosed && <span className="font-medium opacity-90">{formatPrice(total, language)}</span>}
             </button>
           </div>
         </div>

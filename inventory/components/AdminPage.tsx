@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Package, ArrowRight } from 'lucide-react';
-import { Category, SubCategory, Product, ProductNames, Language, ActiveView } from '../types';
+import { Category, SubCategory, Product, ProductNames, Language, ActiveView, AdminStoreSettings } from '../types';
 import { CategorySidebar, SearchResult } from './CategorySidebar';
 import { ProductTable } from './ProductTable';
 import { ExpiryItemsPanel } from './ExpiryItemsPanel';
 import { FlashSalesPanel } from './FlashSalesPanel';
 import { UsersPanel } from './UsersPanel';
 import { DiagnosticsPanel } from './DiagnosticsPanel';
+import { StoreSettingsPanel } from './StoreSettingsPanel';
 import { reorderProducts, getNextOrder } from '../hooks/useProductOrder';
 import { useExpiryItems } from '../hooks/useExpiryItems';
 import { useFlashSaleItems } from '../hooks/useFlashSaleItems';
@@ -23,6 +24,7 @@ import {
   deleteDraftProduct,
   deleteDraftProducts,
   normalizeProductOrders,
+  saveDraftStoreSettings,
 } from '../../lib/inventoryDb';
 import type { LoadedData } from '../../lib/inventoryDb';
 import { supabase } from '../../lib/supabase';

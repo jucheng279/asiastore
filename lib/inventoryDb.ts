@@ -7,6 +7,7 @@ import type {
   ExpirySettings,
   FlashSaleItem,
   FlashSaleSettings,
+  AdminStoreSettings,
 } from '../inventory/types';
 
 function productToDbRow(p: Product) {
@@ -174,10 +175,25 @@ function dbRowToFlashItem(row: any): FlashSaleItem {
   };
 }
 
+function dbRowToStoreSettings(row: any): AdminStoreSettings {
+  return {
+    orderingMode: row?.ordering_mode ?? 'auto',
+    orderingEnabled: row?.ordering_enabled ?? true,
+    autoOpenDay: row?.auto_open_day ?? 1,
+    autoOpenTime: row?.auto_open_time ?? '00:00',
+    autoCloseDay: row?.auto_close_day ?? 5,
+    autoCloseTime: row?.auto_close_time ?? '12:00',
+    closedMessageEn: row?.closed_message_en ?? '',
+    closedMessageSv: row?.closed_message_sv ?? '',
+    closedMessageZh: row?.closed_message_zh ?? '',
+  };
+}
+
 function assembleLoadedData(
   catRes: any, subRes: any, prodRes: any,
   expiryRes: any, flashRes: any,
-  expirySettRes: any, flashSettRes: any
+  expirySettRes: any, flashSettRes: any,
+  storeSettRes?: any
 ): LoadedData {
   const categories: Category[] = (catRes.data || []).map((cat: any) => ({
     id: cat.id,
@@ -242,7 +258,9 @@ function assembleLoadedData(
     defaultDiscountPercentage: flashSettRes.data?.default_discount_percentage ?? 30,
   };
 
-  return { categories, products, expiryItems, expirySettings, flashSaleItems, flashSaleSettings };
+  const storeSettings = dbRowToStoreSettings(storeSettRes?.data);
+
+  return { categories, products, expiryItems, expirySettings, flashSaleItems, flashSaleSettings, storeSettings };
 }
 
 export interface LoadedData {
@@ -252,6 +270,7 @@ export interface LoadedData {
   expirySettings: ExpirySettings;
   flashSaleItems: FlashSaleItem[];
   flashSaleSettings: FlashSaleSettings;
+  storeSettings: AdminStoreSettings;
 }
 
 export function normalizeProductOrders(products: Product[]): { normalized: Product[]; changed: Product[] } {
@@ -285,7 +304,7 @@ export function normalizeProductOrders(products: Product[]): { normalized: Produ
 }
 
 export async function loadFromDb(): Promise<LoadedData> {
-  const [catRes, subRes, prodRes, expiryRes, flashRes, expirySettRes, flashSettRes] = await Promise.all([
+  const [catRes, subRes, prodRes, expiryRes, flashRes, expirySettRes, flashSettRes, storeSettRes] = await Promise.all([
     supabase.from('categories').select('*').order('display_order'),
     supabase.from('subcategories').select('*').order('display_order'),
     supabase.from('products').select('*').order('display_order'),
@@ -293,8 +312,9 @@ export async function loadFromDb(): Promise<LoadedData> {
     supabase.from('flash_sale_items').select('*').order('display_order'),
     supabase.from('expiry_settings').select('*').maybeSingle(),
     supabase.from('flash_sale_settings').select('*').maybeSingle(),
+    supabase.from('store_settings').select('*').maybeSingle(),
   ]);
-  return assembleLoadedData(catRes, subRes, prodRes, expiryRes, flashRes, expirySettRes, flashSettRes);
+  return assembleLoadedData(catRes, subRes, prodRes, expiryRes, flashRes, expirySettRes, flashSettRes, storeSettRes);
 }
 
 export async function fetchLivePreserveMap(): Promise<Map<string, number>> {
@@ -355,11 +375,12 @@ export async function loadDraftFromDb(): Promise<LoadedData> {
       supabase.from('draft_flash_sale_items').select('*').order('display_order'),
       supabase.from('draft_expiry_settings').select('*').maybeSingle(),
       supabase.from('draft_flash_sale_settings').select('*').maybeSingle(),
+      supabase.from('draft_store_settings').select('*').maybeSingle(),
     ]),
     fetchLivePreserveMap(),
   ]);
-  const [catRes, subRes, prodRes, expiryRes, flashRes, expirySettRes, flashSettRes] = draftRes;
-  const data = assembleLoadedData(catRes, subRes, prodRes, expiryRes, flashRes, expirySettRes, flashSettRes);
+  const [catRes, subRes, prodRes, expiryRes, flashRes, expirySettRes, flashSettRes, storeSettRes] = draftRes;
+  const data = assembleLoadedData(catRes, subRes, prodRes, expiryRes, flashRes, expirySettRes, flashSettRes, storeSettRes);
   return {
     ...data,
     products: applyPreserveToProducts(data.products, preserveMap),
@@ -532,6 +553,25 @@ export async function saveDraftFlashSaleSettings(settings: FlashSaleSettings) {
   }
 }
 
+export async function saveDraftStoreSettings(settings: AdminStoreSettings) {
+  try {
+    await supabase.from('draft_store_settings').upsert({
+      id: 1,
+      ordering_mode: settings.orderingMode,
+      ordering_enabled: settings.orderingEnabled,
+      auto_open_day: settings.autoOpenDay,
+      auto_open_time: settings.autoOpenTime,
+      auto_close_day: settings.autoCloseDay,
+      auto_close_time: settings.autoCloseTime,
+      closed_message_en: settings.closedMessageEn,
+      closed_message_sv: settings.closedMessageSv,
+      closed_message_zh: settings.closedMessageZh,
+    });
+  } catch (e) {
+    console.error('saveDraftStoreSettings failed:', e);
+  }
+}
+
 export async function pushUpdate(): Promise<{ success: boolean; error?: string }> {
   try {
     const draft = await loadDraftFromDb();
@@ -645,6 +685,19 @@ export async function pushUpdate(): Promise<{ success: boolean; error?: string }
       id: 1,
       default_flash_days: draft.flashSaleSettings.defaultFlashDays,
       default_discount_percentage: draft.flashSaleSettings.defaultDiscountPercentage,
+    });
+
+    await supabase.from('store_settings').upsert({
+      id: 1,
+      ordering_mode: draft.storeSettings.orderingMode,
+      ordering_enabled: draft.storeSettings.orderingEnabled,
+      auto_open_day: draft.storeSettings.autoOpenDay,
+      auto_open_time: draft.storeSettings.autoOpenTime,
+      auto_close_day: draft.storeSettings.autoCloseDay,
+      auto_close_time: draft.storeSettings.autoCloseTime,
+      closed_message_en: draft.storeSettings.closedMessageEn,
+      closed_message_sv: draft.storeSettings.closedMessageSv,
+      closed_message_zh: draft.storeSettings.closedMessageZh,
     });
 
     return { success: true };

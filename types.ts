@@ -84,4 +84,5 @@ export interface NavigationProps {
   onClearInitialCategory?: () => void;
   onNavigateToProduct?: (productId: string) => void;
   onAddQuantityToCart?: (productId: string, quantity: number) => void;
+  orderingClosed?: boolean;
 }

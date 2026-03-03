@@ -337,12 +337,19 @@
     "email": "电子邮箱",
     "visitingAddress": "到访地址"
   },
+  "store": {
+    "orderingClosed": "暂停接单",
+    "nextOpening": "下次开放: {{datetime}}",
+    "closedAddToCart": "已关闭",
+    "closedCheckout": "暂停接单"
+  },
   "toast": {
     "addedToCart": "{{name}} 已加入购物车",
     "addedToCartQty": "{{qty}}x {{name}} 已加入购物车",
     "orderFailed": "下单失败，请重试。",
     "orderFailedStock": "部分商品已缺货并已移除，请检查购物车。",
     "orderFailedStockItem": "\"{{name}}\"已缺货，已从购物车中移除。",
-    "cartAdjustedToStock": "部分商品数量已根据库存调整。"
+    "cartAdjustedToStock": "部分商品数量已根据库存调整。",
+    "orderingClosed": "目前暂停接单。"
   }
 }

@@ -18,6 +18,7 @@ const ProductDetailView: React.FC<ProductDetailProps> = ({
   favorites = new Set(),
   onToggleFavorite,
   onAddQuantityToCart,
+  orderingClosed = false,
 }) => {
   const { t } = useTranslation();
   const { productMap, language } = useProductData();
@@ -81,7 +82,7 @@ const ProductDetailView: React.FC<ProductDetailProps> = ({
   };
 
   const handleAddToCart = () => {
-    if (!cartProductId || !onAddQuantityToCart || isOutOfStock) return;
+    if (!cartProductId || !onAddQuantityToCart || isOutOfStock || orderingClosed) return;
     const cartQty = cartQuantities.get(cartProductId) || 0;
     const canAdd = available !== undefined ? Math.min(localQty, available - cartQty) : localQty;
     if (canAdd > 0) {
@@ -149,6 +150,17 @@ const ProductDetailView: React.FC<ProductDetailProps> = ({
         >
           <span className="material-symbols-outlined text-[20px]">remove_shopping_cart</span>
           <span>{t('product.outOfStock')}</span>
+        </button>
+      );
+    }
+    if (orderingClosed) {
+      return (
+        <button
+          className="flex-1 h-12 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 font-bold rounded-lg flex items-center justify-center gap-2 cursor-not-allowed"
+          disabled
+        >
+          <span className="material-symbols-outlined text-[20px]">schedule</span>
+          <span>{t('store.closedCheckout')}</span>
         </button>
       );
     }

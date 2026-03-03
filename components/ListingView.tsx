@@ -21,7 +21,7 @@ const PRICE_RANGES = [
   { id: 'over10', labelKey: 'product.over10', min: 10, max: Infinity },
 ];
 
-const ListingView: React.FC<NavigationProps> = ({ currentView, onNavigate, cartCount, favorites = new Set(), onToggleFavorite, cartQuantities = new Map(), onIncreaseQuantity, onDecreaseQuantity, initialCategory, onClearInitialCategory, onNavigateToProduct }) => {
+const ListingView: React.FC<NavigationProps> = ({ currentView, onNavigate, cartCount, favorites = new Set(), onToggleFavorite, cartQuantities = new Map(), onIncreaseQuantity, onDecreaseQuantity, initialCategory, onClearInitialCategory, onNavigateToProduct, orderingClosed }) => {
   const { t } = useTranslation();
   const { categories, subcategories, language, catalogProducts } = useProductData();
 
@@ -245,6 +245,7 @@ const ListingView: React.FC<NavigationProps> = ({ currentView, onNavigate, cartC
                 onToggleFavorite={() => onToggleFavorite?.(item.id)}
                 onIncrease={() => onIncreaseQuantity?.(item.id)}
                 onDecrease={() => onDecreaseQuantity?.(item.id)}
+                orderingClosed={orderingClosed}
               />
             ))}
           </div>

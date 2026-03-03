@@ -1,6 +1,6 @@
 export type Language = 'en' | 'sv' | 'zh';
 
-export type ActiveView = 'categories' | 'expiry' | 'flashSales' | 'users' | 'diagnostics';
+export type ActiveView = 'categories' | 'expiry' | 'flashSales' | 'users' | 'diagnostics' | 'storeSettings';
 
 export interface ProductNames {
   en: string;
@@ -62,6 +62,18 @@ export interface FlashSaleItem extends Product {
 export interface FlashSaleSettings {
   defaultFlashDays: number;
   defaultDiscountPercentage: number;
+}
+
+export interface AdminStoreSettings {
+  orderingMode: 'auto' | 'manual';
+  orderingEnabled: boolean;
+  autoOpenDay: number;
+  autoOpenTime: string;
+  autoCloseDay: number;
+  autoCloseTime: string;
+  closedMessageEn: string;
+  closedMessageSv: string;
+  closedMessageZh: string;
 }
 
 export interface SubCategory {

@@ -23,6 +23,7 @@ const DealsView: React.FC<NavigationProps> = ({
   onIncreaseQuantity,
   onDecreaseQuantity,
   onNavigateToProduct,
+  orderingClosed,
 }) => {
   const { t } = useTranslation();
   const { catalogProducts, expiryProducts, flashSaleProducts } = useProductData();
@@ -143,6 +144,7 @@ const DealsView: React.FC<NavigationProps> = ({
                   onToggleFavorite={() => onToggleFavorite?.(favoriteId)}
                   onIncrease={() => onIncreaseQuantity?.(product.id)}
                   onDecrease={() => onDecreaseQuantity?.(product.id)}
+                  orderingClosed={orderingClosed}
                 />
               );
             })}

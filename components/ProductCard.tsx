@@ -12,6 +12,7 @@ interface ProductCardProps {
   onToggleFavorite: () => void;
   onIncrease: () => void;
   onDecrease: () => void;
+  orderingClosed?: boolean;
 }
 
 const getDaysUntilExpiry = (expiryDate: string): number => {
@@ -31,6 +32,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   onToggleFavorite,
   onIncrease,
   onDecrease,
+  orderingClosed = false,
 }) => {
   const { t } = useTranslation();
   const { language } = useProductData();
@@ -148,6 +150,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
           ) : isOutOfStock ? (
             <span className="text-[10px] font-semibold text-gray-400 uppercase whitespace-nowrap">
               {t('product.outOfStock')}
+            </span>
+          ) : orderingClosed ? (
+            <span className="text-[10px] font-semibold text-amber-500 uppercase whitespace-nowrap">
+              {t('store.closedAddToCart')}
             </span>
           ) : quantity === 0 ? (
             <button

@@ -337,12 +337,19 @@
     "email": "E-postadress",
     "visitingAddress": "Besoksadress"
   },
+  "store": {
+    "orderingClosed": "Bestallning stangd",
+    "nextOpening": "Nasta oppning: {{datetime}}",
+    "closedAddToCart": "Stangd",
+    "closedCheckout": "Bestallning ar stangd"
+  },
   "toast": {
     "addedToCart": "{{name}} lagd i varukorgen",
     "addedToCartQty": "{{qty}}x {{name}} lagda i varukorgen",
     "orderFailed": "Kunde inte lagga bestallningen. Forsok igen.",
     "orderFailedStock": "Vissa varor var slut i lager och har tagits bort. Kontrollera din varukorg.",
     "orderFailedStockItem": "\"{{name}}\" ar slut i lager och har tagits bort fran varukorgen.",
-    "cartAdjustedToStock": "Vissa antal har justerats efter tillgangligt lager."
+    "cartAdjustedToStock": "Vissa antal har justerats efter tillgangligt lager.",
+    "orderingClosed": "Bestallning ar for tillfallet stangd."
   }
 }

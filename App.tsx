@@ -51,7 +51,8 @@ const AUTH_REQUIRED_VIEWS = new Set<ViewState>([
 
 function AppContent() {
   const { t } = useTranslation();
-  const { isLoading: productsLoading, allProducts, productMap, refreshData } = useProductData();
+  const { isLoading: productsLoading, allProducts, productMap, refreshData, orderingOpen, closedMessage, nextOpenTime } = useProductData();
+  const orderingClosed = !orderingOpen;
   const {
     isAuthenticated, isLoading: authLoading, isPasswordRecovery,
     addresses, saveAddress, deleteAddress, signOut,
@@ -170,6 +171,10 @@ function AppContent() {
   };
 
   const goToCheckout = () => {
+    if (orderingClosed) {
+      showToast(t('toast.orderingClosed'), 'warning');
+      return;
+    }
     if (getCartItems().length === 0) return;
     if (requireAuth('CHECKOUT')) return;
     setCurrentView('CHECKOUT');
@@ -180,6 +185,10 @@ function AppContent() {
   };
 
   const confirmOrder = async (shippingAddress: Address, deliveryInstructions?: string, payWithPoints?: boolean) => {
+    if (orderingClosed) {
+      showToast(t('toast.orderingClosed'), 'warning');
+      return;
+    }
     if (isSubmittingOrder) return;
     const cartItems = getCartItems();
     if (cartItems.length === 0) return;
@@ -245,6 +254,10 @@ function AppContent() {
   };
 
   const buyAgain = (orderItems: Order['items']) => {
+    if (orderingClosed) {
+      showToast(t('toast.orderingClosed'), 'warning');
+      return;
+    }
     setCartQuantities(prev => {
       const newMap = new Map(prev);
       orderItems.forEach(item => {
@@ -281,6 +294,7 @@ function AppContent() {
   };
 
   const increaseQuantity = (productId: string) => {
+    if (orderingClosed) return;
     const product = productMap.get(productId);
     const available = product?.availableStock;
     setCartQuantities(prev => {
@@ -310,6 +324,7 @@ function AppContent() {
   };
 
   const addQuantityToCart = (productId: string, quantity: number) => {
+    if (orderingClosed) return;
     const product = productMap.get(productId);
     const available = product?.availableStock;
     setCartQuantities(prev => {
@@ -369,17 +384,17 @@ function AppContent() {
       case 'RESET_PASSWORD':
         return <ResetPasswordView onNavigate={setCurrentView} />;
       case 'HOME':
-        return <HomeView currentView={currentView} onNavigate={guardedNavigate} cartCount={cartCount} favorites={favorites} onToggleFavorite={handleToggleFavorite} cartQuantities={cartQuantities} onIncreaseQuantity={increaseQuantity} onDecreaseQuantity={decreaseQuantity} onNavigateWithCategory={navigateWithCategory} onNavigateToProduct={navigateToProduct} />;
+        return <HomeView currentView={currentView} onNavigate={guardedNavigate} cartCount={cartCount} favorites={favorites} onToggleFavorite={handleToggleFavorite} cartQuantities={cartQuantities} onIncreaseQuantity={increaseQuantity} onDecreaseQuantity={decreaseQuantity} onNavigateWithCategory={navigateWithCategory} onNavigateToProduct={navigateToProduct} orderingClosed={orderingClosed} />;
       case 'LISTING':
-        return <ListingView currentView={currentView} onNavigate={guardedNavigate} cartCount={cartCount} favorites={favorites} onToggleFavorite={handleToggleFavorite} cartQuantities={cartQuantities} onIncreaseQuantity={increaseQuantity} onDecreaseQuantity={decreaseQuantity} initialCategory={selectedCategory} onClearInitialCategory={clearInitialCategory} onNavigateToProduct={navigateToProduct} />;
+        return <ListingView currentView={currentView} onNavigate={guardedNavigate} cartCount={cartCount} favorites={favorites} onToggleFavorite={handleToggleFavorite} cartQuantities={cartQuantities} onIncreaseQuantity={increaseQuantity} onDecreaseQuantity={decreaseQuantity} initialCategory={selectedCategory} onClearInitialCategory={clearInitialCategory} onNavigateToProduct={navigateToProduct} orderingClosed={orderingClosed} />;
       case 'DETAILS':
-        return <ProductDetailView currentView={currentView} onNavigate={guardedNavigate} cartCount={cartCount} selectedProductId={selectedProductId} onGoBack={goBackFromDetail} cartQuantities={cartQuantities} onIncreaseQuantity={increaseQuantity} onDecreaseQuantity={decreaseQuantity} favorites={favorites} onToggleFavorite={handleToggleFavorite} onAddQuantityToCart={addQuantityToCart} />;
+        return <ProductDetailView currentView={currentView} onNavigate={guardedNavigate} cartCount={cartCount} selectedProductId={selectedProductId} onGoBack={goBackFromDetail} cartQuantities={cartQuantities} onIncreaseQuantity={increaseQuantity} onDecreaseQuantity={decreaseQuantity} favorites={favorites} onToggleFavorite={handleToggleFavorite} onAddQuantityToCart={addQuantityToCart} orderingClosed={orderingClosed} />;
       case 'CART':
-        return <CartView currentView={currentView} onNavigate={guardedNavigate} cartCount={cartCount} cartItems={getCartItems()} onIncreaseQuantity={increaseQuantity} onDecreaseQuantity={decreaseQuantity} onRemoveItem={removeFromCart} onClearCart={clearCart} onPlaceOrder={goToCheckout} cartQuantities={cartQuantities} favorites={favorites} onToggleFavorite={handleToggleFavorite} onNavigateToProduct={navigateToProduct} />;
+        return <CartView currentView={currentView} onNavigate={guardedNavigate} cartCount={cartCount} cartItems={getCartItems()} onIncreaseQuantity={increaseQuantity} onDecreaseQuantity={decreaseQuantity} onRemoveItem={removeFromCart} onClearCart={clearCart} onPlaceOrder={goToCheckout} cartQuantities={cartQuantities} favorites={favorites} onToggleFavorite={handleToggleFavorite} onNavigateToProduct={navigateToProduct} orderingClosed={orderingClosed} />;
       case 'CHECKOUT':
-        return <CheckoutView currentView={currentView} onNavigate={guardedNavigate} cartCount={cartCount} cartItems={getCartItems()} addresses={addresses} userPoints={points} onConfirmOrder={confirmOrder} onSaveAddress={handleSaveAddress} isSubmitting={isSubmittingOrder} />;
+        return <CheckoutView currentView={currentView} onNavigate={guardedNavigate} cartCount={cartCount} cartItems={getCartItems()} addresses={addresses} userPoints={points} onConfirmOrder={confirmOrder} onSaveAddress={handleSaveAddress} isSubmitting={isSubmittingOrder} orderingClosed={orderingClosed} />;
       case 'DEALS':
-        return <DealsView currentView={currentView} onNavigate={guardedNavigate} cartCount={cartCount} favorites={favorites} onToggleFavorite={handleToggleFavorite} cartQuantities={cartQuantities} onIncreaseQuantity={increaseQuantity} onDecreaseQuantity={decreaseQuantity} onNavigateToProduct={navigateToProduct} />;
+        return <DealsView currentView={currentView} onNavigate={guardedNavigate} cartCount={cartCount} favorites={favorites} onToggleFavorite={handleToggleFavorite} cartQuantities={cartQuantities} onIncreaseQuantity={increaseQuantity} onDecreaseQuantity={decreaseQuantity} onNavigateToProduct={navigateToProduct} orderingClosed={orderingClosed} />;
       case 'ACCOUNT':
         return <AccountView currentView={currentView} onNavigate={guardedNavigate} cartCount={cartCount} onSignOut={handleSignOut} />;
       case 'FAVORITES':
@@ -393,7 +408,7 @@ function AppContent() {
       case 'NOTIFICATIONS':
         return <NotificationsView currentView={currentView} onNavigate={guardedNavigate} cartCount={cartCount} emailNewsletter={emailNewsletter} onToggleEmailNewsletter={toggleEmailNewsletter} />;
       case 'BEST_SELLERS':
-        return <BestSellersView currentView={currentView} onNavigate={guardedNavigate} cartCount={cartCount} favorites={favorites} onToggleFavorite={handleToggleFavorite} cartQuantities={cartQuantities} onIncreaseQuantity={increaseQuantity} onDecreaseQuantity={decreaseQuantity} onNavigateToProduct={navigateToProduct} />;
+        return <BestSellersView currentView={currentView} onNavigate={guardedNavigate} cartCount={cartCount} favorites={favorites} onToggleFavorite={handleToggleFavorite} cartQuantities={cartQuantities} onIncreaseQuantity={increaseQuantity} onDecreaseQuantity={decreaseQuantity} onNavigateToProduct={navigateToProduct} orderingClosed={orderingClosed} />;
       case 'POINTS':
         return <PointsView currentView={currentView} onNavigate={guardedNavigate} cartCount={cartCount} />;
       case 'CONTACT_US':
@@ -407,6 +422,19 @@ function AppContent() {
     <div className="min-h-screen w-full bg-background-light dark:bg-background-dark flex">
       {!isAuthView && <DesktopSidebar currentView={currentView} onNavigate={guardedNavigate} cartCount={cartCount} />}
       <main className={`flex-1 h-screen overflow-y-auto overflow-x-hidden ${isAuthView ? '' : 'max-w-md lg:max-w-none mx-auto lg:mx-0 shadow-2xl lg:shadow-none'} relative`}>
+        {orderingClosed && !isAuthView && (
+          <div className="sticky top-0 z-[60] bg-amber-50 dark:bg-amber-900/30 border-b border-amber-200 dark:border-amber-800">
+            <div className="px-4 py-2.5 flex items-center gap-2.5">
+              <span className="material-symbols-outlined text-amber-600 dark:text-amber-400 text-[20px] shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>schedule</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-amber-800 dark:text-amber-200 leading-snug">{closedMessage || t('store.orderingClosed')}</p>
+                {nextOpenTime && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">{t('store.nextOpening', { datetime: nextOpenTime })}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
         {renderView()}
       </main>
       {toastMessage && (

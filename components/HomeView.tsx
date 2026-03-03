@@ -6,7 +6,7 @@ import BottomNav from './BottomNav';
 import ProductCard from './ProductCard';
 import LanguageSwitcher from './LanguageSwitcher';
 
-const HomeView: React.FC<NavigationProps> = ({ currentView, onNavigate, cartCount, favorites = new Set(), onToggleFavorite, cartQuantities = new Map(), onIncreaseQuantity, onDecreaseQuantity, onNavigateWithCategory, onNavigateToProduct }) => {
+const HomeView: React.FC<NavigationProps> = ({ currentView, onNavigate, cartCount, favorites = new Set(), onToggleFavorite, cartQuantities = new Map(), onIncreaseQuantity, onDecreaseQuantity, onNavigateWithCategory, onNavigateToProduct, orderingClosed }) => {
   const { t } = useTranslation();
   const { categories, bestSellerProducts, expiryProducts, flashSaleProducts } = useProductData();
 
@@ -118,6 +118,7 @@ const HomeView: React.FC<NavigationProps> = ({ currentView, onNavigate, cartCoun
                 onToggleFavorite={() => onToggleFavorite?.(product.id)}
                 onIncrease={() => onIncreaseQuantity?.(product.id)}
                 onDecrease={() => onDecreaseQuantity?.(product.id)}
+                orderingClosed={orderingClosed}
               />
             </div>
           ))}
@@ -149,6 +150,7 @@ const HomeView: React.FC<NavigationProps> = ({ currentView, onNavigate, cartCoun
                   onToggleFavorite={() => onToggleFavorite?.(favoriteId)}
                   onIncrease={() => onIncreaseQuantity?.(product.id)}
                   onDecrease={() => onDecreaseQuantity?.(product.id)}
+                  orderingClosed={orderingClosed}
                 />
               </div>
             );
@@ -181,6 +183,7 @@ const HomeView: React.FC<NavigationProps> = ({ currentView, onNavigate, cartCoun
                   onToggleFavorite={() => onToggleFavorite?.(favoriteId)}
                   onIncrease={() => onIncreaseQuantity?.(product.id)}
                   onDecrease={() => onDecreaseQuantity?.(product.id)}
+                  orderingClosed={orderingClosed}
                 />
               </div>
             );

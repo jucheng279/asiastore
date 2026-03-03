@@ -337,12 +337,19 @@
     "email": "Email",
     "visitingAddress": "Visiting Address"
   },
+  "store": {
+    "orderingClosed": "Ordering Closed",
+    "nextOpening": "Next opening: {{datetime}}",
+    "closedAddToCart": "Closed",
+    "closedCheckout": "Ordering is closed"
+  },
   "toast": {
     "addedToCart": "{{name}} added to cart",
     "addedToCartQty": "{{qty}}x {{name}} added to cart",
     "orderFailed": "Failed to place order. Please try again.",
     "orderFailedStock": "Some items were out of stock and removed. Please review your cart.",
     "orderFailedStockItem": "\"{{name}}\" is out of stock and was removed from your cart.",
-    "cartAdjustedToStock": "Some quantities were reduced to match available stock."
+    "cartAdjustedToStock": "Some quantities were reduced to match available stock.",
+    "orderingClosed": "Ordering is currently closed."
   }
 }

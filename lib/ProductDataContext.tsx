@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { fetchAllData, type FetchedData, type DbCategory, type DbSubcategory, type Language } from './api';
 import type { Product } from '../types';
+import { fetchStoreSettings, isStoreOpen, getClosedMessage, getNextOpenTime, type StoreSettings } from './storeStatus';
 
 const CACHE_KEY_PREFIX = 'asian_market_products_';
 const CACHE_TTL_MS = 5 * 60 * 1000;
@@ -45,6 +46,9 @@ interface ProductDataState {
   language: Language;
   setLanguage: (lang: Language) => void;
   refreshData: () => Promise<void>;
+  orderingOpen: boolean;
+  closedMessage: string;
+  nextOpenTime: string;
 }
 
 const ProductDataContext = createContext<ProductDataState>({
@@ -60,6 +64,9 @@ const ProductDataContext = createContext<ProductDataState>({
   language: 'en',
   setLanguage: () => {},
   refreshData: () => Promise.resolve(),
+  orderingOpen: true,
+  closedMessage: '',
+  nextOpenTime: '',
 });
 
 export function useProductData() {
@@ -71,6 +78,26 @@ export function ProductDataProvider({ children }: { children: React.ReactNode })
   const [data, setData] = useState<FetchedData | null>(null);
   const [language, setLanguage] = useState<Language>('en');
   const isFetchingRef = useRef(false);
+  const [storeSettings, setStoreSettings] = useState<StoreSettings | null>(null);
+  const [orderingOpen, setOrderingOpen] = useState(true);
+
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    const check = async () => {
+      const settings = await fetchStoreSettings();
+      setStoreSettings(settings);
+      setOrderingOpen(isStoreOpen(settings));
+    };
+    check();
+    interval = setInterval(check, 60_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (storeSettings) {
+      setOrderingOpen(isStoreOpen(storeSettings));
+    }
+  }, [storeSettings]);
 
   const loadData = useCallback(async (lang: Language) => {
     const cached = getCachedData(lang);
@@ -143,6 +170,9 @@ export function ProductDataProvider({ children }: { children: React.ReactNode })
     return { allProducts: all, productMap: map };
   }, [catalogProducts, expiryProducts, flashSaleProducts]);
 
+  const closedMessage = storeSettings ? getClosedMessage(storeSettings, language) : '';
+  const nextOpenTime = storeSettings ? getNextOpenTime(storeSettings, language) : '';
+
   return (
     <ProductDataContext.Provider
       value={{
@@ -158,6 +188,9 @@ export function ProductDataProvider({ children }: { children: React.ReactNode })
         language,
         setLanguage: handleSetLanguage,
         refreshData,
+        orderingOpen,
+        closedMessage,
+        nextOpenTime,
       }}
     >
       {children}

@@ -15,6 +15,7 @@ const BestSellersView: React.FC<NavigationProps> = ({
   onIncreaseQuantity,
   onDecreaseQuantity,
   onNavigateToProduct,
+  orderingClosed,
 }) => {
   const { t } = useTranslation();
   const { bestSellerProducts } = useProductData();
@@ -64,6 +65,7 @@ const BestSellersView: React.FC<NavigationProps> = ({
               onToggleFavorite={() => onToggleFavorite?.(product.id)}
               onIncrease={() => onIncreaseQuantity?.(product.id)}
               onDecrease={() => onDecreaseQuantity?.(product.id)}
+              orderingClosed={orderingClosed}
             />
           ))}
         </div>
