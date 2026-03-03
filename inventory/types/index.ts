@@ -1,0 +1,77 @@
+export type Language = 'en' | 'sv' | 'zh';
+
+export type ActiveView = 'categories' | 'expiry' | 'flashSales' | 'users' | 'diagnostics';
+
+export interface ProductNames {
+  en: string;
+  sv: string;
+  zh: string;
+}
+
+export interface PhotoFile {
+  id: string;
+  file: File;
+  url: string;
+}
+
+export interface Product {
+  id: string;
+  names: ProductNames;
+  price: string;
+  newPrice: string;
+  stock: string;
+  preserve: number;
+  expiration: string;
+  descriptions: ProductNames;
+  photos: PhotoFile[];
+  order: number;
+  categoryId: string;
+  subCategoryId: string | null;
+  visible: boolean;
+  trending: boolean;
+  flash: boolean;
+  parentProductId: string | null;
+  internalOrder: number;
+}
+
+export interface ExpiryItem extends Product {
+  sourceProductId: string | null;
+  isStackParent?: boolean;
+  childItems?: ExpiryItem[];
+}
+
+export interface ExpirySettings {
+  thresholdDays: number;
+  discountPercentage: number;
+}
+
+export interface FlashSaleItem extends Product {
+  sourceProductId: string | null;
+  flashDays: number;
+  flashStartDate: string;
+  flashDiscountPercentage: number;
+  isStackParent?: boolean;
+  childItems?: FlashSaleItem[];
+}
+
+export interface FlashSaleSettings {
+  defaultFlashDays: number;
+  defaultDiscountPercentage: number;
+}
+
+export interface SubCategory {
+  id: string;
+  name: string;
+  names: ProductNames;
+  parentId: string;
+  isCollapsed: boolean;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  names: ProductNames;
+  imageUrl: string;
+  isCollapsed: boolean;
+  subCategories: SubCategory[];
+}
