@@ -136,8 +136,8 @@
     "deliveryInstructions": "Delivery Instructions",
     "deliveryPlaceholder": "Gate code, leave at door, etc.",
     "paymentMethod": "Payment Method",
-    "cashOnDelivery": "Cash on Delivery",
-    "cashOnDeliveryDesc": "Pay when you receive your order",
+    "cashOnDelivery": "Cash or Swish on Delivery",
+    "cashOnDeliveryDesc": "Please have cash or Swish ready when your order arrives",
     "payWithPoints": "Pay with Points",
     "yourBalance": "Your balance: {{points}} pts",
     "insufficientPoints": "Insufficient points. You need <strong>{{needed}} pts</strong> but only have <strong>{{have}} pts</strong>. You need <strong>{{more}} more points</strong>.",
@@ -185,7 +185,10 @@
     "pleaseSelectDeliveryInfo": "Please select delivery info.",
     "emailInvalid": "Please enter a valid email address.",
     "streetAddressRequired": "Street address is required.",
-    "required": "Required."
+    "required": "Required.",
+    "payAtStore": "Pay at Store",
+    "payAtStoreDesc": "Available for in-store pickup only",
+    "inStorePickupOnly": "In-Store Pickup Only"
   },
   "account": {
     "myAccount": "My Account",

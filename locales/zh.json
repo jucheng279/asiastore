@@ -136,8 +136,8 @@
     "deliveryInstructions": "配送说明",
     "deliveryPlaceholder": "门禁密码、放在门口等",
     "paymentMethod": "支付方式",
-    "cashOnDelivery": "货到付款",
-    "cashOnDeliveryDesc": "收到订单时付款",
+    "cashOnDelivery": "货到现金或Swish付款",
+    "cashOnDeliveryDesc": "请在订单送达时准备好现金或Swish",
     "payWithPoints": "积分支付",
     "yourBalance": "您的余额：{{points}} 积分",
     "insufficientPoints": "积分不足。您需要 <strong>{{needed}} 积分</strong>，但只有 <strong>{{have}} 积分</strong>。还需要 <strong>{{more}} 积分</strong>。",
@@ -185,7 +185,10 @@
     "pleaseSelectDeliveryInfo": "请选择配送信息。",
     "emailInvalid": "请输入有效的邮箱地址。",
     "streetAddressRequired": "请填写街道地址。",
-    "required": "必填。"
+    "required": "必填。",
+    "payAtStore": "门店支付",
+    "payAtStoreDesc": "仅限到店自取时使用",
+    "inStorePickupOnly": "仅限到店自取"
   },
   "account": {
     "myAccount": "我的账户",

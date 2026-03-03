@@ -238,6 +238,22 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({
               </div>
             </button>
 
+            <div className="w-full p-4 rounded-xl border-2 border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/[0.02] opacity-50 cursor-not-allowed">
+              <div className="flex items-center gap-3">
+                <div className="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-white/20 shrink-0"></div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-gray-400 dark:text-gray-500 text-[20px]">store</span>
+                    <p className="text-sm font-semibold text-text-main dark:text-white">{t('checkout.payAtStore')}</p>
+                    <span className="px-2 py-0.5 bg-gray-200 dark:bg-white/10 text-gray-500 dark:text-gray-400 text-[10px] font-bold rounded-full">
+                      {t('checkout.inStorePickupOnly')}
+                    </span>
+                  </div>
+                  <p className="text-xs text-text-sub mt-0.5">{t('checkout.payAtStoreDesc')}</p>
+                </div>
+              </div>
+            </div>
+
             {insufficientPoints && (
               <div className="flex items-start gap-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 rounded-xl p-3">
                 <span className="material-symbols-outlined text-red-500 text-[18px] mt-0.5">error</span>

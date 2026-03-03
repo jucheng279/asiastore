@@ -136,8 +136,8 @@
     "deliveryInstructions": "Leveransinstruktioner",
     "deliveryPlaceholder": "Portkod, lamna vid dorren, etc.",
     "paymentMethod": "Betalningssatt",
-    "cashOnDelivery": "Betalning vid leverans",
-    "cashOnDeliveryDesc": "Betala nar du far din bestallning",
+    "cashOnDelivery": "Kontant eller Swish vid leverans",
+    "cashOnDeliveryDesc": "Ha kontanter eller Swish redo vid leverans",
     "payWithPoints": "Betala med poang",
     "yourBalance": "Ditt saldo: {{points}} poang",
     "insufficientPoints": "Otillrackliga poang. Du behover <strong>{{needed}} poang</strong> men har bara <strong>{{have}} poang</strong>. Du behover <strong>{{more}} fler poang</strong>.",
@@ -185,7 +185,10 @@
     "pleaseSelectDeliveryInfo": "Valj leveransinfo.",
     "emailInvalid": "Ange en giltig e-postadress.",
     "streetAddressRequired": "Gatuadress kravs.",
-    "required": "Obligatoriskt."
+    "required": "Obligatoriskt.",
+    "payAtStore": "Betala i butik",
+    "payAtStoreDesc": "Endast tillgangligt for avhamtning i butik",
+    "inStorePickupOnly": "Endast butiksavhamtning"
   },
   "account": {
     "myAccount": "Mitt konto",
