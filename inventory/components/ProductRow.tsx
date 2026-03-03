@@ -164,7 +164,7 @@ export function ProductRow({
               )}
             </div>
           </div>
-          <div className="w-20 flex-shrink-0 px-1.5 py-1 border-r border-slate-100">
+          <div className="w-20 px-1.5 py-1 border-r border-slate-100">
             <input
               type="number"
               value={product.price}
@@ -177,7 +177,7 @@ export function ProductRow({
               placeholder="0.00"
             />
           </div>
-          <div className="w-20 flex-shrink-0 px-1.5 py-1 border-r border-slate-100">
+          <div className="w-20 px-1.5 py-1 border-r border-slate-100">
             <input
               type="number"
               value={product.newPrice}
@@ -190,7 +190,7 @@ export function ProductRow({
               placeholder="0.00"
             />
           </div>
-          <div className="w-14 flex-shrink-0 px-1.5 py-1 border-r border-slate-100">
+          <div className="w-14 px-1.5 py-1 border-r border-slate-100">
             <input
               type="number"
               value={product.stock}
@@ -203,17 +203,17 @@ export function ProductRow({
               placeholder="0"
             />
           </div>
-          <div className="w-[5.5rem] flex-shrink-0 px-4 py-1 border-r border-slate-100 flex items-center justify-center">
+          <div className="w-[5.5rem] px-4 py-1 border-r border-slate-100 flex items-center justify-center">
             <span className="text-sm text-slate-500">{product.preserve}</span>
           </div>
-          <div className="w-[5.5rem] flex-shrink-0 px-4 py-1 border-r border-slate-100 flex items-center justify-center">
+          <div className="w-[5.5rem] px-4 py-1 border-r border-slate-100 flex items-center justify-center">
             {(() => {
               const avail = (parseInt(product.stock, 10) || 0) - product.preserve;
               const color = avail <= 0 ? 'text-red-600 font-bold' : avail <= 10 ? 'text-amber-600 font-semibold' : 'text-slate-700 font-medium';
               return <span className={`text-sm ${color}`}>{avail}</span>;
             })()}
           </div>
-          <div className="w-36 flex-shrink-0 px-1.5 py-1 border-r border-slate-100">
+          <div className="w-36 px-1.5 py-1 border-r border-slate-100">
             <input
               type="date"
               value={product.expiration}
@@ -224,7 +224,7 @@ export function ProductRow({
               }`}
             />
           </div>
-          <div className="w-16 flex-shrink-0 px-1.5 py-1 border-r border-slate-100 flex items-center justify-center">
+          <div className="w-16 px-1.5 py-1 border-r border-slate-100 flex items-center justify-center">
             <button
               onClick={() => setIsInfoModalOpen(true)}
               className={`relative p-1.5 rounded-md transition-all ${
@@ -240,7 +240,7 @@ export function ProductRow({
               )}
             </button>
           </div>
-          <div className="w-14 flex-shrink-0 px-1.5 py-1 border-r border-slate-100">
+          <div className="w-14 px-1.5 py-1 border-r border-slate-100">
             <input
               type="number"
               value={orderInput}
@@ -256,7 +256,7 @@ export function ProductRow({
             />
           </div>
         </div>
-        <div className="w-14 flex-shrink-0 px-1.5 py-1 flex items-center justify-center relative">
+        <div className="w-14 px-1.5 py-1 flex items-center justify-center relative">
           <button
             data-settings-button
             onClick={handleSettingsClick}
