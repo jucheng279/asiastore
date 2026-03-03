@@ -12,7 +12,6 @@ interface SubProductListProps {
   onAddSubProduct: (parentProductId: string) => void;
   openSettingsId: string | null;
   onSettingsToggle: (productId: string | null) => void;
-  copiedProductIds?: Set<string>;
 }
 
 export function SubProductList({
@@ -25,7 +24,6 @@ export function SubProductList({
   onAddSubProduct,
   openSettingsId,
   onSettingsToggle,
-  copiedProductIds,
 }: SubProductListProps) {
   return (
     <div className="bg-slate-50/60">
@@ -39,7 +37,6 @@ export function SubProductList({
           onOrderChange={onOrderChange}
           isSettingsOpen={openSettingsId === subProduct.id}
           onSettingsToggle={onSettingsToggle}
-          isCopiedToExpiry={copiedProductIds?.has(subProduct.id)}
         />
       ))}
       <div className="border-b border-slate-100">

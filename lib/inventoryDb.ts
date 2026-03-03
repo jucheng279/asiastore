@@ -55,6 +55,7 @@ function expiryItemToDbRow(item: ExpiryItem) {
     visible: item.visible,
     stock: item.stock ? parseInt(item.stock, 10) : 0,
     preserve: item.preserve || 0,
+    discount_applied: item.discountApplied || false,
   };
 }
 
@@ -153,6 +154,7 @@ function dbRowToExpiryItem(row: any): ExpiryItem {
       flash: false,
     }),
     sourceProductId: row.source_product_id || null,
+    discountApplied: row.discount_applied ?? false,
   };
 }
 
@@ -228,7 +230,11 @@ function assembleLoadedData(
 
   const expirySettings: ExpirySettings = {
     thresholdDays: expirySettRes.data?.threshold_days ?? 30,
-    discountPercentage: expirySettRes.data?.discount_percentage ?? 50,
+    expiredDiscountPercentage: expirySettRes.data?.expired_discount_percentage ?? 0,
+    threshold1Days: expirySettRes.data?.threshold_1_days ?? 7,
+    threshold1DiscountPercentage: expirySettRes.data?.threshold_1_discount_percentage ?? 0,
+    threshold2Days: expirySettRes.data?.threshold_2_days ?? 14,
+    threshold2DiscountPercentage: expirySettRes.data?.threshold_2_discount_percentage ?? 0,
   };
 
   const flashSaleSettings: FlashSaleSettings = {
@@ -484,7 +490,11 @@ export async function saveDraftExpirySettings(settings: ExpirySettings) {
     await supabase.from('draft_expiry_settings').upsert({
       id: 1,
       threshold_days: settings.thresholdDays,
-      discount_percentage: settings.discountPercentage,
+      expired_discount_percentage: settings.expiredDiscountPercentage,
+      threshold_1_days: settings.threshold1Days,
+      threshold_1_discount_percentage: settings.threshold1DiscountPercentage,
+      threshold_2_days: settings.threshold2Days,
+      threshold_2_discount_percentage: settings.threshold2DiscountPercentage,
     });
   } catch (e) {
     console.error('saveDraftExpirySettings failed:', e);
@@ -624,7 +634,11 @@ export async function pushUpdate(): Promise<{ success: boolean; error?: string }
     await supabase.from('expiry_settings').upsert({
       id: 1,
       threshold_days: draft.expirySettings.thresholdDays,
-      discount_percentage: draft.expirySettings.discountPercentage,
+      expired_discount_percentage: draft.expirySettings.expiredDiscountPercentage,
+      threshold_1_days: draft.expirySettings.threshold1Days,
+      threshold_1_discount_percentage: draft.expirySettings.threshold1DiscountPercentage,
+      threshold_2_days: draft.expirySettings.threshold2Days,
+      threshold_2_discount_percentage: draft.expirySettings.threshold2DiscountPercentage,
     });
 
     await supabase.from('flash_sale_settings').upsert({

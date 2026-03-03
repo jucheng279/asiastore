@@ -36,13 +36,18 @@ export interface Product {
 
 export interface ExpiryItem extends Product {
   sourceProductId: string | null;
+  discountApplied: boolean;
   isStackParent?: boolean;
   childItems?: ExpiryItem[];
 }
 
 export interface ExpirySettings {
   thresholdDays: number;
-  discountPercentage: number;
+  expiredDiscountPercentage: number;
+  threshold1Days: number;
+  threshold1DiscountPercentage: number;
+  threshold2Days: number;
+  threshold2DiscountPercentage: number;
 }
 
 export interface FlashSaleItem extends Product {

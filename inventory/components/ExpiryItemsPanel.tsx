@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Plus, Clock, Percent, Calendar } from 'lucide-react';
+import { Plus, Clock, Calendar, AlertTriangle } from 'lucide-react';
 import { Product, Language, ExpiryItem, ExpirySettings } from '../types';
-import { ProductTableHeader } from './ProductTableHeader';
 import { ProductRow } from './ProductRow';
 import { ExpiryStackRow } from './ExpiryStackRow';
+import { LanguageSelector, getLanguageBadge } from './LanguageSelector';
 
 interface ExpiryItemsPanelProps {
   items: ExpiryItem[];
@@ -73,7 +73,7 @@ export function ExpiryItemsPanel({
 
       <div className="flex-1 overflow-auto p-4">
         <div className="min-w-max bg-white rounded-xl border border-slate-200 shadow-soft">
-          <ProductTableHeader
+          <ExpiryTableHeader
             currentLanguage={currentLanguage}
             onLanguageChange={onLanguageChange}
           />
@@ -85,10 +85,7 @@ export function ExpiryItemsPanel({
               </div>
               <p className="text-slate-600 font-medium">No expiry items yet</p>
               <p className="text-sm text-slate-400 mt-1 mb-1 max-w-xs">
-                Products approaching their expiration date will appear here automatically.
-              </p>
-              <p className="text-xs text-slate-400">
-                Current threshold: {expirySettings.thresholdDays} days
+                Add items manually and set their expiration dates.
               </p>
             </div>
           ) : (
@@ -114,12 +111,54 @@ export function ExpiryItemsPanel({
                   onOrderChange={onOrderChange}
                   isSettingsOpen={openSettingsId === item.id}
                   onSettingsToggle={setOpenSettingsId}
+                  isExpiryItem
                 />
               )
             ))
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+interface ExpiryTableHeaderProps {
+  currentLanguage: Language;
+  onLanguageChange: (language: Language) => void;
+}
+
+function ExpiryTableHeader({ currentLanguage, onLanguageChange }: ExpiryTableHeaderProps) {
+  const [isLanguageSelectorOpen, setIsLanguageSelectorOpen] = useState(false);
+
+  return (
+    <div className="flex items-center bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+      <div className="w-7 flex-shrink-0" />
+      <div className="w-52 px-2 py-1.5 border-r border-slate-200 relative">
+        <button
+          onClick={() => setIsLanguageSelectorOpen(true)}
+          className="flex items-center gap-2 hover:text-primary-600 transition-colors"
+        >
+          Name
+          <span className="px-1.5 py-0.5 bg-primary-600 text-white text-[10px] rounded-md font-medium normal-case">
+            {getLanguageBadge(currentLanguage)}
+          </span>
+        </button>
+        <LanguageSelector
+          isOpen={isLanguageSelectorOpen}
+          currentLanguage={currentLanguage}
+          onSelect={onLanguageChange}
+          onClose={() => setIsLanguageSelectorOpen(false)}
+        />
+      </div>
+      <div className="w-20 px-2 py-1.5 border-r border-slate-200">Price</div>
+      <div className="w-20 px-2 py-1.5 border-r border-slate-200">Sale</div>
+      <div className="w-14 px-2 py-1.5 border-r border-slate-200 flex items-center justify-center">Stock</div>
+      <div className="w-[4.5rem] px-2 py-1.5 border-r border-slate-200 flex items-center justify-center">Preserve</div>
+      <div className="w-[4.5rem] px-2 py-1.5 border-r border-slate-200 flex items-center justify-center">Available</div>
+      <div className="w-36 px-2 py-1.5 border-r border-slate-200">Expiration</div>
+      <div className="w-16 px-2 py-1.5 border-r border-slate-200 flex items-center justify-center">Info</div>
+      <div className="w-14 px-2 py-1.5 border-r border-slate-200 flex items-center justify-center">Order</div>
+      <div className="w-14 px-2 py-1.5"></div>
     </div>
   );
 }
@@ -137,73 +176,124 @@ function ExpirySettingsToolbar({
   onApplyDiscount,
   hasItems,
 }: ExpirySettingsToolbarProps) {
-  const [thresholdInput, setThresholdInput] = useState(String(settings.thresholdDays));
-  const [discountInput, setDiscountInput] = useState(String(settings.discountPercentage));
+  const [expiredDiscount, setExpiredDiscount] = useState(String(settings.expiredDiscountPercentage));
+  const [t1Days, setT1Days] = useState(String(settings.threshold1Days));
+  const [t1Discount, setT1Discount] = useState(String(settings.threshold1DiscountPercentage));
+  const [t2Days, setT2Days] = useState(String(settings.threshold2Days));
+  const [t2Discount, setT2Discount] = useState(String(settings.threshold2DiscountPercentage));
 
   useEffect(() => {
-    setThresholdInput(String(settings.thresholdDays));
-  }, [settings.thresholdDays]);
+    setExpiredDiscount(String(settings.expiredDiscountPercentage));
+    setT1Days(String(settings.threshold1Days));
+    setT1Discount(String(settings.threshold1DiscountPercentage));
+    setT2Days(String(settings.threshold2Days));
+    setT2Discount(String(settings.threshold2DiscountPercentage));
+  }, [settings]);
 
-  useEffect(() => {
-    setDiscountInput(String(settings.discountPercentage));
-  }, [settings.discountPercentage]);
+  const commitNumber = (
+    value: string,
+    fallback: number,
+    key: keyof ExpirySettings,
+    setter: (v: string) => void,
+    min = 0,
+    max = Infinity
+  ) => {
+    const val = parseFloat(value);
+    if (!isNaN(val) && val >= min && val <= max) {
+      onUpdateSettings({ [key]: val });
+    } else {
+      setter(String(fallback));
+    }
+  };
+
+  const hasAnyDiscount =
+    settings.expiredDiscountPercentage > 0 ||
+    settings.threshold1DiscountPercentage > 0 ||
+    settings.threshold2DiscountPercentage > 0;
 
   return (
-    <div className="px-6 py-3 bg-slate-50 border-b border-slate-200 flex items-center gap-6">
-      <div className="flex items-center gap-2">
-        <Calendar size={15} className="text-slate-500" />
-        <span className="text-sm text-slate-600 font-medium">Threshold</span>
-        <input
-          type="number"
-          value={thresholdInput}
-          onChange={e => setThresholdInput(e.target.value)}
-          onBlur={() => {
-            const val = parseInt(thresholdInput, 10);
-            if (!isNaN(val) && val >= 0) {
-              onUpdateSettings({ thresholdDays: val });
-            } else {
-              setThresholdInput(String(settings.thresholdDays));
-            }
-          }}
-          onWheel={e => e.currentTarget.blur()}
-          className="w-16 px-2 py-1 text-sm bg-white border border-slate-200 rounded-md text-center focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
-          min="0"
-        />
-        <span className="text-sm text-slate-500">days</span>
+    <div className="px-6 py-3 bg-slate-50 border-b border-slate-200">
+      <div className="flex items-center gap-4 flex-wrap">
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 rounded-lg border border-red-100">
+          <AlertTriangle size={14} className="text-red-500 flex-shrink-0" />
+          <span className="text-xs font-semibold text-red-700 whitespace-nowrap">Expired</span>
+          <input
+            type="number"
+            value={expiredDiscount}
+            onChange={e => setExpiredDiscount(e.target.value)}
+            onBlur={() => commitNumber(expiredDiscount, settings.expiredDiscountPercentage, 'expiredDiscountPercentage', setExpiredDiscount, 0, 100)}
+            onWheel={e => e.currentTarget.blur()}
+            className="w-14 px-2 py-0.5 text-sm bg-white border border-red-200 rounded-md text-center focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
+            min="0"
+            max="100"
+          />
+          <span className="text-xs text-red-500">%</span>
+        </div>
+
+        <div className="w-px h-8 bg-slate-200" />
+
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 rounded-lg border border-amber-100">
+          <Calendar size={14} className="text-amber-600 flex-shrink-0" />
+          <input
+            type="number"
+            value={t1Days}
+            onChange={e => setT1Days(e.target.value)}
+            onBlur={() => commitNumber(t1Days, settings.threshold1Days, 'threshold1Days', setT1Days, 0)}
+            onWheel={e => e.currentTarget.blur()}
+            className="w-12 px-2 py-0.5 text-sm bg-white border border-amber-200 rounded-md text-center focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400"
+            min="0"
+          />
+          <span className="text-xs text-amber-600 whitespace-nowrap">days</span>
+          <div className="w-px h-5 bg-amber-200 mx-1" />
+          <input
+            type="number"
+            value={t1Discount}
+            onChange={e => setT1Discount(e.target.value)}
+            onBlur={() => commitNumber(t1Discount, settings.threshold1DiscountPercentage, 'threshold1DiscountPercentage', setT1Discount, 0, 100)}
+            onWheel={e => e.currentTarget.blur()}
+            className="w-14 px-2 py-0.5 text-sm bg-white border border-amber-200 rounded-md text-center focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400"
+            min="0"
+            max="100"
+          />
+          <span className="text-xs text-amber-500">%</span>
+        </div>
+
+        <div className="w-px h-8 bg-slate-200" />
+
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-sky-50 rounded-lg border border-sky-100">
+          <Calendar size={14} className="text-sky-600 flex-shrink-0" />
+          <input
+            type="number"
+            value={t2Days}
+            onChange={e => setT2Days(e.target.value)}
+            onBlur={() => commitNumber(t2Days, settings.threshold2Days, 'threshold2Days', setT2Days, 0)}
+            onWheel={e => e.currentTarget.blur()}
+            className="w-12 px-2 py-0.5 text-sm bg-white border border-sky-200 rounded-md text-center focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-400"
+            min="0"
+          />
+          <span className="text-xs text-sky-600 whitespace-nowrap">days</span>
+          <div className="w-px h-5 bg-sky-200 mx-1" />
+          <input
+            type="number"
+            value={t2Discount}
+            onChange={e => setT2Discount(e.target.value)}
+            onBlur={() => commitNumber(t2Discount, settings.threshold2DiscountPercentage, 'threshold2DiscountPercentage', setT2Discount, 0, 100)}
+            onWheel={e => e.currentTarget.blur()}
+            className="w-14 px-2 py-0.5 text-sm bg-white border border-sky-200 rounded-md text-center focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-400"
+            min="0"
+            max="100"
+          />
+          <span className="text-xs text-sky-500">%</span>
+        </div>
+
+        <button
+          onClick={onApplyDiscount}
+          disabled={!hasItems || !hasAnyDiscount}
+          className="ml-auto px-4 py-1.5 text-sm font-medium bg-primary-600 text-white rounded-lg transition-all duration-150 hover:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] shadow-soft"
+        >
+          Apply Discount
+        </button>
       </div>
-
-      <div className="w-px h-6 bg-slate-200" />
-
-      <div className="flex items-center gap-2">
-        <Percent size={15} className="text-slate-500" />
-        <span className="text-sm text-slate-600 font-medium">Discount</span>
-        <input
-          type="number"
-          value={discountInput}
-          onChange={e => setDiscountInput(e.target.value)}
-          onBlur={() => {
-            const val = parseInt(discountInput, 10);
-            if (!isNaN(val) && val >= 0 && val <= 100) {
-              onUpdateSettings({ discountPercentage: val });
-            } else {
-              setDiscountInput(String(settings.discountPercentage));
-            }
-          }}
-          onWheel={e => e.currentTarget.blur()}
-          className="w-16 px-2 py-1 text-sm bg-white border border-slate-200 rounded-md text-center focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
-          min="0"
-          max="100"
-        />
-        <span className="text-sm text-slate-500">%</span>
-      </div>
-
-      <button
-        onClick={onApplyDiscount}
-        disabled={!hasItems || settings.discountPercentage === 0}
-        className="ml-auto px-4 py-1.5 text-sm font-medium bg-primary-600 text-white rounded-lg transition-all duration-150 hover:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] shadow-soft"
-      >
-        Apply Discount
-      </button>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Product, ExpiryItem, ExpirySettings } from '../types';
 import { reorderProducts, getNextOrder } from './useProductOrder';
 import {
@@ -6,16 +6,45 @@ import {
   saveDraftExpirySettings,
 } from '../../lib/inventoryDb';
 
-function createExpiryChild(product: Product): ExpiryItem {
-  return {
-    ...product,
-    id: crypto.randomUUID(),
-    sourceProductId: product.id,
-    photos: product.photos.map(p => ({ ...p })),
-    names: { ...product.names },
-    descriptions: { ...product.descriptions },
-    order: product.internalOrder,
-  };
+function getDiscountForItem(
+  expiration: string,
+  settings: ExpirySettings
+): number {
+  if (!expiration) return 0;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const expiryDate = new Date(expiration + 'T00:00:00');
+
+  if (expiryDate <= today) {
+    return settings.expiredDiscountPercentage;
+  }
+
+  const diffMs = expiryDate.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+  const t1 = Math.min(settings.threshold1Days, settings.threshold2Days);
+  const t2 = Math.max(settings.threshold1Days, settings.threshold2Days);
+  const d1 = settings.threshold1Days <= settings.threshold2Days
+    ? settings.threshold1DiscountPercentage
+    : settings.threshold2DiscountPercentage;
+  const d2 = settings.threshold1Days <= settings.threshold2Days
+    ? settings.threshold2DiscountPercentage
+    : settings.threshold1DiscountPercentage;
+
+  if (diffDays <= t1) return d1;
+  if (diffDays <= t2) return d2;
+  return 0;
+}
+
+function applyDiscountToItem(
+  item: ExpiryItem,
+  settings: ExpirySettings
+): ExpiryItem {
+  const price = parseFloat(item.price);
+  if (isNaN(price) || price <= 0) return { ...item, discountApplied: true };
+  const pct = getDiscountForItem(item.expiration, settings);
+  const salePrice = pct > 0 ? (price * (1 - pct / 100)).toFixed(2) : '';
+  return { ...item, newPrice: salePrice, discountApplied: true };
 }
 
 interface UseExpiryItemsOptions {
@@ -23,27 +52,25 @@ interface UseExpiryItemsOptions {
   initialSettings?: ExpirySettings;
 }
 
-export function useExpiryItems(products: Product[], options?: UseExpiryItemsOptions) {
+const DEFAULT_SETTINGS: ExpirySettings = {
+  thresholdDays: 30,
+  expiredDiscountPercentage: 0,
+  threshold1Days: 7,
+  threshold1DiscountPercentage: 0,
+  threshold2Days: 14,
+  threshold2DiscountPercentage: 0,
+};
+
+export function useExpiryItems(_products: Product[], options?: UseExpiryItemsOptions) {
   const [expiryItems, setExpiryItems] = useState<ExpiryItem[]>(options?.initialItems || []);
   const [expirySettings, setExpirySettings] = useState<ExpirySettings>(
-    options?.initialSettings || { thresholdDays: 30, discountPercentage: 0 }
+    options?.initialSettings || DEFAULT_SETTINGS
   );
-  const copiedProductIdsRef = useRef<Set<string>>(new Set());
   const initializedRef = useRef(false);
 
   useEffect(() => {
     if (options?.initialItems && !initializedRef.current) {
       setExpiryItems(options.initialItems);
-      const ids = new Set<string>();
-      for (const item of options.initialItems) {
-        if (item.sourceProductId) ids.add(item.sourceProductId);
-        if ((item as any).childItems) {
-          for (const child of (item as any).childItems) {
-            if (child.sourceProductId) ids.add(child.sourceProductId);
-          }
-        }
-      }
-      copiedProductIdsRef.current = ids;
       initializedRef.current = true;
     }
   }, [options?.initialItems]);
@@ -54,96 +81,40 @@ export function useExpiryItems(products: Product[], options?: UseExpiryItemsOpti
     }
   }, [options?.initialSettings]);
 
-  const activeCopiedProductIds = useMemo(() => {
-    const ids = new Set<string>();
-    expiryItems.forEach(item => {
-      if (item.sourceProductId !== null) {
-        ids.add(item.sourceProductId);
-      }
-      if (item.childItems) {
-        item.childItems.forEach(child => {
-          if (child.sourceProductId !== null) {
-            ids.add(child.sourceProductId);
-          }
-        });
-      }
-    });
-    return ids;
-  }, [expiryItems]);
-
   const persistItems = useCallback((items: ExpiryItem[]) => {
     replaceDraftExpiryItems(items);
   }, []);
 
   useEffect(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const hasApplied = expiryItems.some(item => item.discountApplied);
+    if (!hasApplied) return;
 
-    const thresholdDate = new Date(today);
-    thresholdDate.setDate(thresholdDate.getDate() + expirySettings.thresholdDays);
+    setExpiryItems(prev => {
+      let changed = false;
+      const updated = prev.map(item => {
+        if (!item.discountApplied) return item;
 
-    const newItems: ExpiryItem[] = [];
-
-    products.forEach(product => {
-      if (!product.expiration) return;
-      if (copiedProductIdsRef.current.has(product.id)) return;
-
-      const expirationDate = new Date(product.expiration + 'T00:00:00');
-      if (expirationDate <= thresholdDate) {
-        const isMainProduct = product.parentProductId === null;
-
-        if (isMainProduct) {
-          const variants = products.filter(p => p.parentProductId === product.id);
-          const childItems = variants.map(v => createExpiryChild(v));
-
-          newItems.push({
-            ...product,
-            id: crypto.randomUUID(),
-            sourceProductId: product.id,
-            photos: product.photos.map(p => ({ ...p })),
-            names: { ...product.names },
-            descriptions: { ...product.descriptions },
-            order: 0,
-            isStackParent: variants.length > 0,
-            childItems: childItems.length > 0 ? childItems : undefined,
+        const recalced = applyDiscountToItem(item, expirySettings);
+        let recalcedChildren = recalced.childItems;
+        if (recalced.isStackParent && recalced.childItems) {
+          recalcedChildren = recalced.childItems.map(child => {
+            if (!child.discountApplied) return child;
+            const rc = applyDiscountToItem(child, expirySettings);
+            if (rc.newPrice !== child.newPrice) changed = true;
+            return rc;
           });
-
-          copiedProductIdsRef.current.add(product.id);
-          variants.forEach(v => copiedProductIdsRef.current.add(v.id));
-        } else {
-          const parent = products.find(p => p.id === product.parentProductId);
-          const parentAlreadyCopied = parent && copiedProductIdsRef.current.has(parent.id);
-          if (parentAlreadyCopied) return;
-
-          newItems.push({
-            ...product,
-            id: crypto.randomUUID(),
-            sourceProductId: product.id,
-            photos: product.photos.map(p => ({ ...p })),
-            names: { ...product.names },
-            descriptions: { ...product.descriptions },
-            order: 0,
-          });
-          copiedProductIdsRef.current.add(product.id);
         }
-      }
-    });
+        if (recalced.newPrice !== item.newPrice) changed = true;
+        return { ...recalced, childItems: recalcedChildren };
+      });
 
-    if (newItems.length > 0) {
-      setExpiryItems(prev => {
-        const nextOrder = prev.length > 0 ? Math.max(...prev.map(i => i.order)) + 1 : 1;
-        const updated = [
-          ...prev,
-          ...newItems.map((item, index) => ({
-            ...item,
-            order: nextOrder + index,
-          })),
-        ];
+      if (changed) {
         persistItems(updated);
         return updated;
-      });
-    }
-  }, [products, expirySettings.thresholdDays, persistItems]);
+      }
+      return prev;
+    });
+  }, [expirySettings, persistItems]);
 
   const handleAddExpiryItem = () => {
     const newItem: ExpiryItem = {
@@ -165,6 +136,7 @@ export function useExpiryItems(products: Product[], options?: UseExpiryItemsOpti
       parentProductId: null,
       internalOrder: 0,
       sourceProductId: null,
+      discountApplied: false,
     };
     setExpiryItems(prev => {
       const updated = [...prev, newItem];
@@ -175,7 +147,12 @@ export function useExpiryItems(products: Product[], options?: UseExpiryItemsOpti
 
   const handleUpdateExpiryItem = (itemId: string, updates: Partial<Product>) => {
     setExpiryItems(prev => {
-      const updated = prev.map(item => (item.id === itemId ? { ...item, ...updates } : item));
+      const updated = prev.map(item => {
+        if (item.id !== itemId) return item;
+        const merged = { ...item, ...updates };
+        if (!merged.discountApplied) return merged;
+        return applyDiscountToItem(merged, expirySettings);
+      });
       persistItems(updated);
       return updated;
     });
@@ -202,31 +179,34 @@ export function useExpiryItems(products: Product[], options?: UseExpiryItemsOpti
 
   const handleUpdateExpirySettings = (updates: Partial<ExpirySettings>) => {
     setExpirySettings(prev => {
-      const updated = { ...prev, ...updates };
-      saveDraftExpirySettings(updated);
-      return updated;
+      const merged = { ...prev, ...updates };
+      if (updates.threshold1Days !== undefined || updates.threshold2Days !== undefined) {
+        const t1 = merged.threshold1Days;
+        const t2 = merged.threshold2Days;
+        if (t1 > t2) {
+          merged.threshold1Days = t2;
+          merged.threshold1DiscountPercentage = prev.threshold2DiscountPercentage;
+          merged.threshold2Days = t1;
+          merged.threshold2DiscountPercentage = prev.threshold1DiscountPercentage;
+        }
+      }
+      saveDraftExpirySettings(merged);
+      return merged;
     });
   };
 
   const handleApplyDiscount = () => {
     setExpiryItems(prev => {
       const updated = prev.map(item => {
-        const applyDiscount = (target: ExpiryItem): ExpiryItem => {
-          const price = parseFloat(target.price);
-          if (isNaN(price) || price <= 0) return target;
-          const discounted = price * (1 - expirySettings.discountPercentage / 100);
-          return { ...target, newPrice: discounted.toFixed(2) };
-        };
-
-        const discountedItem = applyDiscount(item);
-
+        const discountedItem = applyDiscountToItem(item, expirySettings);
         if (discountedItem.isStackParent && discountedItem.childItems) {
           return {
             ...discountedItem,
-            childItems: discountedItem.childItems.map(child => applyDiscount(child)),
+            childItems: discountedItem.childItems.map(child =>
+              applyDiscountToItem(child, expirySettings)
+            ),
           };
         }
-
         return discountedItem;
       });
       persistItems(updated);
@@ -237,7 +217,6 @@ export function useExpiryItems(products: Product[], options?: UseExpiryItemsOpti
   return {
     expiryItems,
     expirySettings,
-    activeCopiedProductIds,
     handleAddExpiryItem,
     handleUpdateExpiryItem,
     handleDeleteExpiryItem,

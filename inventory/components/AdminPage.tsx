@@ -118,7 +118,6 @@ export function AdminPage({ onSignOut }: AdminPageProps) {
   const {
     expiryItems,
     expirySettings,
-    activeCopiedProductIds,
     handleAddExpiryItem,
     handleUpdateExpiryItem,
     handleDeleteExpiryItem,
@@ -729,7 +728,6 @@ export function AdminPage({ onSignOut }: AdminPageProps) {
             categories.find(c => c.id === selectedCategoryId)?.subCategories || []
           }
           isMainCategoryView={!selectedSubCategoryId}
-          copiedProductIds={activeCopiedProductIds}
           categoryImageUrl={categories.find(c => c.id === selectedCategoryId)?.imageUrl}
           categoryImageUploading={categoryImageUploading}
           onCategoryImageUpload={handleCategoryImageUpload}

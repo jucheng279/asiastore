@@ -10,6 +10,7 @@ interface ProductSettingsPopoverProps {
   onToggleTrending: () => void;
   onDelete: () => void;
   onClose: () => void;
+  hideFlashTrending?: boolean;
 }
 
 export function ProductSettingsPopover({
@@ -21,6 +22,7 @@ export function ProductSettingsPopover({
   onToggleTrending,
   onDelete,
   onClose,
+  hideFlashTrending,
 }: ProductSettingsPopoverProps) {
   const popoverRef = useRef<HTMLDivElement>(null);
 
@@ -63,42 +65,46 @@ export function ProductSettingsPopover({
           />
         </button>
       </div>
-      <div className="flex items-center justify-between px-4 py-2.5">
-        <div className="flex items-center gap-3 text-sm text-slate-700">
-          <Zap size={16} className={isFlash ? 'text-orange-500' : 'text-slate-400'} />
-          <span>Flash</span>
-        </div>
-        <button
-          onClick={onToggleFlash}
-          className={`relative w-10 h-5 rounded-full transition-colors ${
-            isFlash ? 'bg-orange-500' : 'bg-slate-200'
-          }`}
-        >
-          <span
-            className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${
-              isFlash ? 'translate-x-5' : 'translate-x-0'
-            }`}
-          />
-        </button>
-      </div>
-      <div className="flex items-center justify-between px-4 py-2.5">
-        <div className="flex items-center gap-3 text-sm text-slate-700">
-          <Award size={16} className={isTrending ? 'text-amber-500' : 'text-slate-400'} />
-          <span>Best</span>
-        </div>
-        <button
-          onClick={onToggleTrending}
-          className={`relative w-10 h-5 rounded-full transition-colors ${
-            isTrending ? 'bg-amber-500' : 'bg-slate-200'
-          }`}
-        >
-          <span
-            className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${
-              isTrending ? 'translate-x-5' : 'translate-x-0'
-            }`}
-          />
-        </button>
-      </div>
+      {!hideFlashTrending && (
+        <>
+          <div className="flex items-center justify-between px-4 py-2.5">
+            <div className="flex items-center gap-3 text-sm text-slate-700">
+              <Zap size={16} className={isFlash ? 'text-orange-500' : 'text-slate-400'} />
+              <span>Flash</span>
+            </div>
+            <button
+              onClick={onToggleFlash}
+              className={`relative w-10 h-5 rounded-full transition-colors ${
+                isFlash ? 'bg-orange-500' : 'bg-slate-200'
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${
+                  isFlash ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+          <div className="flex items-center justify-between px-4 py-2.5">
+            <div className="flex items-center gap-3 text-sm text-slate-700">
+              <Award size={16} className={isTrending ? 'text-amber-500' : 'text-slate-400'} />
+              <span>Best</span>
+            </div>
+            <button
+              onClick={onToggleTrending}
+              className={`relative w-10 h-5 rounded-full transition-colors ${
+                isTrending ? 'bg-amber-500' : 'bg-slate-200'
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${
+                  isTrending ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+        </>
+      )}
       <div className="h-px bg-slate-100 my-1 mx-3" />
       <button
         onClick={onDelete}

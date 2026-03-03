@@ -38,7 +38,6 @@ export function ProductTableHeader({
       <div className="w-14 px-2 py-1.5 border-r border-slate-200 flex items-center justify-center">Stock</div>
       <div className="w-[4.5rem] px-2 py-1.5 border-r border-slate-200 flex items-center justify-center">Preserve</div>
       <div className="w-[4.5rem] px-2 py-1.5 border-r border-slate-200 flex items-center justify-center">Available</div>
-      <div className="w-36 px-2 py-1.5 border-r border-slate-200">Expiration</div>
       <div className="w-16 px-2 py-1.5 border-r border-slate-200 flex items-center justify-center">Info</div>
       <div className="w-14 px-2 py-1.5 border-r border-slate-200 flex items-center justify-center">Order</div>
       <div className="w-14 px-2 py-1.5"></div>

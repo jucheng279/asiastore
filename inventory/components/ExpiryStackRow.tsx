@@ -38,6 +38,7 @@ export function ExpiryStackRow({
         isExpanded={isExpanded}
         onToggleExpand={() => setIsExpanded(!isExpanded)}
         subProductCount={childCount}
+        isExpiryItem
       />
 
       {isExpanded && item.childItems && item.childItems.length > 0 && (
@@ -48,6 +49,7 @@ export function ExpiryStackRow({
               product={child}
               currentLanguage={currentLanguage}
               isReadOnly={false}
+              isExpiryItem
               onUpdate={(childId, updates) => {
                 onUpdateItem(childId, updates);
               }}

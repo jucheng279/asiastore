@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MoveHorizontal as MoreHorizontal, EyeOff, Zap, Award, Clock, FileText, ChevronRight, ChevronDown } from 'lucide-react';
+import { MoveHorizontal as MoreHorizontal, EyeOff, Zap, Award, FileText, ChevronRight, ChevronDown } from 'lucide-react';
 import { Product, Language } from '../types';
 import { InfoModal } from './InfoModal';
 import { ProductSettingsPopover } from './ProductSettingsPopover';
@@ -13,11 +13,11 @@ interface ProductRowProps {
   onDelete: (productId: string) => void;
   isSettingsOpen: boolean;
   onSettingsToggle: (productId: string | null) => void;
-  isCopiedToExpiry?: boolean;
   isReadOnly?: boolean;
   isExpanded?: boolean;
   onToggleExpand?: (productId: string) => void;
   subProductCount?: number;
+  isExpiryItem?: boolean;
 }
 
 export function ProductRow({
@@ -28,11 +28,11 @@ export function ProductRow({
   onDelete,
   isSettingsOpen,
   onSettingsToggle,
-  isCopiedToExpiry,
   isReadOnly,
   isExpanded,
   onToggleExpand,
   subProductCount = 0,
+  isExpiryItem,
 }: ProductRowProps) {
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -54,10 +54,6 @@ export function ProductRow({
   const handleStockChange = (value: string) => {
     const intValue = value === '' ? '' : String(parseInt(value, 10) || 0);
     onUpdate(product.id, { stock: intValue });
-  };
-
-  const handleExpirationChange = (value: string) => {
-    onUpdate(product.id, { expiration: value });
   };
 
   const handleOrderKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -142,11 +138,6 @@ export function ProductRow({
               {product.trending && (
                 <Award size={14} className="text-amber-500 flex-shrink-0" />
               )}
-              {isCopiedToExpiry && (
-                <span className="flex-shrink-0 flex items-center" title="Copied to Expiry Items">
-                  <Clock size={14} className="text-amber-500" />
-                </span>
-              )}
               <input
                 type="text"
                 value={product.names[currentLanguage]}
@@ -183,9 +174,9 @@ export function ProductRow({
               value={product.newPrice}
               onChange={e => onUpdate(product.id, { newPrice: e.target.value })}
               onWheel={e => e.currentTarget.blur()}
-              readOnly={isReadOnly}
+              readOnly={isReadOnly || isExpiryItem}
               className={`w-full px-2.5 py-1.5 bg-transparent border border-transparent rounded-md text-sm text-slate-700 placeholder:text-slate-400 transition-all ${
-                isReadOnly ? 'cursor-default' : 'hover:border-slate-200 focus:border-primary-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/10'
+                (isReadOnly || isExpiryItem) ? 'cursor-default' : 'hover:border-slate-200 focus:border-primary-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/10'
               }`}
               placeholder="0.00"
             />
@@ -213,17 +204,16 @@ export function ProductRow({
               return <span className={`text-sm ${color}`}>{avail}</span>;
             })()}
           </div>
-          <div className="w-36 px-1.5 py-1 border-r border-slate-100">
-            <input
-              type="date"
-              value={product.expiration}
-              onChange={e => handleExpirationChange(e.target.value)}
-              readOnly={isReadOnly}
-              className={`w-full px-2 py-1.5 bg-transparent border border-transparent rounded-md text-sm text-slate-700 placeholder:text-slate-400 transition-all ${
-                isReadOnly ? 'cursor-default' : 'hover:border-slate-200 focus:border-primary-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/10'
-              }`}
-            />
-          </div>
+          {isExpiryItem && (
+            <div className="w-36 px-1.5 py-1 border-r border-slate-100">
+              <input
+                type="date"
+                value={product.expiration}
+                onChange={e => onUpdate(product.id, { expiration: e.target.value })}
+                className="w-full px-2 py-1.5 bg-transparent border border-transparent rounded-md text-sm text-slate-700 placeholder:text-slate-400 transition-all hover:border-slate-200 focus:border-primary-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/10"
+              />
+            </div>
+          )}
           <div className="w-16 px-1.5 py-1 border-r border-slate-100 flex items-center justify-center">
             <button
               onClick={() => setIsInfoModalOpen(true)}
@@ -274,6 +264,7 @@ export function ProductRow({
               onToggleTrending={handleToggleTrending}
               onDelete={handleDeleteClick}
               onClose={() => onSettingsToggle(null)}
+              hideFlashTrending={isExpiryItem}
             />
           )}
         </div>

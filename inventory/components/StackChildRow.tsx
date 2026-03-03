@@ -7,6 +7,7 @@ interface StackChildRowProps {
   product: Product;
   currentLanguage: Language;
   isReadOnly?: boolean;
+  isExpiryItem?: boolean;
   onUpdate?: (productId: string, updates: Partial<Product>) => void;
 }
 
@@ -14,6 +15,7 @@ export function StackChildRow({
   product,
   currentLanguage,
   isReadOnly = true,
+  isExpiryItem,
   onUpdate,
 }: StackChildRowProps) {
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
@@ -80,8 +82,10 @@ export function StackChildRow({
               value={product.newPrice}
               onChange={e => handleUpdate({ newPrice: e.target.value })}
               onWheel={e => e.currentTarget.blur()}
-              readOnly={isReadOnly}
-              className={inputClass}
+              readOnly={isReadOnly || isExpiryItem}
+              className={isReadOnly || isExpiryItem
+                ? 'w-full px-2.5 py-1.5 bg-transparent border border-transparent rounded-md text-sm text-slate-700 cursor-default'
+                : inputClass}
               placeholder="0.00"
             />
           </div>
@@ -104,14 +108,17 @@ export function StackChildRow({
               return <span className={`text-sm ${color}`}>{avail}</span>;
             })()}
           </div>
-          <div className="w-36 px-1.5 py-1 border-r border-slate-100">
-            <input
-              type="date"
-              value={product.expiration}
-              readOnly={isReadOnly}
-              className={`w-full px-2 py-1.5 bg-transparent border border-transparent rounded-md text-sm text-slate-700 ${isReadOnly ? 'cursor-default' : ''}`}
-            />
-          </div>
+          {isExpiryItem && (
+            <div className="w-36 px-1.5 py-1 border-r border-slate-100">
+              <input
+                type="date"
+                value={product.expiration}
+                onChange={e => handleUpdate({ expiration: e.target.value })}
+                readOnly={isReadOnly}
+                className={`w-full px-2 py-1.5 bg-transparent border border-transparent rounded-md text-sm text-slate-700 ${isReadOnly ? 'cursor-default' : 'placeholder:text-slate-400 transition-all hover:border-slate-200 focus:border-primary-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/10'}`}
+              />
+            </div>
+          )}
           <div className="w-16 px-1.5 py-1 border-r border-slate-100 flex items-center justify-center">
             <button
               onClick={() => setIsInfoModalOpen(true)}

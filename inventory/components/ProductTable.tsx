@@ -25,7 +25,6 @@ interface ProductTableProps {
   categoryName: string;
   subCategories?: SubCategory[];
   isMainCategoryView?: boolean;
-  copiedProductIds?: Set<string>;
   categoryImageUrl?: string;
   categoryImageUploading?: boolean;
   onCategoryImageUpload?: (file: File) => void;
@@ -48,7 +47,6 @@ export function ProductTable({
   categoryName,
   subCategories = [],
   isMainCategoryView = false,
-  copiedProductIds,
   categoryImageUrl,
   categoryImageUploading = false,
   onCategoryImageUpload,
@@ -261,7 +259,6 @@ export function ProductTable({
                         onOrderChange={onOrderChange}
                         isSettingsOpen={openSettingsId === product.id}
                         onSettingsToggle={handleSettingsToggle}
-                        isCopiedToExpiry={copiedProductIds?.has(product.id)}
                         isExpanded={isExpanded}
                         onToggleExpand={toggleExpand}
                         subProductCount={subProducts.length}
@@ -277,7 +274,6 @@ export function ProductTable({
                           onAddSubProduct={onAddSubProduct}
                           openSettingsId={openSettingsId}
                           onSettingsToggle={handleSettingsToggle}
-                          copiedProductIds={copiedProductIds}
                         />
                       )}
                     </div>

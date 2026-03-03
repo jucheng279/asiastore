@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MoveHorizontal as MoreHorizontal, EyeOff, Zap, Award, Clock, FileText } from 'lucide-react';
+import { MoveHorizontal as MoreHorizontal, EyeOff, Zap, Award, FileText } from 'lucide-react';
 import { Product, Language } from '../types';
 import { InfoModal } from './InfoModal';
 import { ProductSettingsPopover } from './ProductSettingsPopover';
@@ -13,7 +13,6 @@ interface SubProductRowProps {
   onDelete: (productId: string) => void;
   isSettingsOpen: boolean;
   onSettingsToggle: (productId: string | null) => void;
-  isCopiedToExpiry?: boolean;
 }
 
 export function SubProductRow({
@@ -24,7 +23,6 @@ export function SubProductRow({
   onDelete,
   isSettingsOpen,
   onSettingsToggle,
-  isCopiedToExpiry,
 }: SubProductRowProps) {
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -46,10 +44,6 @@ export function SubProductRow({
   const handleStockChange = (value: string) => {
     const intValue = value === '' ? '' : String(parseInt(value, 10) || 0);
     onUpdate(product.id, { stock: intValue });
-  };
-
-  const handleExpirationChange = (value: string) => {
-    onUpdate(product.id, { expiration: value });
   };
 
   const handleOrderKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -126,11 +120,6 @@ export function SubProductRow({
               {product.trending && (
                 <Award size={14} className="text-amber-500 flex-shrink-0" />
               )}
-              {isCopiedToExpiry && (
-                <span className="flex-shrink-0 flex items-center" title="Copied to Expiry Items">
-                  <Clock size={14} className="text-amber-500" />
-                </span>
-              )}
               <input
                 type="text"
                 value={product.names[currentLanguage]}
@@ -179,14 +168,6 @@ export function SubProductRow({
               const color = avail <= 0 ? 'text-red-600 font-bold' : avail <= 10 ? 'text-amber-600 font-semibold' : 'text-slate-700 font-medium';
               return <span className={`text-sm ${color}`}>{avail}</span>;
             })()}
-          </div>
-          <div className="w-36 px-1.5 py-1 border-r border-slate-100">
-            <input
-              type="date"
-              value={product.expiration}
-              onChange={e => handleExpirationChange(e.target.value)}
-              className={`w-full px-2 py-1.5 bg-transparent border border-transparent rounded-md text-sm text-slate-700 placeholder:text-slate-400 transition-all hover:border-slate-200 focus:border-primary-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/10`}
-            />
           </div>
           <div className="w-16 px-1.5 py-1 border-r border-slate-100 flex items-center justify-center">
             <button

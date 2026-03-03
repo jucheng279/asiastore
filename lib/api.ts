@@ -228,14 +228,10 @@ export async function fetchAllData(lang: Language): Promise<FetchedData> {
   );
 
   const allDbProducts: DbProduct[] = prodRes.data || [];
-  const today = new Date().toISOString().split('T')[0];
   const parentProducts = allDbProducts.filter((p) => !p.parent_product_id && p.visible);
   const childProducts = allDbProducts.filter((p) => p.parent_product_id);
 
-  const catalogParents = parentProducts.filter((p) => {
-    if (p.expiration && p.expiration < today) return false;
-    return true;
-  });
+  const catalogParents = parentProducts;
 
   const activeFlashMap = new Map<string, DbFlashItem>();
   const standaloneFlashItems: DbFlashItem[] = [];
