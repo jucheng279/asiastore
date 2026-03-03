@@ -18,6 +18,7 @@ import LoginView from './components/LoginView';
 import RegisterView from './components/RegisterView';
 import ForgotPasswordView from './components/ForgotPasswordView';
 import ResetPasswordView from './components/ResetPasswordView';
+import ContactUsView from './components/ContactUsView';
 import DesktopSidebar from './components/DesktopSidebar';
 import { ProductDataProvider, useProductData } from './lib/ProductDataContext';
 import { AuthProvider, useAuth } from './lib/AuthContext';
@@ -395,6 +396,8 @@ function AppContent() {
         return <BestSellersView currentView={currentView} onNavigate={guardedNavigate} cartCount={cartCount} favorites={favorites} onToggleFavorite={handleToggleFavorite} cartQuantities={cartQuantities} onIncreaseQuantity={increaseQuantity} onDecreaseQuantity={decreaseQuantity} onNavigateToProduct={navigateToProduct} />;
       case 'POINTS':
         return <PointsView currentView={currentView} onNavigate={guardedNavigate} cartCount={cartCount} />;
+      case 'CONTACT_US':
+        return <ContactUsView currentView={currentView} onNavigate={guardedNavigate} cartCount={cartCount} />;
       default:
         return <HomeView currentView={currentView} onNavigate={guardedNavigate} cartCount={cartCount} />;
     }

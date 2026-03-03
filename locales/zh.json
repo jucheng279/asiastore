@@ -328,6 +328,12 @@
     "updating": "更新中...",
     "updatePassword": "更新密码"
   },
+  "contact": {
+    "title": "联系我们",
+    "phone": "电话号码",
+    "email": "电子邮箱",
+    "visitingAddress": "到访地址"
+  },
   "toast": {
     "addedToCart": "{{name}} 已加入购物车",
     "addedToCartQty": "{{qty}}x {{name}} 已加入购物车",

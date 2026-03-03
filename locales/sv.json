@@ -328,6 +328,12 @@
     "updating": "Uppdaterar...",
     "updatePassword": "Uppdatera losenord"
   },
+  "contact": {
+    "title": "Kontakta oss",
+    "phone": "Telefonnummer",
+    "email": "E-postadress",
+    "visitingAddress": "Besoksadress"
+  },
   "toast": {
     "addedToCart": "{{name}} lagd i varukorgen",
     "addedToCartQty": "{{qty}}x {{name}} lagda i varukorgen",

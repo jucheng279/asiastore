@@ -12,12 +12,6 @@ const MENU_ITEMS = [
   { icon: 'notifications', labelKey: 'account.notifications', view: 'NOTIFICATIONS' as const },
 ];
 
-const SUPPORT_ITEMS = [
-  { icon: 'help', labelKey: 'account.helpCenter' },
-  { icon: 'chat', labelKey: 'account.contactUs' },
-  { icon: 'policy', labelKey: 'account.privacyPolicy' },
-  { icon: 'description', labelKey: 'account.termsOfService' },
-];
 
 interface AccountViewProps extends NavigationProps {
   onSignOut?: () => Promise<void>;
@@ -189,20 +183,18 @@ const AccountView: React.FC<AccountViewProps> = ({ currentView, onNavigate, cart
           <h3 className="text-text-main dark:text-white text-base font-bold">{t('account.support')}</h3>
         </div>
         <div className="flex flex-col">
-          {SUPPORT_ITEMS.map((item, index) => (
-            <button
-              key={index}
-              className="flex items-center gap-4 px-4 py-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors border-b border-gray-100 dark:border-white/5 last:border-b-0"
-            >
-              <div className="w-10 h-10 bg-gray-100 dark:bg-white/10 rounded-full flex items-center justify-center">
-                <span className="material-symbols-outlined text-text-sub text-[22px]">{item.icon}</span>
-              </div>
-              <div className="flex-1 text-left">
-                <p className="text-text-main dark:text-white font-semibold">{t(item.labelKey)}</p>
-              </div>
-              <span className="material-symbols-outlined text-gray-400">chevron_right</span>
-            </button>
-          ))}
+          <button
+            className="flex items-center gap-4 px-4 py-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+            onClick={() => onNavigate('CONTACT_US')}
+          >
+            <div className="w-10 h-10 bg-gray-100 dark:bg-white/10 rounded-full flex items-center justify-center">
+              <span className="material-symbols-outlined text-text-sub text-[22px]">chat</span>
+            </div>
+            <div className="flex-1 text-left">
+              <p className="text-text-main dark:text-white font-semibold">{t('account.contactUs')}</p>
+            </div>
+            <span className="material-symbols-outlined text-gray-400">chevron_right</span>
+          </button>
         </div>
       </div>
 

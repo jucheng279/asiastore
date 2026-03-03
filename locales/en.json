@@ -328,6 +328,12 @@
     "updating": "Updating...",
     "updatePassword": "Update Password"
   },
+  "contact": {
+    "title": "Contact Us",
+    "phone": "Phone Number",
+    "email": "Email",
+    "visitingAddress": "Visiting Address"
+  },
   "toast": {
     "addedToCart": "{{name}} added to cart",
     "addedToCartQty": "{{qty}}x {{name}} added to cart",
