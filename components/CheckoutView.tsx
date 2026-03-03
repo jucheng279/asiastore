@@ -46,7 +46,8 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({
   const [saveToBook, setSaveToBook] = useState(false);
 
   const [deliveryInstructions, setDeliveryInstructions] = useState('');
-  const [payWithPoints, setPayWithPoints] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'cashOrSwish' | 'points' | 'payAtStore'>('cashOrSwish');
+  const payWithPoints = paymentMethod === 'points';
 
   const [attempted, setAttempted] = useState(false);
 
@@ -186,18 +187,18 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({
           </h3>
           <div className="space-y-2">
             <button
-              onClick={() => setPayWithPoints(false)}
+              onClick={() => setPaymentMethod('cashOrSwish')}
               className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
-                !payWithPoints
+                paymentMethod === 'cashOrSwish'
                   ? 'border-primary bg-primary/5 dark:bg-primary/10'
                   : 'border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 hover:border-gray-300'
               }`}
             >
               <div className="flex items-center gap-3">
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-                  !payWithPoints ? 'border-primary bg-primary' : 'border-gray-300 dark:border-white/30'
+                  paymentMethod === 'cashOrSwish' ? 'border-primary bg-primary' : 'border-gray-300 dark:border-white/30'
                 }`}>
-                  {!payWithPoints && (
+                  {paymentMethod === 'cashOrSwish' && (
                     <span className="material-symbols-outlined text-white text-[14px]">check</span>
                   )}
                 </div>
@@ -209,18 +210,18 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({
             </button>
 
             <button
-              onClick={() => setPayWithPoints(true)}
+              onClick={() => setPaymentMethod('points')}
               className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
-                payWithPoints
+                paymentMethod === 'points'
                   ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/10'
                   : 'border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 hover:border-gray-300'
               }`}
             >
               <div className="flex items-center gap-3">
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-                  payWithPoints ? 'border-amber-500 bg-amber-500' : 'border-gray-300 dark:border-white/30'
+                  paymentMethod === 'points' ? 'border-amber-500 bg-amber-500' : 'border-gray-300 dark:border-white/30'
                 }`}>
-                  {payWithPoints && (
+                  {paymentMethod === 'points' && (
                     <span className="material-symbols-outlined text-white text-[14px]">check</span>
                   )}
                 </div>
@@ -238,21 +239,31 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({
               </div>
             </button>
 
-            <div className="w-full p-4 rounded-xl border-2 border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/[0.02] opacity-50 cursor-not-allowed">
+            <button
+              onClick={() => setPaymentMethod('payAtStore')}
+              className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                paymentMethod === 'payAtStore'
+                  ? 'border-primary bg-primary/5 dark:bg-primary/10'
+                  : 'border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 hover:border-gray-300'
+              }`}
+            >
               <div className="flex items-center gap-3">
-                <div className="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-white/20 shrink-0"></div>
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                  paymentMethod === 'payAtStore' ? 'border-primary bg-primary' : 'border-gray-300 dark:border-white/30'
+                }`}>
+                  {paymentMethod === 'payAtStore' && (
+                    <span className="material-symbols-outlined text-white text-[14px]">check</span>
+                  )}
+                </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-gray-400 dark:text-gray-500 text-[20px]">store</span>
                     <p className="text-sm font-semibold text-text-main dark:text-white">{t('checkout.payAtStore')}</p>
-                    <span className="px-2 py-0.5 bg-gray-200 dark:bg-white/10 text-gray-500 dark:text-gray-400 text-[10px] font-bold rounded-full">
-                      {t('checkout.inStorePickupOnly')}
-                    </span>
                   </div>
                   <p className="text-xs text-text-sub mt-0.5">{t('checkout.payAtStoreDesc')}</p>
                 </div>
               </div>
-            </div>
+            </button>
 
             {insufficientPoints && (
               <div className="flex items-start gap-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 rounded-xl p-3">
