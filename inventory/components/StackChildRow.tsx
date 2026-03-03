@@ -42,7 +42,7 @@ export function StackChildRow({
         </div>
         <div className="w-1 h-8 border-l-2 border-teal-300 flex-shrink-0" />
         <div className={`flex items-center flex-1 transition-opacity ${!product.visible ? 'opacity-50' : ''}`}>
-          <div className="min-w-[12.7rem] flex-1 px-1.5 py-1 border-r border-slate-100">
+          <div className="w-[12.7rem] px-1.5 py-1 border-r border-slate-100">
             <div className="flex items-center gap-1">
               {!product.visible && (
                 <EyeOff size={14} className="text-slate-500 flex-shrink-0" />
@@ -94,10 +94,10 @@ export function StackChildRow({
               placeholder="0"
             />
           </div>
-          <div className="w-[5.5rem] px-4 py-1 border-r border-slate-100 flex items-center justify-center">
+          <div className="w-[4.5rem] px-1.5 py-1 border-r border-slate-100 flex items-center justify-center">
             <span className="text-sm text-slate-500">{product.preserve}</span>
           </div>
-          <div className="w-[5.5rem] px-4 py-1 border-r border-slate-100 flex items-center justify-center">
+          <div className="w-[4.5rem] px-1.5 py-1 border-r border-slate-100 flex items-center justify-center">
             {(() => {
               const avail = (parseInt(product.stock, 10) || 0) - product.preserve;
               const color = avail <= 0 ? 'text-red-600 font-bold' : avail <= 10 ? 'text-amber-600 font-semibold' : 'text-slate-700 font-medium';
