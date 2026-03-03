@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MoreHorizontal, EyeOff, Zap, Award, Clock, FileText } from 'lucide-react';
+import { MoveHorizontal as MoreHorizontal, EyeOff, Zap, Award, Clock, FileText } from 'lucide-react';
 import { Product, Language } from '../types';
 import { InfoModal } from './InfoModal';
 import { ProductSettingsPopover } from './ProductSettingsPopover';
