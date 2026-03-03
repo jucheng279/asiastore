@@ -8,6 +8,7 @@ import { FlashSalesPanel } from './FlashSalesPanel';
 import { UsersPanel } from './UsersPanel';
 import { DiagnosticsPanel } from './DiagnosticsPanel';
 import { StoreSettingsPanel } from './StoreSettingsPanel';
+import { StoreSettingsPanel } from './StoreSettingsPanel';
 import { reorderProducts, getNextOrder } from '../hooks/useProductOrder';
 import { useExpiryItems } from '../hooks/useExpiryItems';
 import { useFlashSaleItems } from '../hooks/useFlashSaleItems';
@@ -74,6 +75,17 @@ export function AdminPage({ onSignOut }: AdminPageProps) {
   const [draftSaveStatus, setDraftSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [initialData, setInitialData] = useState<LoadedData | null>(null);
   const [highlightedProductId, setHighlightedProductId] = useState<string | null>(null);
+  const [storeSettings, setStoreSettings] = useState<AdminStoreSettings>({
+    orderingMode: 'auto',
+    orderingEnabled: true,
+    autoOpenDay: 1,
+    autoOpenTime: '00:00',
+    autoCloseDay: 5,
+    autoCloseTime: '12:00',
+    closedMessageEn: '',
+    closedMessageSv: '',
+    closedMessageZh: '',
+  });
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -154,6 +166,7 @@ export function AdminPage({ onSignOut }: AdminPageProps) {
       setCategories(data.categories);
       setProducts(normalized);
       setInitialData({ ...data, products: normalized });
+      setStoreSettings(data.storeSettings);
       setIsLoading(false);
       if (changed.length > 0) {
         saveDraftProducts(changed);
@@ -429,6 +442,21 @@ export function AdminPage({ onSignOut }: AdminPageProps) {
     setSelectedSubCategoryId(null);
   };
 
+  const handleSelectStoreSettingsView = () => {
+    setActiveView('storeSettings');
+    setSelectedCategoryId(null);
+    setSelectedSubCategoryId(null);
+  };
+
+  const handleUpdateStoreSettings = useCallback((updates: Partial<AdminStoreSettings>) => {
+    setStoreSettings(prev => {
+      const next = { ...prev, ...updates };
+      saveDraftStoreSettings(next);
+      showSaveStatus();
+      return next;
+    });
+  }, [showSaveStatus]);
+
   const handleSearchNavigate = useCallback((result: SearchResult) => {
     if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
 
@@ -692,6 +720,15 @@ export function AdminPage({ onSignOut }: AdminPageProps) {
       return <DiagnosticsPanel />;
     }
 
+    if (activeView === 'storeSettings') {
+      return (
+        <StoreSettingsPanel
+          settings={storeSettings}
+          onUpdate={handleUpdateStoreSettings}
+        />
+      );
+    }
+
     if (activeView === 'flashSales') {
       return (
         <FlashSalesPanel
@@ -789,6 +826,7 @@ export function AdminPage({ onSignOut }: AdminPageProps) {
         onSelectFlashSalesView={handleSelectFlashSalesView}
         onSelectUsersView={handleSelectUsersView}
         onSelectDiagnosticsView={handleSelectDiagnosticsView}
+        onSelectStoreSettingsView={handleSelectStoreSettingsView}
         userCount={userCount}
         onAddCategory={handleAddCategory}
         onAddSubCategory={handleAddSubCategory}

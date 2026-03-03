@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { ChevronDown, ChevronRight, Plus, Pencil, Trash2, X, FolderTree, Store, Clock, Zap, ArrowUpFromLine, Users, Activity, Search, LogOut } from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus, Pencil, Trash2, X, FolderTree, Store, Clock, Zap, ArrowUpFromLine, Users, Activity, Search, LogOut, Settings } from 'lucide-react';
 import { Category, SubCategory, Product, ProductNames, ActiveView, ExpiryItem, FlashSaleItem } from '../types';
 import { CategoryNameModal } from './CategoryNameModal';
 
@@ -30,6 +30,7 @@ interface CategorySidebarProps {
   onSelectFlashSalesView: () => void;
   onSelectUsersView: () => void;
   onSelectDiagnosticsView: () => void;
+  onSelectStoreSettingsView: () => void;
   userCount: number;
   onAddCategory: (name: string) => void;
   onAddSubCategory: (categoryId: string, name: string) => void;
@@ -63,6 +64,7 @@ export function CategorySidebar({
   onSelectFlashSalesView,
   onSelectUsersView,
   onSelectDiagnosticsView,
+  onSelectStoreSettingsView,
   userCount,
   onAddCategory,
   onAddSubCategory,
@@ -505,6 +507,23 @@ export function CategorySidebar({
             activeView === 'diagnostics' ? 'text-primary-700' : 'text-slate-700'
           }`}>
             Diagnostics
+          </span>
+        </div>
+
+        <div
+          onClick={onSelectStoreSettingsView}
+          className={`flex items-center gap-1.5 p-2.5 rounded-lg cursor-pointer transition-all duration-150 mt-1 ${
+            activeView === 'storeSettings'
+              ? 'bg-primary-50 border border-primary-200'
+              : 'hover:bg-slate-50 border border-transparent'
+          }`}
+        >
+          <span className="w-4 flex-shrink-0" />
+          <Settings size={16} className={`flex-shrink-0 ${activeView === 'storeSettings' ? 'text-primary-600' : 'text-slate-500'}`} />
+          <span className={`flex-1 text-sm font-medium ${
+            activeView === 'storeSettings' ? 'text-primary-700' : 'text-slate-700'
+          }`}>
+            Store Settings
           </span>
         </div>
       </div>
