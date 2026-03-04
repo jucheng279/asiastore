@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { X, Pencil, Check, Upload, Trash2, ChevronLeft, ImageIcon } from 'lucide-react';
+import { X, Pencil, Check, Upload, Trash2, ChevronLeft, Image as ImageIcon } from 'lucide-react';
 import { Product, Language, PhotoFile } from '../types';
 
 interface InfoModalProps {
