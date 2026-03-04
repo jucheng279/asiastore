@@ -8,7 +8,6 @@ import { FlashSalesPanel } from './FlashSalesPanel';
 import { UsersPanel } from './UsersPanel';
 import { DiagnosticsPanel } from './DiagnosticsPanel';
 import { StoreSettingsPanel } from './StoreSettingsPanel';
-import { StoreSettingsPanel } from './StoreSettingsPanel';
 import { reorderProducts, getNextOrder } from '../hooks/useProductOrder';
 import { useExpiryItems } from '../hooks/useExpiryItems';
 import { useFlashSaleItems } from '../hooks/useFlashSaleItems';

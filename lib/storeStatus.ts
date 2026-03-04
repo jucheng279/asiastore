@@ -90,7 +90,11 @@ export function isStoreOpen(settings: StoreSettings): boolean {
   const openDayMinutes = (settings.autoOpenDay - 1) * 1440 + timeToMinutes(openTime.hours, openTime.minutes);
   const closeDayMinutes = (settings.autoCloseDay - 1) * 1440 + timeToMinutes(closeTime.hours, closeTime.minutes);
 
-  return nowDayMinutes >= openDayMinutes && nowDayMinutes < closeDayMinutes;
+  if (closeDayMinutes > openDayMinutes) {
+    return nowDayMinutes >= openDayMinutes && nowDayMinutes < closeDayMinutes;
+  }
+
+  return nowDayMinutes >= openDayMinutes || nowDayMinutes < closeDayMinutes;
 }
 
 const DAY_NAMES_EN = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
