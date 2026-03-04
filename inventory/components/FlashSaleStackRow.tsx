@@ -148,6 +148,28 @@ export function FlashSaleStackRow({
     onUpdateChildItem(item.id, childId, updates);
   };
 
+  const hasVariants = childCount > 0;
+  const variantAggregates = hasVariants && item.childItems ? (() => {
+    let lowestEffective = Infinity;
+    let lowestPrice = '';
+    let lowestSalePrice = '';
+    let totalStock = 0;
+    let totalPreserve = 0;
+    item.childItems.forEach(v => {
+      const price = parseFloat(v.price) || 0;
+      const sale = parseFloat(v.newPrice) || 0;
+      const effective = (sale > 0 && sale < price) ? sale : price;
+      if (effective < lowestEffective) {
+        lowestEffective = effective;
+        lowestPrice = v.price;
+        lowestSalePrice = v.newPrice;
+      }
+      totalStock += parseInt(v.stock, 10) || 0;
+      totalPreserve += v.preserve;
+    });
+    return { price: lowestPrice, salePrice: lowestSalePrice, stock: totalStock, preserve: totalPreserve, available: totalStock - totalPreserve };
+  })() : undefined;
+
   return (
     <div>
       <ProductRow
@@ -162,6 +184,8 @@ export function FlashSaleStackRow({
         isExpanded={isExpanded}
         onToggleExpand={() => setIsExpanded(!isExpanded)}
         subProductCount={childCount}
+        hasVariants={hasVariants}
+        variantAggregates={variantAggregates}
       />
 
       <div className="flex items-center gap-4 px-4 py-2 bg-slate-50/80 border-b border-slate-100 text-xs">

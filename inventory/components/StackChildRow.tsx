@@ -20,9 +20,7 @@ export function StackChildRow({
 }: StackChildRowProps) {
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
 
-  const hasInfo =
-    product.photos.length > 0 ||
-    Object.values(product.descriptions).some(d => d.trim() !== '');
+  const hasInfo = product.photos.length > 0;
 
   const inputClass = isReadOnly
     ? 'w-full px-2.5 py-1.5 bg-transparent border border-transparent rounded-md text-sm text-slate-700 cursor-default'
@@ -150,6 +148,7 @@ export function StackChildRow({
           product={product}
           onClose={() => setIsInfoModalOpen(false)}
           onUpdate={onUpdate || (() => {})}
+          hideDescription
         />
       )}
     </>

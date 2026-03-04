@@ -5,6 +5,14 @@ import { InfoModal } from './InfoModal';
 import { ProductSettingsPopover } from './ProductSettingsPopover';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 
+interface VariantAggregates {
+  price: string;
+  salePrice: string;
+  stock: number;
+  preserve: number;
+  available: number;
+}
+
 interface ProductRowProps {
   product: Product;
   currentLanguage: Language;
@@ -18,6 +26,8 @@ interface ProductRowProps {
   onToggleExpand?: (productId: string) => void;
   subProductCount?: number;
   isExpiryItem?: boolean;
+  hasVariants?: boolean;
+  variantAggregates?: VariantAggregates;
 }
 
 export function ProductRow({
@@ -33,6 +43,8 @@ export function ProductRow({
   onToggleExpand,
   subProductCount = 0,
   isExpiryItem,
+  hasVariants = false,
+  variantAggregates,
 }: ProductRowProps) {
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -155,62 +167,91 @@ export function ProductRow({
               )}
             </div>
           </div>
-          <div className="w-20 px-1.5 py-1 border-r border-slate-100">
-            <input
-              type="number"
-              value={product.price}
-              onChange={e => onUpdate(product.id, { price: e.target.value })}
-              onWheel={e => e.currentTarget.blur()}
-              readOnly={isReadOnly}
-              className={`w-full px-2.5 py-1.5 bg-transparent border border-transparent rounded-md text-sm text-slate-700 placeholder:text-slate-400 transition-all ${
-                isReadOnly ? 'cursor-default' : 'hover:border-slate-200 focus:border-primary-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/10'
-              }`}
-              placeholder="0.00"
-            />
-          </div>
-          <div className="w-20 px-1.5 py-1 border-r border-slate-100">
-            <input
-              type="number"
-              value={product.newPrice}
-              onChange={e => onUpdate(product.id, { newPrice: e.target.value })}
-              onWheel={e => e.currentTarget.blur()}
-              readOnly={isReadOnly || isExpiryItem}
-              className={`w-full px-2.5 py-1.5 bg-transparent border border-transparent rounded-md text-sm text-slate-700 placeholder:text-slate-400 transition-all ${
-                (isReadOnly || isExpiryItem) ? 'cursor-default' : 'hover:border-slate-200 focus:border-primary-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/10'
-              }`}
-              placeholder="0.00"
-            />
-          </div>
-          <div className="w-14 px-1.5 py-1 border-r border-slate-100">
-            <input
-              type="number"
-              value={product.stock}
-              onChange={e => handleStockChange(e.target.value)}
-              onWheel={e => e.currentTarget.blur()}
-              readOnly={isReadOnly}
-              className={`w-full px-2.5 py-1.5 bg-transparent border border-transparent rounded-md text-sm text-slate-700 placeholder:text-slate-400 transition-all ${
-                isReadOnly ? 'cursor-default' : 'hover:border-slate-200 focus:border-primary-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/10'
-              }`}
-              placeholder="0"
-            />
-          </div>
-          <div className="w-[4.5rem] px-1.5 py-1 border-r border-slate-100 flex items-center justify-center">
-            <span className="text-sm text-slate-500">{product.preserve}</span>
-          </div>
-          <div className="w-[4.5rem] px-1.5 py-1 border-r border-slate-100 flex items-center justify-center">
-            {(() => {
-              const avail = (parseInt(product.stock, 10) || 0) - product.preserve;
-              const color = avail <= 0 ? 'text-red-600 font-bold' : avail <= 10 ? 'text-amber-600 font-semibold' : 'text-slate-700 font-medium';
-              return <span className={`text-sm ${color}`}>{avail}</span>;
-            })()}
-          </div>
+          {hasVariants && variantAggregates ? (
+            <>
+              <div className="w-20 px-1.5 py-1 border-r border-slate-100 flex items-center">
+                <span className="w-full px-2.5 py-1.5 text-sm text-slate-500 italic">{variantAggregates.price || '--'}</span>
+              </div>
+              <div className="w-20 px-1.5 py-1 border-r border-slate-100 flex items-center">
+                <span className="w-full px-2.5 py-1.5 text-sm text-slate-500 italic">{variantAggregates.salePrice || '--'}</span>
+              </div>
+              <div className="w-14 px-1.5 py-1 border-r border-slate-100 flex items-center justify-center">
+                <span className="text-sm text-slate-500 italic">{variantAggregates.stock}</span>
+              </div>
+              <div className="w-[4.5rem] px-1.5 py-1 border-r border-slate-100 flex items-center justify-center">
+                <span className="text-sm text-slate-500 italic">{variantAggregates.preserve}</span>
+              </div>
+              <div className="w-[4.5rem] px-1.5 py-1 border-r border-slate-100 flex items-center justify-center">
+                {(() => {
+                  const avail = variantAggregates.available;
+                  const color = avail <= 0 ? 'text-red-600 font-bold italic' : avail <= 10 ? 'text-amber-600 font-semibold italic' : 'text-slate-700 font-medium italic';
+                  return <span className={`text-sm ${color}`}>{avail}</span>;
+                })()}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="w-20 px-1.5 py-1 border-r border-slate-100">
+                <input
+                  type="number"
+                  value={product.price}
+                  onChange={e => onUpdate(product.id, { price: e.target.value })}
+                  onWheel={e => e.currentTarget.blur()}
+                  readOnly={isReadOnly}
+                  className={`w-full px-2.5 py-1.5 bg-transparent border border-transparent rounded-md text-sm text-slate-700 placeholder:text-slate-400 transition-all ${
+                    isReadOnly ? 'cursor-default' : 'hover:border-slate-200 focus:border-primary-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/10'
+                  }`}
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="w-20 px-1.5 py-1 border-r border-slate-100">
+                <input
+                  type="number"
+                  value={product.newPrice}
+                  onChange={e => onUpdate(product.id, { newPrice: e.target.value })}
+                  onWheel={e => e.currentTarget.blur()}
+                  readOnly={isReadOnly || isExpiryItem}
+                  className={`w-full px-2.5 py-1.5 bg-transparent border border-transparent rounded-md text-sm text-slate-700 placeholder:text-slate-400 transition-all ${
+                    (isReadOnly || isExpiryItem) ? 'cursor-default' : 'hover:border-slate-200 focus:border-primary-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/10'
+                  }`}
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="w-14 px-1.5 py-1 border-r border-slate-100">
+                <input
+                  type="number"
+                  value={product.stock}
+                  onChange={e => handleStockChange(e.target.value)}
+                  onWheel={e => e.currentTarget.blur()}
+                  readOnly={isReadOnly}
+                  className={`w-full px-2.5 py-1.5 bg-transparent border border-transparent rounded-md text-sm text-slate-700 placeholder:text-slate-400 transition-all ${
+                    isReadOnly ? 'cursor-default' : 'hover:border-slate-200 focus:border-primary-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/10'
+                  }`}
+                  placeholder="0"
+                />
+              </div>
+              <div className="w-[4.5rem] px-1.5 py-1 border-r border-slate-100 flex items-center justify-center">
+                <span className="text-sm text-slate-500">{product.preserve}</span>
+              </div>
+              <div className="w-[4.5rem] px-1.5 py-1 border-r border-slate-100 flex items-center justify-center">
+                {(() => {
+                  const avail = (parseInt(product.stock, 10) || 0) - product.preserve;
+                  const color = avail <= 0 ? 'text-red-600 font-bold' : avail <= 10 ? 'text-amber-600 font-semibold' : 'text-slate-700 font-medium';
+                  return <span className={`text-sm ${color}`}>{avail}</span>;
+                })()}
+              </div>
+            </>
+          )}
           {isExpiryItem && (
             <div className="w-36 px-1.5 py-1 border-r border-slate-100">
               <input
                 type="date"
                 value={product.expiration}
                 onChange={e => onUpdate(product.id, { expiration: e.target.value })}
-                className="w-full px-2 py-1.5 bg-transparent border border-transparent rounded-md text-sm text-slate-700 placeholder:text-slate-400 transition-all hover:border-slate-200 focus:border-primary-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/10"
+                readOnly={hasVariants}
+                className={`w-full px-2 py-1.5 bg-transparent border border-transparent rounded-md text-sm text-slate-700 ${
+                  hasVariants ? 'cursor-default' : 'placeholder:text-slate-400 transition-all hover:border-slate-200 focus:border-primary-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/10'
+                }`}
               />
             </div>
           )}

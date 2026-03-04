@@ -132,6 +132,36 @@ export function ProductTable({
     setOpenSettingsId(productId);
   };
 
+  const computeVariantAggregates = (variants: Product[]) => {
+    if (variants.length === 0) return undefined;
+    let lowestEffective = Infinity;
+    let lowestPrice = '';
+    let lowestSalePrice = '';
+    let totalStock = 0;
+    let totalPreserve = 0;
+
+    variants.forEach(v => {
+      const price = parseFloat(v.price) || 0;
+      const sale = parseFloat(v.newPrice) || 0;
+      const effective = (sale > 0 && sale < price) ? sale : price;
+      if (effective < lowestEffective) {
+        lowestEffective = effective;
+        lowestPrice = v.price;
+        lowestSalePrice = v.newPrice;
+      }
+      totalStock += parseInt(v.stock, 10) || 0;
+      totalPreserve += v.preserve;
+    });
+
+    return {
+      price: lowestPrice,
+      salePrice: lowestSalePrice,
+      stock: totalStock,
+      preserve: totalPreserve,
+      available: totalStock - totalPreserve,
+    };
+  };
+
   return (
     <div className="flex-1 flex flex-col h-full bg-slate-50">
       <div className="px-6 py-4 bg-white border-b border-slate-200 flex items-center justify-between">
@@ -249,6 +279,8 @@ export function ProductTable({
                 {group.products.map(product => {
                   const subProducts = getSubProducts(product.id);
                   const isExpanded = expandedProductIds.has(product.id);
+                  const hasVariants = subProducts.length > 0;
+                  const variantAggregates = hasVariants ? computeVariantAggregates(subProducts) : undefined;
                   return (
                     <div key={product.id}>
                       <ProductRow
@@ -262,6 +294,8 @@ export function ProductTable({
                         isExpanded={isExpanded}
                         onToggleExpand={toggleExpand}
                         subProductCount={subProducts.length}
+                        hasVariants={hasVariants}
+                        variantAggregates={variantAggregates}
                       />
                       {isExpanded && (
                         <SubProductList

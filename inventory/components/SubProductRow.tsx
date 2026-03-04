@@ -91,9 +91,7 @@ export function SubProductRow({
     onDelete(product.id);
   };
 
-  const hasInfo =
-    product.photos.length > 0 ||
-    Object.values(product.descriptions).some(d => d.trim() !== '');
+  const hasInfo = product.photos.length > 0;
 
   const inputClass = 'w-full px-2.5 py-1.5 bg-transparent border border-transparent rounded-md text-sm text-slate-700 placeholder:text-slate-400 transition-all hover:border-slate-200 focus:border-primary-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/10';
 
@@ -229,6 +227,7 @@ export function SubProductRow({
         product={product}
         onClose={() => setIsInfoModalOpen(false)}
         onUpdate={onUpdate}
+        hideDescription
       />
 
       <DeleteConfirmationModal

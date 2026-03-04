@@ -119,6 +119,33 @@ function computeDiscount(price: number, salePrice: number | null): number | unde
   return undefined;
 }
 
+function applyChildAggregates(parent: Product, kids: Product[]): void {
+  if (kids.length === 0) return;
+  let lowestEffective = Infinity;
+  let bestChild: Product | null = null;
+  let totalStock = 0;
+  let totalAvailable = 0;
+
+  for (const k of kids) {
+    const effective = k.price;
+    if (effective < lowestEffective) {
+      lowestEffective = effective;
+      bestChild = k;
+    }
+    totalStock += k.stock ?? 0;
+    totalAvailable += k.availableStock ?? 0;
+  }
+
+  if (bestChild) {
+    parent.price = bestChild.price;
+    parent.originalPrice = bestChild.originalPrice;
+    parent.isSale = bestChild.isSale;
+    parent.discountPercentage = bestChild.discountPercentage;
+  }
+  parent.stock = totalStock;
+  parent.availableStock = totalAvailable;
+}
+
 function mapDbProduct(row: DbProduct, lang: Language): Product {
   const hasSale = row.sale_price != null && row.sale_price < row.price;
   const stock = row.stock || 0;
@@ -269,6 +296,7 @@ export async function fetchAllData(lang: Language): Promise<FetchedData> {
     if (kids.length > 0) {
       fp.hasChildren = true;
       fp.children = kids;
+      applyChildAggregates(fp, kids);
     }
     return fp;
   });
@@ -285,6 +313,7 @@ export async function fetchAllData(lang: Language): Promise<FetchedData> {
     if (kids.length > 0) {
       fp.hasChildren = true;
       fp.children = kids;
+      applyChildAggregates(fp, kids);
     }
     return fp;
   });
@@ -300,6 +329,7 @@ export async function fetchAllData(lang: Language): Promise<FetchedData> {
       if (kids.length > 0) {
         fp.hasChildren = true;
         fp.children = kids;
+        applyChildAggregates(fp, kids);
       }
       return fp;
     }),
@@ -312,6 +342,7 @@ export async function fetchAllData(lang: Language): Promise<FetchedData> {
       if (kids.length > 0) {
         fp.hasChildren = true;
         fp.children = kids;
+        applyChildAggregates(fp, kids);
       }
       return fp;
     }),

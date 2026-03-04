@@ -7,6 +7,7 @@ interface InfoModalProps {
   product: Product;
   onClose: () => void;
   onUpdate: (productId: string, updates: Partial<Product>) => void;
+  hideDescription?: boolean;
 }
 
 const languageTabs: { key: Language; label: string }[] = [
@@ -15,7 +16,7 @@ const languageTabs: { key: Language; label: string }[] = [
   { key: 'zh', label: 'ZH' },
 ];
 
-export function InfoModal({ isOpen, product, onClose, onUpdate }: InfoModalProps) {
+export function InfoModal({ isOpen, product, onClose, onUpdate, hideDescription = false }: InfoModalProps) {
   const [descLang, setDescLang] = useState<Language>('en');
   const [isDescEditing, setIsDescEditing] = useState(false);
   const [isPhotosEditing, setIsPhotosEditing] = useState(false);
@@ -109,6 +110,7 @@ export function InfoModal({ isOpen, product, onClose, onUpdate }: InfoModalProps
         </div>
 
         <div className="overflow-y-auto max-h-[calc(85vh-60px)]">
+          {!hideDescription && (
           <div className="px-5 py-4 border-b border-slate-100">
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
@@ -179,6 +181,7 @@ export function InfoModal({ isOpen, product, onClose, onUpdate }: InfoModalProps
               </div>
             )}
           </div>
+          )}
 
           <div className="px-5 py-4">
             <div className="flex items-center justify-between mb-3">

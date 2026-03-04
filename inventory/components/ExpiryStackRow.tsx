@@ -24,6 +24,28 @@ export function ExpiryStackRow({
 }: ExpiryStackRowProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const childCount = item.childItems?.length || 0;
+  const hasVariants = childCount > 0;
+
+  const variantAggregates = hasVariants && item.childItems ? (() => {
+    let lowestEffective = Infinity;
+    let lowestPrice = '';
+    let lowestSalePrice = '';
+    let totalStock = 0;
+    let totalPreserve = 0;
+    item.childItems.forEach(v => {
+      const price = parseFloat(v.price) || 0;
+      const sale = parseFloat(v.newPrice) || 0;
+      const effective = (sale > 0 && sale < price) ? sale : price;
+      if (effective < lowestEffective) {
+        lowestEffective = effective;
+        lowestPrice = v.price;
+        lowestSalePrice = v.newPrice;
+      }
+      totalStock += parseInt(v.stock, 10) || 0;
+      totalPreserve += v.preserve;
+    });
+    return { price: lowestPrice, salePrice: lowestSalePrice, stock: totalStock, preserve: totalPreserve, available: totalStock - totalPreserve };
+  })() : undefined;
 
   return (
     <div>
@@ -39,6 +61,8 @@ export function ExpiryStackRow({
         onToggleExpand={() => setIsExpanded(!isExpanded)}
         subProductCount={childCount}
         isExpiryItem
+        hasVariants={hasVariants}
+        variantAggregates={variantAggregates}
       />
 
       {isExpanded && item.childItems && item.childItems.length > 0 && (
