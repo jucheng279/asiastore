@@ -133,6 +133,7 @@ export function AdminPage({ onSignOut }: AdminPageProps) {
     expirySettings,
     handleAddExpiryItem,
     handleUpdateExpiryItem,
+    handleUpdateExpiryChildItem,
     handleDeleteExpiryItem,
     handleExpiryOrderChange,
     handleUpdateExpirySettings,
@@ -700,6 +701,7 @@ export function AdminPage({ onSignOut }: AdminPageProps) {
           onLanguageChange={setCurrentLanguage}
           onAddItem={handleAddExpiryItem}
           onUpdateItem={handleUpdateExpiryItem}
+          onUpdateChildItem={handleUpdateExpiryChildItem}
           onDeleteItem={handleDeleteExpiryItem}
           onOrderChange={handleExpiryOrderChange}
           onUpdateSettings={handleUpdateExpirySettings}

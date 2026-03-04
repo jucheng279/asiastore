@@ -7,6 +7,7 @@ interface ExpiryStackRowProps {
   item: ExpiryItem;
   currentLanguage: Language;
   onUpdateItem: (itemId: string, updates: Partial<Product>) => void;
+  onUpdateChildItem: (parentItemId: string, childItemId: string, updates: Partial<Product>) => void;
   onDeleteItem: (itemId: string) => void;
   onOrderChange: (itemId: string, newOrder: number) => void;
   isSettingsOpen: boolean;
@@ -17,6 +18,7 @@ export function ExpiryStackRow({
   item,
   currentLanguage,
   onUpdateItem,
+  onUpdateChildItem,
   onDeleteItem,
   onOrderChange,
   isSettingsOpen,
@@ -75,7 +77,7 @@ export function ExpiryStackRow({
               isReadOnly={false}
               isExpiryItem
               onUpdate={(childId, updates) => {
-                onUpdateItem(childId, updates);
+                onUpdateChildItem(item.id, childId, updates);
               }}
             />
           ))}

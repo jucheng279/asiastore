@@ -158,6 +158,25 @@ export function useExpiryItems(_products: Product[], options?: UseExpiryItemsOpt
     });
   };
 
+  const handleUpdateExpiryChildItem = (parentItemId: string, childItemId: string, updates: Partial<Product>) => {
+    setExpiryItems(prev => {
+      const updated = prev.map(item => {
+        if (item.id !== parentItemId || !item.childItems) return item;
+        return {
+          ...item,
+          childItems: item.childItems.map(c => {
+            if (c.id !== childItemId) return c;
+            const merged = { ...c, ...updates };
+            if (!merged.discountApplied) return merged;
+            return applyDiscountToItem(merged, expirySettings);
+          }),
+        };
+      });
+      persistItems(updated);
+      return updated;
+    });
+  };
+
   const handleDeleteExpiryItem = (itemId: string) => {
     setExpiryItems(prev => {
       const remaining = prev.filter(item => item.id !== itemId);
@@ -219,6 +238,7 @@ export function useExpiryItems(_products: Product[], options?: UseExpiryItemsOpt
     expirySettings,
     handleAddExpiryItem,
     handleUpdateExpiryItem,
+    handleUpdateExpiryChildItem,
     handleDeleteExpiryItem,
     handleExpiryOrderChange,
     handleUpdateExpirySettings,

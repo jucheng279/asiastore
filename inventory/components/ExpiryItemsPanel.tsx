@@ -12,6 +12,7 @@ interface ExpiryItemsPanelProps {
   onLanguageChange: (language: Language) => void;
   onAddItem: () => void;
   onUpdateItem: (itemId: string, updates: Partial<Product>) => void;
+  onUpdateChildItem: (parentItemId: string, childItemId: string, updates: Partial<Product>) => void;
   onDeleteItem: (itemId: string) => void;
   onOrderChange: (itemId: string, newOrder: number) => void;
   onUpdateSettings: (updates: Partial<ExpirySettings>) => void;
@@ -26,6 +27,7 @@ export function ExpiryItemsPanel({
   onLanguageChange,
   onAddItem,
   onUpdateItem,
+  onUpdateChildItem,
   onDeleteItem,
   onOrderChange,
   onUpdateSettings,
@@ -96,6 +98,7 @@ export function ExpiryItemsPanel({
                   item={item}
                   currentLanguage={currentLanguage}
                   onUpdateItem={onUpdateItem}
+                  onUpdateChildItem={onUpdateChildItem}
                   onDeleteItem={onDeleteItem}
                   onOrderChange={onOrderChange}
                   isSettingsOpen={openSettingsId === item.id}

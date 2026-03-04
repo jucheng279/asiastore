@@ -91,6 +91,8 @@ export function StackChildRow({
             <input
               type="number"
               value={product.stock}
+              onChange={e => handleUpdate({ stock: e.target.value })}
+              onWheel={e => e.currentTarget.blur()}
               readOnly={isReadOnly}
               className={inputClass}
               placeholder="0"
