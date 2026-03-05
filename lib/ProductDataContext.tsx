@@ -163,7 +163,7 @@ export function ProductDataProvider({ children }: { children: React.ReactNode })
     const map = new Map<string, Product>();
     for (const p of all) {
       map.set(p.id, p);
-      if (p.sourceProductId) {
+      if (p.sourceProductId && !map.has(p.sourceProductId)) {
         map.set(p.sourceProductId, p);
       }
     }

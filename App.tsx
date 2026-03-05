@@ -152,7 +152,7 @@ function AppContent() {
     cartQuantities.forEach((quantity, productId) => {
       const product = productMap.get(productId);
       if (product) {
-        items.push({ ...product, quantity });
+        items.push({ ...product, id: productId, quantity });
       }
     });
     return items;
