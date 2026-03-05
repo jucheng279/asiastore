@@ -146,7 +146,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             )}
           </div>
           {product.hasChildren ? (
-            <span className="text-xs font-semibold text-primary whitespace-nowrap">{t('common.view')}</span>
+            <span className="text-xs font-semibold text-primary whitespace-nowrap">{t('common.viewAll')}</span>
           ) : isOutOfStock ? (
             <span className="text-[10px] font-semibold text-gray-400 uppercase whitespace-nowrap">
               {t('product.outOfStock')}
