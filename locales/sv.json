@@ -46,9 +46,10 @@
   },
   "home": {
     "searchPlaceholder": "Sok matcha, dumplings...",
-    "limitedTime": "Begransad tid",
-    "lunarNewYear": "Nyarserbjudanden",
-    "upTo50Off": "Upp till 50% rabatt pa traditionella snacks och presenter",
+    "welcomeTitle": "Valkommen till Asia Shop Linkoping",
+    "welcomeTagline": "Dina favoritsmaker fran Asien, har i Linkoping",
+    "bannerSchedule": "Vi tar emot bestallningar mandag till fredag. Din bestallning levereras hem till dig varje sondag!",
+    "bannerFreeShipping": "Fri leverans pa bestallningar over 35 kr",
     "shopByCategory": "Handla efter kategori",
     "trendingProducts": "Bastsaljare",
     "nearExpiryDeals": "Kort datum-erbjudanden",

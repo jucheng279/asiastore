@@ -46,9 +46,10 @@
   },
   "home": {
     "searchPlaceholder": "搜索抹茶、饺子...",
-    "limitedTime": "限时",
-    "lunarNewYear": "新年特惠",
-    "upTo50Off": "传统零食和礼品低至5折",
+    "welcomeTitle": "欢迎来到 Asia Shop Linkoping",
+    "welcomeTagline": "您喜爱的亚洲风味，就在林雪平",
+    "bannerSchedule": "我们周一至周五接受订单，每周日送货上门！",
+    "bannerFreeShipping": "订单满 35 kr 免费配送",
     "shopByCategory": "按类别购买",
     "trendingProducts": "畅销商品",
     "nearExpiryDeals": "临期特价",

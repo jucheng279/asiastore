@@ -54,24 +54,22 @@ const HomeView: React.FC<NavigationProps> = ({ currentView, onNavigate, cartCoun
 
       </div>
 
-      <div className="flex overflow-y-auto no-scrollbar pt-4 px-4 lg:px-6 pb-2 bg-surface-light dark:bg-surface-dark">
-        <div className="flex items-stretch gap-3 w-full">
-          <div className="flex h-full w-full flex-col gap-4 rounded-xl bg-primary shadow-lg overflow-hidden relative">
-            <div className="absolute -right-10 -top-10 w-40 h-40 bg-gold rounded-full opacity-20 blur-xl"></div>
-            <div className="absolute -left-10 -bottom-10 w-32 h-32 bg-yellow-400 rounded-full opacity-20 blur-xl"></div>
-            <div className="flex flex-row p-5 lg:p-8 items-center justify-between relative z-10">
-              <div className="flex flex-col gap-2 flex-1">
-                <span className="px-2 py-1 bg-white/20 text-white text-xs font-bold rounded w-fit backdrop-blur-sm">{t('home.limitedTime')}</span>
-                <h3 className="text-white text-2xl lg:text-3xl font-extrabold leading-tight">{t('home.lunarNewYear')}</h3>
-                <p className="text-white/90 text-sm lg:text-base font-medium leading-normal">{t('home.upTo50Off')}</p>
-                <button
-                  className="mt-2 flex w-fit cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 px-4 bg-white text-primary text-sm font-bold leading-normal tracking-[0.015em] hover:bg-gray-50 transition-colors"
-                  onClick={() => onNavigate('LISTING')}
-                >
-                  {t('common.shopNow')}
-                </button>
-              </div>
-              <div className="w-28 h-28 lg:w-40 lg:h-40 bg-center bg-no-repeat bg-contain shrink-0" style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuA96QpXo1XL_Gb4Iy-Pq41rCeb0yfKK3--0Ckiw2Dq7EalyZyN2GfNKbL7q5sKJJhbzObWS9T45YCQoZByJGC14-ypMJ49qubsCetjA3t9xEG9eUjv5Nre1MQcwzajUc7FxVgkCm_6iw5zh5MmJMdLYJ0vyh5jUw1-jdc8EwYVGcGdcr-RYUsq2cT30_E-L-TomYfsqMdmx_nQ8eBmRGg1GjmBNfkblfI0GNut5dADOaq2rOb85zwJBboyBnbKBAolf1jUPEGfC7GE")' }}></div>
+      <div className="pt-4 px-4 lg:px-6 pb-2 bg-surface-light dark:bg-surface-dark">
+        <div className="w-full rounded-xl bg-primary shadow-lg overflow-hidden">
+          <div className="p-5 lg:p-8 flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-white/80 text-2xl">storefront</span>
+              <h3 className="text-white text-xl lg:text-2xl font-extrabold leading-tight">{t('home.welcomeTitle')}</h3>
+            </div>
+            <p className="text-white/80 text-sm lg:text-base font-medium leading-normal">{t('home.welcomeTagline')}</p>
+            <div className="w-full h-px bg-white/20 my-1"></div>
+            <div className="flex items-start gap-2.5">
+              <span className="material-symbols-outlined text-white/70 text-lg mt-0.5 shrink-0">local_shipping</span>
+              <p className="text-white/90 text-sm leading-relaxed">{t('home.bannerSchedule')}</p>
+            </div>
+            <div className="flex items-start gap-2.5">
+              <span className="material-symbols-outlined text-white/70 text-lg mt-0.5 shrink-0">verified</span>
+              <p className="text-white/90 text-sm leading-relaxed">{t('home.bannerFreeShipping')}</p>
             </div>
           </div>
         </div>

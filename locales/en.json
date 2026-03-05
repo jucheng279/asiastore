@@ -46,9 +46,10 @@
   },
   "home": {
     "searchPlaceholder": "Search matcha, dumplings...",
-    "limitedTime": "Limited Time",
-    "lunarNewYear": "Lunar New Year Specials",
-    "upTo50Off": "Up to 50% Off traditional snacks & gifts",
+    "welcomeTitle": "Welcome to Asia Shop Linkoping",
+    "welcomeTagline": "Your favorite Asian flavors, right here in Linkoping",
+    "bannerSchedule": "We accept orders Monday to Friday. Your order will be delivered fresh to your door every Sunday!",
+    "bannerFreeShipping": "Free delivery on orders over 35 kr",
     "shopByCategory": "Shop by Category",
     "trendingProducts": "Best Sellers",
     "nearExpiryDeals": "Near-Expiry Deals",
