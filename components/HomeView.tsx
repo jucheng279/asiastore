@@ -67,10 +67,6 @@ const HomeView: React.FC<NavigationProps> = ({ currentView, onNavigate, cartCoun
               <span className="material-symbols-outlined text-white/70 text-lg mt-0.5 shrink-0">local_shipping</span>
               <p className="text-white/90 text-sm leading-relaxed">{t('home.bannerSchedule')}</p>
             </div>
-            <div className="flex items-start gap-2.5">
-              <span className="material-symbols-outlined text-white/70 text-lg mt-0.5 shrink-0">verified</span>
-              <p className="text-white/90 text-sm leading-relaxed">{t('home.bannerFreeShipping')}</p>
-            </div>
           </div>
         </div>
       </div>
