@@ -98,7 +98,8 @@
     "itemsSaved_one": "{{count}} vara sparad",
     "itemsSaved_other": "{{count}} varor sparade",
     "outOfStock": "Slut i lager",
-    "onlyXLeft": "Bara {{count}} kvar"
+    "onlyXLeft": "Bara {{count}} kvar",
+    "notAvailable": "Ej tillganglig"
   },
   "deals": {
     "dealsOffers": "Erbjudanden",

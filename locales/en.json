@@ -98,7 +98,8 @@
     "itemsSaved_one": "{{count}} item saved",
     "itemsSaved_other": "{{count}} items saved",
     "outOfStock": "Out of Stock",
-    "onlyXLeft": "Only {{count}} left"
+    "onlyXLeft": "Only {{count}} left",
+    "notAvailable": "Not Available"
   },
   "deals": {
     "dealsOffers": "Deals & Offers",
