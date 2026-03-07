@@ -184,7 +184,7 @@ function AppContent() {
     await refreshData();
   };
 
-  const confirmOrder = async (shippingAddress: Address, deliveryInstructions?: string, payWithPoints?: boolean) => {
+  const confirmOrder = async (shippingAddress: Address, deliveryInstructions?: string, payWithPoints?: boolean, paymentMethod?: 'cashOrSwish' | 'points' | 'payAtStore') => {
     if (orderingClosed) {
       showToast(t('toast.orderingClosed'), 'warning');
       return;
@@ -211,6 +211,7 @@ function AppContent() {
         deliveryInstructions,
         paidWithPoints: payWithPoints,
         pointsAmount: payWithPoints ? total : 0,
+        paymentMethod: paymentMethod || 'cashOrSwish',
         items: cartItems.map(item => ({
           id: item.id,
           name: item.name,

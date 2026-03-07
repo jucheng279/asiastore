@@ -288,6 +288,7 @@ export interface DbOrder {
   status: string;
   paid_with_points: boolean;
   points_amount: number;
+  payment_method: string;
 }
 
 export async function fetchUserOrders(userId: string): Promise<{ order: DbOrder; items: DbOrderItem[] }[]> {
@@ -389,6 +390,7 @@ export async function createUserOrder(
     deliveryInstructions?: string;
     paidWithPoints?: boolean;
     pointsAmount?: number;
+    paymentMethod?: string;
     items: { productId: string; name: string; image: string; price: number; quantity: number }[];
   }
 ): Promise<{ orderId: string | null; error: string | null }> {
@@ -410,6 +412,7 @@ export async function createUserOrder(
     p_paid_with_points: orderData.paidWithPoints || false,
     p_points_amount: orderData.pointsAmount || 0,
     p_items: itemsPayload,
+    p_payment_method: orderData.paymentMethod || 'cashOrSwish',
   });
 
   if (error) return { orderId: null, error: error.message };

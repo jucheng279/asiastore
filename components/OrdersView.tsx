@@ -1,10 +1,103 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useProductData } from '../lib/ProductDataContext';
 import { useAuth } from '../lib/AuthContext';
 import { formatPrice, formatDate } from '../lib/formatters';
-import { NavigationProps, Order } from '../types';
+import { NavigationProps, Order, OrderItem } from '../types';
+import { fetchStoreSettings } from '../lib/storeStatus';
+import { calculateOrderingWindow } from '../lib/orderSummaryApi';
 import BottomNav from './BottomNav';
+
+interface ConsolidatedOrder {
+  id: string;
+  date: string;
+  total: number;
+  items: OrderItem[];
+  contactEmail: string;
+  contactPhone: string;
+  shippingAddress: Order['shippingAddress'];
+  deliveryInstructions?: string;
+  status: 'active' | 'cancelled';
+  paidWithPoints?: boolean;
+  pointsAmount?: number;
+  paymentMethod?: string;
+  mergedOrderIds: string[];
+}
+
+function consolidateOrders(
+  orders: Order[],
+  openDay: number,
+  openTime: string,
+  closeDay: number,
+  closeTime: string
+): ConsolidatedOrder[] {
+  const getWindowKey = (dateStr: string): string => {
+    const orderDate = new Date(dateStr);
+    for (let offset = 0; offset >= -52; offset--) {
+      const win = calculateOrderingWindow(openDay, openTime, closeDay, closeTime, offset);
+      if (orderDate >= win.start && orderDate < win.end) {
+        return win.start.toISOString();
+      }
+    }
+    return dateStr;
+  };
+
+  const addrKey = (addr: Order['shippingAddress']): string =>
+    `${(addr.streetAddress || '').trim().toLowerCase()}|${(addr.postalCode || '').trim().toLowerCase()}|${(addr.city || '').trim().toLowerCase()}`;
+
+  const grouped = new Map<string, Order[]>();
+  for (const order of orders) {
+    const windowKey = getWindowKey(order.date);
+    const key = `${windowKey}|${order.contactPhone.trim()}|${order.contactEmail.trim().toLowerCase()}|${order.paymentMethod || 'cashOrSwish'}|${addrKey(order.shippingAddress)}|${order.status}`;
+    const list = grouped.get(key) || [];
+    list.push(order);
+    grouped.set(key, list);
+  }
+
+  const result: ConsolidatedOrder[] = [];
+  for (const group of grouped.values()) {
+    if (group.length === 1) {
+      result.push({ ...group[0], mergedOrderIds: [group[0].id] });
+    } else {
+      const first = group[0];
+      const mergedItems: OrderItem[] = [];
+      let totalSum = 0;
+      let pointsSum = 0;
+
+      for (const order of group) {
+        totalSum += order.total;
+        pointsSum += order.pointsAmount || 0;
+        for (const item of order.items) {
+          const existing = mergedItems.find(m => m.id === item.id && m.price === item.price);
+          if (existing) {
+            existing.qty += item.qty;
+          } else {
+            mergedItems.push({ ...item });
+          }
+        }
+      }
+
+      result.push({
+        id: first.id,
+        date: first.date,
+        total: totalSum,
+        items: mergedItems,
+        contactEmail: first.contactEmail,
+        contactPhone: first.contactPhone,
+        shippingAddress: first.shippingAddress,
+        deliveryInstructions: first.deliveryInstructions || group.find(o => o.deliveryInstructions)?.deliveryInstructions,
+        status: first.status,
+        paidWithPoints: first.paidWithPoints,
+        pointsAmount: pointsSum || undefined,
+        paymentMethod: first.paymentMethod,
+        mergedOrderIds: group.map(o => o.id),
+      });
+    }
+  }
+
+  result.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  return result;
+}
 
 interface OrdersViewProps extends NavigationProps {
   orders: Order[];
@@ -18,10 +111,29 @@ const OrdersView: React.FC<OrdersViewProps> = ({ currentView, onNavigate, cartCo
   const { refreshData } = useProductData();
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null);
+  const [storeSchedule, setStoreSchedule] = useState({ openDay: 1, openTime: '00:00', closeDay: 5, closeTime: '12:00' });
 
-  const handleCancelOrder = async (orderId: string) => {
-    setCancellingId(orderId);
-    await cancelOrder(orderId);
+  useEffect(() => {
+    fetchStoreSettings().then(settings => {
+      setStoreSchedule({
+        openDay: settings.autoOpenDay,
+        openTime: settings.autoOpenTime,
+        closeDay: settings.autoCloseDay,
+        closeTime: settings.autoCloseTime,
+      });
+    });
+  }, []);
+
+  const consolidatedOrders = useMemo(
+    () => consolidateOrders(orders, storeSchedule.openDay, storeSchedule.openTime, storeSchedule.closeDay, storeSchedule.closeTime),
+    [orders, storeSchedule]
+  );
+
+  const handleCancelOrder = async (consolidated: ConsolidatedOrder) => {
+    setCancellingId(consolidated.id);
+    for (const orderId of consolidated.mergedOrderIds) {
+      await cancelOrder(orderId);
+    }
     refreshData();
     setCancellingId(null);
     setConfirmCancelId(null);
@@ -50,10 +162,11 @@ const OrdersView: React.FC<OrdersViewProps> = ({ currentView, onNavigate, cartCo
         </button>
       </header>
 
-      {orders.length > 0 ? (
+      {consolidatedOrders.length > 0 ? (
         <div className="flex flex-col lg:grid lg:grid-cols-2 gap-4 px-4 lg:px-6 py-4">
-          {orders.map((order) => {
+          {consolidatedOrders.map((order) => {
             const isCancelled = order.status === 'cancelled';
+            const isMerged = order.mergedOrderIds.length > 1;
             return (
               <div
                 key={order.id}
@@ -63,11 +176,16 @@ const OrdersView: React.FC<OrdersViewProps> = ({ currentView, onNavigate, cartCo
               >
                 <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-white/5">
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <p className="text-text-main dark:text-white font-bold">{order.id}</p>
                       {isCancelled && (
                         <span className="px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-bold uppercase tracking-wider">
                           {t('orders.cancelled')}
+                        </span>
+                      )}
+                      {isMerged && (
+                        <span className="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-bold">
+                          {order.mergedOrderIds.length} orders combined
                         </span>
                       )}
                     </div>
@@ -114,7 +232,7 @@ const OrdersView: React.FC<OrdersViewProps> = ({ currentView, onNavigate, cartCo
                             <div className="flex items-center gap-2">
                               <button
                                 className="px-3 py-2 text-xs font-semibold text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
-                                onClick={() => handleCancelOrder(order.id)}
+                                onClick={() => handleCancelOrder(order)}
                                 disabled={cancellingId === order.id}
                               >
                                 {cancellingId === order.id ? t('common.loading') : t('orders.confirmCancel')}

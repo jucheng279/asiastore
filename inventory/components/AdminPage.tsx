@@ -8,6 +8,7 @@ import { FlashSalesPanel } from './FlashSalesPanel';
 import { UsersPanel } from './UsersPanel';
 import { DiagnosticsPanel } from './DiagnosticsPanel';
 import { StoreSettingsPanel } from './StoreSettingsPanel';
+import { OrderSummaryPanel } from './OrderSummaryPanel';
 import { reorderProducts, getNextOrder } from '../hooks/useProductOrder';
 import { useExpiryItems } from '../hooks/useExpiryItems';
 import { useFlashSaleItems } from '../hooks/useFlashSaleItems';
@@ -70,6 +71,7 @@ export function AdminPage({ onSignOut }: AdminPageProps) {
   const [pushError, setPushError] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState(true);
   const [userCount, setUserCount] = useState(0);
+  const [orderCount, setOrderCount] = useState(0);
   const [categoryImageUploading, setCategoryImageUploading] = useState(false);
   const [draftSaveStatus, setDraftSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [initialData, setInitialData] = useState<LoadedData | null>(null);
@@ -436,6 +438,12 @@ export function AdminPage({ onSignOut }: AdminPageProps) {
     setSelectedSubCategoryId(null);
   };
 
+  const handleSelectOrderSummaryView = () => {
+    setActiveView('orderSummary');
+    setSelectedCategoryId(null);
+    setSelectedSubCategoryId(null);
+  };
+
   const handleSelectDiagnosticsView = () => {
     setActiveView('diagnostics');
     setSelectedCategoryId(null);
@@ -717,6 +725,15 @@ export function AdminPage({ onSignOut }: AdminPageProps) {
       );
     }
 
+    if (activeView === 'orderSummary') {
+      return (
+        <OrderSummaryPanel
+          storeSettings={storeSettings}
+          onOrderCountChange={setOrderCount}
+        />
+      );
+    }
+
     if (activeView === 'diagnostics') {
       return <DiagnosticsPanel />;
     }
@@ -826,9 +843,11 @@ export function AdminPage({ onSignOut }: AdminPageProps) {
         onSelectExpiryView={handleSelectExpiryView}
         onSelectFlashSalesView={handleSelectFlashSalesView}
         onSelectUsersView={handleSelectUsersView}
+        onSelectOrderSummaryView={handleSelectOrderSummaryView}
         onSelectDiagnosticsView={handleSelectDiagnosticsView}
         onSelectStoreSettingsView={handleSelectStoreSettingsView}
         userCount={userCount}
+        orderCount={orderCount}
         onAddCategory={handleAddCategory}
         onAddSubCategory={handleAddSubCategory}
         onRenameCategory={handleRenameCategory}

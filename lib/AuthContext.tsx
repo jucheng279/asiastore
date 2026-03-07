@@ -42,7 +42,7 @@ function toLocalAddress(ua: UserAddress): Address {
   };
 }
 
-function dbOrderToLocal(dbOrder: { order: { id: string; total: number; contact_email: string; contact_phone: string; shipping_address: Record<string, unknown>; delivery_instructions: string | null; created_at: string; status?: string; paid_with_points?: boolean; points_amount?: number }; items: { product_id: string; name: string; image: string; price: number; quantity: number }[] }): Order {
+function dbOrderToLocal(dbOrder: { order: { id: string; total: number; contact_email: string; contact_phone: string; shipping_address: Record<string, unknown>; delivery_instructions: string | null; created_at: string; status?: string; paid_with_points?: boolean; points_amount?: number; payment_method?: string }; items: { product_id: string; name: string; image: string; price: number; quantity: number }[] }): Order {
   const o = dbOrder.order;
   const addr = o.shipping_address as Record<string, string | boolean | undefined>;
   return {
@@ -74,6 +74,7 @@ function dbOrderToLocal(dbOrder: { order: { id: string; total: number; contact_e
     status: (o.status as 'active' | 'cancelled') || 'active',
     paidWithPoints: o.paid_with_points || false,
     pointsAmount: o.points_amount || 0,
+    paymentMethod: (o.payment_method as 'cashOrSwish' | 'points' | 'payAtStore') || 'cashOrSwish',
   };
 }
 
@@ -110,6 +111,7 @@ interface AuthContextType {
     deliveryInstructions?: string;
     paidWithPoints?: boolean;
     pointsAmount?: number;
+    paymentMethod?: 'cashOrSwish' | 'points' | 'payAtStore';
     items: { id: string; name: string; image: string; price: number; quantity: number }[];
   }) => Promise<{ order: Order | null; error: string | null }>;
   cancelOrder: (orderId: string) => Promise<{ success: boolean; error: string | null }>;
@@ -349,6 +351,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     deliveryInstructions?: string;
     paidWithPoints?: boolean;
     pointsAmount?: number;
+    paymentMethod?: 'cashOrSwish' | 'points' | 'payAtStore';
     items: { id: string; name: string; image: string; price: number; quantity: number }[];
   }): Promise<{ order: Order | null; error: string | null }> => {
     if (!user) return { order: null, error: 'Not authenticated' };
@@ -361,6 +364,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       deliveryInstructions: orderData.deliveryInstructions,
       paidWithPoints: orderData.paidWithPoints,
       pointsAmount: orderData.pointsAmount,
+      paymentMethod: orderData.paymentMethod,
       items: orderData.items.map(item => ({
         productId: item.id,
         name: item.name,
@@ -396,6 +400,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       status: 'active',
       paidWithPoints: orderData.paidWithPoints,
       pointsAmount: orderData.pointsAmount,
+      paymentMethod: orderData.paymentMethod || 'cashOrSwish',
     };
 
     setOrders(prev => [newOrder, ...prev]);

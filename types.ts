@@ -52,6 +52,7 @@ export interface Order {
   status: 'active' | 'cancelled';
   paidWithPoints?: boolean;
   pointsAmount?: number;
+  paymentMethod?: 'cashOrSwish' | 'points' | 'payAtStore';
 }
 
 export type ViewState = 'HOME' | 'LISTING' | 'DETAILS' | 'CART' | 'CHECKOUT' | 'DEALS' | 'ACCOUNT' | 'FAVORITES' | 'ORDERS' | 'PAYMENT_METHODS' | 'ADDRESSES' | 'NOTIFICATIONS' | 'BEST_SELLERS' | 'POINTS' | 'LOGIN' | 'REGISTER' | 'FORGOT_PASSWORD' | 'RESET_PASSWORD' | 'CONTACT_US';

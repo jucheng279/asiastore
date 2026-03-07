@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { ChevronDown, ChevronRight, Plus, Pencil, Trash2, X, FolderTree, Store, Clock, Zap, ArrowUpFromLine, Users, Activity, Search, LogOut, Settings } from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus, Pencil, Trash2, X, FolderTree, Store, Clock, Zap, ArrowUpFromLine, Users, Activity, Search, LogOut, Settings, ClipboardList } from 'lucide-react';
 import { Category, SubCategory, Product, ProductNames, ActiveView, ExpiryItem, FlashSaleItem } from '../types';
 import { CategoryNameModal } from './CategoryNameModal';
 
@@ -29,9 +29,11 @@ interface CategorySidebarProps {
   onSelectExpiryView: () => void;
   onSelectFlashSalesView: () => void;
   onSelectUsersView: () => void;
+  onSelectOrderSummaryView: () => void;
   onSelectDiagnosticsView: () => void;
   onSelectStoreSettingsView: () => void;
   userCount: number;
+  orderCount: number;
   onAddCategory: (name: string) => void;
   onAddSubCategory: (categoryId: string, name: string) => void;
   onRenameCategory: (categoryId: string, names: ProductNames) => void;
@@ -63,9 +65,11 @@ export function CategorySidebar({
   onSelectExpiryView,
   onSelectFlashSalesView,
   onSelectUsersView,
+  onSelectOrderSummaryView,
   onSelectDiagnosticsView,
   onSelectStoreSettingsView,
   userCount,
+  orderCount,
   onAddCategory,
   onAddSubCategory,
   onRenameCategory,
@@ -489,6 +493,28 @@ export function CategorySidebar({
           {userCount > 0 && (
             <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
               {userCount}
+            </span>
+          )}
+        </div>
+
+        <div
+          onClick={onSelectOrderSummaryView}
+          className={`flex items-center gap-1.5 p-2.5 rounded-lg cursor-pointer transition-all duration-150 mt-1 ${
+            activeView === 'orderSummary'
+              ? 'bg-primary-50 border border-primary-200'
+              : 'hover:bg-slate-50 border border-transparent'
+          }`}
+        >
+          <span className="w-4 flex-shrink-0" />
+          <ClipboardList size={16} className={`flex-shrink-0 ${activeView === 'orderSummary' ? 'text-teal-600' : 'text-slate-500'}`} />
+          <span className={`flex-1 text-sm font-medium ${
+            activeView === 'orderSummary' ? 'text-primary-700' : 'text-slate-700'
+          }`}>
+            Order Summary
+          </span>
+          {orderCount > 0 && (
+            <span className="px-2 py-0.5 bg-teal-100 text-teal-700 text-xs rounded-full font-medium">
+              {orderCount}
             </span>
           )}
         </div>

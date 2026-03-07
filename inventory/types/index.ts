@@ -1,6 +1,6 @@
 export type Language = 'en' | 'sv' | 'zh';
 
-export type ActiveView = 'categories' | 'expiry' | 'flashSales' | 'users' | 'diagnostics' | 'storeSettings';
+export type ActiveView = 'categories' | 'expiry' | 'flashSales' | 'users' | 'orderSummary' | 'diagnostics' | 'storeSettings';
 
 export interface ProductNames {
   en: string;

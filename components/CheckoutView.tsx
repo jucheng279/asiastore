@@ -10,7 +10,7 @@ interface CheckoutViewProps extends NavigationProps {
   cartItems: CartItem[];
   addresses: Address[];
   userPoints: number;
-  onConfirmOrder: (address: Address, instructions?: string, payWithPoints?: boolean) => void;
+  onConfirmOrder: (address: Address, instructions?: string, payWithPoints?: boolean, paymentMethod?: 'cashOrSwish' | 'points' | 'payAtStore') => void;
   onSaveAddress: (address: Omit<Address, 'id'> & { id?: string }) => void;
   isSubmitting?: boolean;
 }
@@ -116,7 +116,8 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({
     onConfirmOrder(
       address,
       deliveryInstructions.trim() || undefined,
-      payWithPoints
+      payWithPoints,
+      paymentMethod
     );
   };
 
