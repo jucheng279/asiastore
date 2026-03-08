@@ -6,6 +6,7 @@ import {
   type OrderSummaryRow,
   type OrderingWindow,
 } from '../../lib/orderSummaryApi';
+import { printOrderSummary } from '../utils/printOrderSummary';
 
 interface OrderSummaryPanelProps {
   storeSettings: {
@@ -100,7 +101,7 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
   };
 
   const handlePrint = () => {
-    globalThis.print();
+    printOrderSummary(filteredRows, window.label, grandTotal, uniqueCustomers);
   };
 
   if (isLoading) {
@@ -116,10 +117,10 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-slate-50">
-      <div className="bg-white border-b border-slate-200 px-6 py-4 print:px-2 print:py-2">
+      <div className="bg-white border-b border-slate-200 px-6 py-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-teal-50 rounded-lg print:hidden">
+            <div className="p-2 bg-teal-50 rounded-lg">
               <ClipboardList size={20} className="text-teal-600" />
             </div>
             <div>
@@ -129,7 +130,7 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 print:hidden">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setWeekOffset(prev => prev - 1)}
               className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
@@ -164,7 +165,7 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
           </div>
         </div>
 
-        <div className="relative print:hidden">
+        <div className="relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
@@ -174,18 +175,11 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
             className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-400 transition-all"
           />
         </div>
-
-        <div className="hidden print:block text-center mt-2">
-          <h1 className="text-xl font-bold">Order Summary - {window.label}</h1>
-          <p className="text-sm text-slate-600">
-            {filteredRows.length} deliveries &middot; {uniqueCustomers} customers &middot; Total: {grandTotal.toFixed(2)} kr
-          </p>
-        </div>
       </div>
 
-      <div className="flex-1 overflow-auto p-4 print:p-0 print:overflow-visible">
+      <div className="flex-1 overflow-auto p-4">
         {filteredRows.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center print:hidden">
+          <div className="flex flex-col items-center justify-center py-16 text-center">
             <div className="w-16 h-16 bg-slate-200 rounded-2xl flex items-center justify-center mb-4">
               <Package size={32} className="text-slate-400" />
             </div>
@@ -196,7 +190,7 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
           </div>
         ) : (
           <>
-            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden print:rounded-none print:border-0">
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200">
@@ -218,7 +212,7 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
                     return (
                       <tr
                         key={`${row.userId}-${index}`}
-                        className={`border-b border-slate-100 last:border-b-0 print:break-inside-avoid ${
+                        className={`border-b border-slate-100 last:border-b-0 ${
                           hasMultipleRows
                             ? isEvenGroup
                               ? 'bg-teal-50/30'
