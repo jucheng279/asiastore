@@ -73,6 +73,7 @@ function AppContent() {
   const scrollPositionRef = useRef(0);
   const pendingScrollRef = useRef<number | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mainRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     saveCartToStorage(cartQuantities);
@@ -136,8 +137,10 @@ function AppContent() {
       const scrollTo = pendingScrollRef.current;
       pendingScrollRef.current = null;
       requestAnimationFrame(() => {
-        window.scrollTo(0, scrollTo);
+        mainRef.current?.scrollTo(0, scrollTo);
       });
+    } else {
+      mainRef.current?.scrollTo(0, 0);
     }
   }, [currentView]);
 
@@ -345,7 +348,7 @@ function AppContent() {
   };
 
   const navigateToProduct = (productId: string) => {
-    scrollPositionRef.current = window.scrollY;
+    scrollPositionRef.current = mainRef.current?.scrollTop ?? 0;
     setPreviousView(currentView);
     setSelectedProductId(productId);
     setCurrentView('DETAILS');
@@ -422,7 +425,7 @@ function AppContent() {
   return (
     <div className="min-h-screen w-full bg-background-light dark:bg-background-dark flex">
       {!isAuthView && <DesktopSidebar currentView={currentView} onNavigate={guardedNavigate} cartCount={cartCount} />}
-      <main className={`flex-1 h-screen overflow-y-auto overflow-x-hidden ${isAuthView ? '' : 'max-w-md lg:max-w-none mx-auto lg:mx-0 shadow-2xl lg:shadow-none'} relative`}>
+      <main ref={mainRef} className={`flex-1 h-screen overflow-y-auto overflow-x-hidden ${isAuthView ? '' : 'max-w-md lg:max-w-none mx-auto lg:mx-0 shadow-2xl lg:shadow-none'} relative`}>
         {orderingClosed && !isAuthView && (
           <div className="sticky top-0 z-[60] bg-amber-50 dark:bg-amber-900/30 border-b border-amber-200 dark:border-amber-800">
             <div className="px-4 py-2.5 flex items-center gap-2.5">
