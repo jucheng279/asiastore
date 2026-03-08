@@ -219,6 +219,7 @@
     "buyAgain": "Buy Again",
     "cancel": "Cancel Order",
     "cancelled": "Cancelled",
+    "completed": "Completed",
     "confirmCancel": "Confirm Cancel"
   },
   "favorites": {

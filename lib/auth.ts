@@ -292,6 +292,8 @@ export interface DbOrder {
 }
 
 export async function fetchUserOrders(userId: string): Promise<{ order: DbOrder; items: DbOrderItem[] }[]> {
+  await supabase.rpc('finalize_and_cleanup_orders');
+
   const { data: orders, error: ordersError } = await supabase
     .from('user_orders')
     .select('*')

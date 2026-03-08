@@ -43,13 +43,14 @@ export interface OrderItem {
 export interface Order {
   id: string;
   date: string;
+  createdAt: string;
   total: number;
   items: OrderItem[];
   contactEmail: string;
   contactPhone: string;
   shippingAddress: Address;
   deliveryInstructions?: string;
-  status: 'active' | 'cancelled';
+  status: 'active' | 'cancelled' | 'completed';
   paidWithPoints?: boolean;
   pointsAmount?: number;
   paymentMethod?: 'cashOrSwish' | 'points' | 'payAtStore';

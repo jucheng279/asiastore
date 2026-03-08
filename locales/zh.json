@@ -219,6 +219,7 @@
     "buyAgain": "再次购买",
     "cancel": "取消订单",
     "cancelled": "已取消",
+    "completed": "已完成",
     "confirmCancel": "确认取消"
   },
   "favorites": {

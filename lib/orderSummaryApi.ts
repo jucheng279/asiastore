@@ -103,10 +103,12 @@ export async function fetchOrderSummary(
   windowStart: Date,
   windowEnd: Date
 ): Promise<{ rows: OrderSummaryRow[]; totalOrders: number }> {
+  await supabase.rpc('finalize_and_cleanup_orders');
+
   const { data: orders, error: ordersErr } = await supabase
     .from('user_orders')
     .select('*')
-    .eq('status', 'active')
+    .in('status', ['active', 'completed'])
     .gte('created_at', windowStart.toISOString())
     .lt('created_at', windowEnd.toISOString())
     .order('created_at', { ascending: true });

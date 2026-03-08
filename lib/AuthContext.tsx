@@ -48,6 +48,7 @@ function dbOrderToLocal(dbOrder: { order: { id: string; total: number; contact_e
   return {
     id: o.id,
     date: new Date(o.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    createdAt: o.created_at,
     total: o.total,
     items: dbOrder.items.map(item => ({
       id: item.product_id,
@@ -71,7 +72,7 @@ function dbOrderToLocal(dbOrder: { order: { id: string; total: number; contact_e
       isDefault: (addr.isDefault as boolean) || false,
     },
     deliveryInstructions: o.delivery_instructions || undefined,
-    status: (o.status as 'active' | 'cancelled') || 'active',
+    status: (o.status as 'active' | 'cancelled' | 'completed') || 'active',
     paidWithPoints: o.paid_with_points || false,
     pointsAmount: o.points_amount || 0,
     paymentMethod: (o.payment_method as 'cashOrSwish' | 'points' | 'payAtStore') || 'cashOrSwish',
@@ -385,6 +386,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const newOrder: Order = {
       id: result.orderId,
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      createdAt: new Date().toISOString(),
       total: orderData.total,
       items: orderData.items.map(item => ({
         id: item.id,

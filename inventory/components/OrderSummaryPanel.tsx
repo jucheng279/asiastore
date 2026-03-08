@@ -133,8 +133,9 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
           <div className="flex items-center gap-2">
             <button
               onClick={() => setWeekOffset(prev => prev - 1)}
-              className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
-              title="Previous week"
+              disabled={weekOffset <= -1}
+              className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              title={weekOffset <= -1 ? 'Only the last 2 ordering periods are available' : 'Previous week'}
             >
               <ChevronLeft size={16} className="text-slate-600" />
             </button>
