@@ -196,7 +196,6 @@ const OrdersView: React.FC<OrdersViewProps> = ({ currentView, onNavigate, cartCo
                 <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-white/5">
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-text-main dark:text-white font-bold">{order.id}</p>
                       {isCancelled && (
                         <span className="px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-bold uppercase tracking-wider">
                           {t('orders.cancelled')}
