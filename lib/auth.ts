@@ -433,3 +433,34 @@ export async function cancelUserOrder(
   if (error) return { success: false, error: error.message };
   return { success: true, error: null };
 }
+
+export interface ModifyOrderResult {
+  new_total: number;
+  new_items: { product_id: string; name: string; image: string; price: number; quantity: number }[];
+  was_cancelled: boolean;
+  points_diff?: number;
+  points_refunded?: number;
+}
+
+export async function modifyUserOrder(
+  userId: string,
+  orderId: string,
+  items: { productId: string; name: string; image: string; price: number; quantity: number }[]
+): Promise<{ result: ModifyOrderResult | null; error: string | null }> {
+  const itemsPayload = items.map(item => ({
+    product_id: item.productId,
+    name: item.name,
+    image: item.image,
+    price: item.price,
+    quantity: item.quantity,
+  }));
+
+  const { data, error } = await supabase.rpc('modify_order_atomic', {
+    p_user_id: userId,
+    p_order_id: orderId,
+    p_items: itemsPayload,
+  });
+
+  if (error) return { result: null, error: error.message };
+  return { result: data as ModifyOrderResult, error: null };
+}

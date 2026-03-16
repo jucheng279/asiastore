@@ -220,7 +220,20 @@
     "cancel": "取消订单",
     "cancelled": "已取消",
     "completed": "已完成",
-    "confirmCancel": "确认取消"
+    "confirmCancel": "确认取消",
+    "editOrder": "修改订单",
+    "saveChanges": "保存更改",
+    "discardChanges": "放弃",
+    "willBeRemoved": "将被移除",
+    "editSuccess": "订单已更新",
+    "editFailed": "更新订单失败，请重试。",
+    "insufficientPoints": "积分不足以支付更新后的金额",
+    "addItems": "添加商品",
+    "doneAdding": "完成",
+    "searchProducts": "搜索要添加的商品...",
+    "noChanges": "没有更改需要保存",
+    "newTotal": "新合计：",
+    "saving": "保存中..."
   },
   "favorites": {
     "title": "收藏",

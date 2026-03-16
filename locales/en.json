@@ -220,7 +220,20 @@
     "cancel": "Cancel Order",
     "cancelled": "Cancelled",
     "completed": "Completed",
-    "confirmCancel": "Confirm Cancel"
+    "confirmCancel": "Confirm Cancel",
+    "editOrder": "Edit Order",
+    "saveChanges": "Save Changes",
+    "discardChanges": "Discard",
+    "willBeRemoved": "Will be removed",
+    "editSuccess": "Order updated successfully",
+    "editFailed": "Failed to update order. Please try again.",
+    "insufficientPoints": "Not enough points for the updated total",
+    "addItems": "Add Items",
+    "doneAdding": "Done",
+    "searchProducts": "Search products to add...",
+    "noChanges": "No changes to save",
+    "newTotal": "New Total:",
+    "saving": "Saving..."
   },
   "favorites": {
     "title": "Favorites",

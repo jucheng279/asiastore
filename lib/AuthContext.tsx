@@ -17,12 +17,14 @@ import {
   fetchUserOrders,
   createUserOrder,
   cancelUserOrder,
+  modifyUserOrder,
   dailyCheckin,
   deductPoints,
   fetchUserPoints,
   hasCheckedInToday,
   type UserProfile,
   type UserAddress,
+  type ModifyOrderResult,
 } from './auth';
 import type { User } from '@supabase/supabase-js';
 import type { Address, Order } from '../types';
@@ -116,6 +118,7 @@ interface AuthContextType {
     items: { id: string; name: string; image: string; price: number; quantity: number }[];
   }) => Promise<{ order: Order | null; error: string | null }>;
   cancelOrder: (orderId: string) => Promise<{ success: boolean; error: string | null }>;
+  modifyOrder: (orderId: string, items: { id: string; name: string; image: string; price: number; quantity: number }[]) => Promise<{ result: ModifyOrderResult | null; error: string | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -424,6 +427,60 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return result;
   };
 
+  const handleModifyOrder = async (
+    orderId: string,
+    items: { id: string; name: string; image: string; price: number; quantity: number }[]
+  ): Promise<{ result: ModifyOrderResult | null; error: string | null }> => {
+    if (!user) return { result: null, error: 'Not authenticated' };
+
+    const result = await modifyUserOrder(
+      user.id,
+      orderId,
+      items.map(item => ({
+        productId: item.id,
+        name: item.name,
+        image: item.image,
+        price: item.price,
+        quantity: item.quantity,
+      }))
+    );
+
+    if (result.error || !result.result) {
+      return { result: null, error: result.error || 'Modification failed' };
+    }
+
+    const modResult = result.result;
+
+    if (modResult.was_cancelled) {
+      setOrders(prev => prev.map(o =>
+        o.id === orderId ? { ...o, status: 'cancelled' as const } : o
+      ));
+      if (modResult.points_refunded && modResult.points_refunded > 0) {
+        setPoints(prev => prev + modResult.points_refunded!);
+      }
+    } else {
+      setOrders(prev => prev.map(o => {
+        if (o.id !== orderId) return o;
+        return {
+          ...o,
+          total: modResult.new_total,
+          items: modResult.new_items.map(item => ({
+            id: item.product_id,
+            name: item.name,
+            image: item.image,
+            price: item.price,
+            qty: item.quantity,
+          })),
+        };
+      }));
+      if (modResult.points_diff && modResult.points_diff !== 0) {
+        setPoints(prev => prev - modResult.points_diff!);
+      }
+    }
+
+    return result;
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -453,6 +510,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         deductUserPoints: handleDeductPoints,
         createOrder: handleCreateOrder,
         cancelOrder: handleCancelOrder,
+        modifyOrder: handleModifyOrder,
       }}
     >
       {children}

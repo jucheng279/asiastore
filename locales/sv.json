@@ -220,7 +220,20 @@
     "cancel": "Avbryt bestallning",
     "cancelled": "Avbruten",
     "completed": "Slutford",
-    "confirmCancel": "Bekrafta avbrytning"
+    "confirmCancel": "Bekrafta avbrytning",
+    "editOrder": "Redigera bestallning",
+    "saveChanges": "Spara andringar",
+    "discardChanges": "Avbryt",
+    "willBeRemoved": "Tas bort",
+    "editSuccess": "Bestallning uppdaterad",
+    "editFailed": "Kunde inte uppdatera bestallningen. Forsok igen.",
+    "insufficientPoints": "Otillrackliga poang for det nya beloppet",
+    "addItems": "Lagg till varor",
+    "doneAdding": "Klart",
+    "searchProducts": "Sok produkter att lagga till...",
+    "noChanges": "Inga andringar att spara",
+    "newTotal": "Nytt totalt:",
+    "saving": "Sparar..."
   },
   "favorites": {
     "title": "Favoriter",
