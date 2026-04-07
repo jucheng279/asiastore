@@ -233,7 +233,8 @@
     "searchProducts": "Search products to add...",
     "noChanges": "No changes to save",
     "newTotal": "New Total:",
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "stockAdjusted": "Some quantities were adjusted to match available stock. Please review and save again."
   },
   "favorites": {
     "title": "Favorites",

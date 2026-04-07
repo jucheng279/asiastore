@@ -233,7 +233,8 @@
     "searchProducts": "搜索要添加的商品...",
     "noChanges": "没有更改需要保存",
     "newTotal": "新合计：",
-    "saving": "保存中..."
+    "saving": "保存中...",
+    "stockAdjusted": "部分商品数量已根据库存进行调整，请确认后重新保存。"
   },
   "favorites": {
     "title": "收藏",

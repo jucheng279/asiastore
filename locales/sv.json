@@ -233,7 +233,8 @@
     "searchProducts": "Sok produkter att lagga till...",
     "noChanges": "Inga andringar att spara",
     "newTotal": "Nytt totalt:",
-    "saving": "Sparar..."
+    "saving": "Sparar...",
+    "stockAdjusted": "Vissa antal har justerats efter tillgangligt lager. Granska och spara igen."
   },
   "favorites": {
     "title": "Favoriter",

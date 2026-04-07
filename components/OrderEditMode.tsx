@@ -117,7 +117,7 @@ const OrderEditMode: React.FC<OrderEditModeProps> = ({
   const previewDiscount = paidWithPoints
     ? (previewSubtotal + previewShipping + previewTax) * POINTS_DISCOUNT_RATE
     : 0;
-  const previewTotal = previewSubtotal + previewShipping + previewTax - previewDiscount;
+  const previewTotal = Math.round((previewSubtotal + previewShipping + previewTax - previewDiscount) * 100) / 100;
 
   const handleSave = async () => {
     if (!hasChanges) return;
@@ -138,7 +138,19 @@ const OrderEditMode: React.FC<OrderEditModeProps> = ({
       const result = await modifyOrder(orderId, itemsPayload);
 
       if (result.error) {
-        setError(result.error);
+        if (/insufficient stock/i.test(result.error)) {
+          await refreshData();
+          setEditItems(prev => prev.map(item => {
+            const product = productMap.get(item.id);
+            if (!product || product.availableStock === undefined) return item;
+            const max = product.availableStock + item.originalQty;
+            if (item.quantity <= max) return item;
+            return { ...item, quantity: Math.max(0, max) };
+          }));
+          setError(t('orders.stockAdjusted'));
+        } else {
+          setError(result.error);
+        }
         setSaving(false);
         return;
       }
