@@ -141,8 +141,16 @@ export function ProductDataProvider({ children }: { children: React.ReactNode })
       sessionStorage.removeItem(CACHE_KEY_PREFIX + lang);
     }
     isFetchingRef.current = false;
-    await loadData(language);
-  }, [language, loadData]);
+    if (data) {
+      try {
+        const fresh = await fetchAllData(language);
+        setData(fresh);
+        setCachedData(language, fresh);
+      } catch {}
+    } else {
+      await loadData(language);
+    }
+  }, [language, loadData, data]);
 
   const catalogProducts = data?.catalogProducts || [];
   const expiryProducts = data?.expiryProducts || [];

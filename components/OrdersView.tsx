@@ -181,7 +181,6 @@ const OrdersView: React.FC<OrdersViewProps> = ({ currentView, onNavigate, cartCo
   const handleEditOrder = (order: ConsolidatedOrder) => {
     setEditingOrderId(order.id);
     setConfirmCancelId(null);
-    refreshData();
   };
 
   const handleEditSuccess = () => {
