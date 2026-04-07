@@ -45,7 +45,7 @@ interface ProductDataState {
   productMap: Map<string, Product>;
   language: Language;
   setLanguage: (lang: Language) => void;
-  refreshData: () => Promise<void>;
+  refreshData: () => Promise<FetchedData | null>;
   orderingOpen: boolean;
   closedMessage: string;
   nextOpenTime: string;
@@ -63,7 +63,7 @@ const ProductDataContext = createContext<ProductDataState>({
   productMap: new Map(),
   language: 'en',
   setLanguage: () => {},
-  refreshData: () => Promise.resolve(),
+  refreshData: () => Promise.resolve(null),
   orderingOpen: true,
   closedMessage: '',
   nextOpenTime: '',
@@ -136,7 +136,7 @@ export function ProductDataProvider({ children }: { children: React.ReactNode })
     setLanguage(lang);
   }, []);
 
-  const refreshData = useCallback(async () => {
+  const refreshData = useCallback(async (): Promise<FetchedData | null> => {
     for (const lang of ['en', 'sv', 'zh'] as Language[]) {
       sessionStorage.removeItem(CACHE_KEY_PREFIX + lang);
     }
@@ -146,9 +146,13 @@ export function ProductDataProvider({ children }: { children: React.ReactNode })
         const fresh = await fetchAllData(language);
         setData(fresh);
         setCachedData(language, fresh);
-      } catch {}
+        return fresh;
+      } catch {
+        return null;
+      }
     } else {
       await loadData(language);
+      return null;
     }
   }, [language, loadData, data]);
 

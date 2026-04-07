@@ -4,7 +4,28 @@ import { useProductData } from '../lib/ProductDataContext';
 import { useAuth } from '../lib/AuthContext';
 import { formatPrice } from '../lib/formatters';
 import { TAX_RATE, FREE_SHIPPING_THRESHOLD, SHIPPING_FEE, POINTS_DISCOUNT_RATE } from '../lib/businessConstants';
+import type { FetchedData } from '../lib/api';
 import type { OrderItem, Product } from '../types';
+
+function buildProductMap(data: FetchedData): Map<string, Product> {
+  const allChildProducts: Product[] = [];
+  for (const list of [data.catalogProducts, data.expiryProducts, data.flashSaleProducts]) {
+    for (const p of list) {
+      if (p.children) {
+        allChildProducts.push(...p.children);
+      }
+    }
+  }
+  const all = [...data.catalogProducts, ...allChildProducts, ...data.expiryProducts, ...data.flashSaleProducts];
+  const map = new Map<string, Product>();
+  for (const p of all) {
+    map.set(p.id, p);
+    if (p.sourceProductId && !map.has(p.sourceProductId)) {
+      map.set(p.sourceProductId, p);
+    }
+  }
+  return map;
+}
 
 interface EditableItem {
   id: string;
@@ -139,15 +160,22 @@ const OrderEditMode: React.FC<OrderEditModeProps> = ({
 
       if (result.error) {
         if (/insufficient stock/i.test(result.error)) {
-          await refreshData();
+          const freshData = await refreshData();
+          const freshMap = freshData ? buildProductMap(freshData) : productMap;
+          const adjustedNames: string[] = [];
           setEditItems(prev => prev.map(item => {
-            const product = productMap.get(item.id);
+            const product = freshMap.get(item.id);
             if (!product || product.availableStock === undefined) return item;
             const max = product.availableStock + item.originalQty;
             if (item.quantity <= max) return item;
-            return { ...item, quantity: Math.max(0, max) };
+            const capped = Math.max(0, max);
+            adjustedNames.push(t('orders.stockAdjustedItem', { name: item.name, qty: capped }));
+            return { ...item, quantity: capped };
           }));
-          setError(t('orders.stockAdjusted'));
+          const msg = adjustedNames.length > 0
+            ? `${t('orders.stockAdjusted')}\n${adjustedNames.join('\n')}`
+            : t('orders.stockAdjusted');
+          setError(msg);
         } else {
           setError(result.error);
         }
@@ -337,7 +365,9 @@ const OrderEditMode: React.FC<OrderEditModeProps> = ({
 
       {error && (
         <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 p-3">
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          {error.split('\n').map((line, i) => (
+            <p key={i} className={`text-sm text-red-600 dark:text-red-400 ${i > 0 ? 'mt-1 text-xs opacity-80' : ''}`}>{line}</p>
+          ))}
         </div>
       )}
 

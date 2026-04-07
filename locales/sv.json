@@ -234,7 +234,8 @@
     "noChanges": "Inga andringar att spara",
     "newTotal": "Nytt totalt:",
     "saving": "Sparar...",
-    "stockAdjusted": "Vissa antal har justerats efter tillgangligt lager. Granska och spara igen."
+    "stockAdjusted": "Vissa antal har justerats efter tillgangligt lager. Granska och spara igen.",
+    "stockAdjustedItem": "{{name}}: minskat till {{qty}}"
   },
   "favorites": {
     "title": "Favoriter",

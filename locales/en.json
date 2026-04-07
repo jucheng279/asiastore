@@ -234,7 +234,8 @@
     "noChanges": "No changes to save",
     "newTotal": "New Total:",
     "saving": "Saving...",
-    "stockAdjusted": "Some quantities were adjusted to match available stock. Please review and save again."
+    "stockAdjusted": "Some quantities were adjusted to match available stock. Please review and save again.",
+    "stockAdjustedItem": "{{name}}: reduced to {{qty}}"
   },
   "favorites": {
     "title": "Favorites",
