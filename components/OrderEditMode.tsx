@@ -59,15 +59,20 @@ const OrderEditMode: React.FC<OrderEditModeProps> = ({
   const { modifyOrder, points } = useAuth();
 
   const [editItems, setEditItems] = useState<EditableItem[]>(
-    items.map(item => ({
-      id: item.id,
-      name: item.name,
-      image: item.image,
-      price: item.price,
-      quantity: item.qty,
-      originalQty: item.qty,
-      isNew: false,
-    }))
+    items
+      .filter(item => {
+        const p = productMap.get(item.id);
+        return !p?.hasChildren;
+      })
+      .map(item => ({
+        id: item.id,
+        name: item.name,
+        image: item.image,
+        price: item.price,
+        quantity: item.qty,
+        originalQty: item.qty,
+        isNew: false,
+      }))
   );
   const [showAddItems, setShowAddItems] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -81,6 +86,7 @@ const OrderEditMode: React.FC<OrderEditModeProps> = ({
     const q = searchQuery.toLowerCase();
     return allProducts
       .filter(p =>
+        !p.hasChildren &&
         !editItemIds.has(p.id) &&
         p.name.toLowerCase().includes(q) &&
         (p.availableStock === undefined || p.availableStock > 0)
@@ -111,6 +117,7 @@ const OrderEditMode: React.FC<OrderEditModeProps> = ({
   };
 
   const handleAddProduct = (product: Product) => {
+    if (product.hasChildren) return;
     setEditItems(prev => [...prev, {
       id: product.id,
       name: product.name,
