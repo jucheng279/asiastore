@@ -20,7 +20,6 @@ const OrdersView: React.FC<OrdersViewProps> = ({ currentView, onNavigate, cartCo
   const { cancelOrder } = useAuth();
   const { refreshData } = useProductData();
   const [cancellingId, setCancellingId] = useState<string | null>(null);
-  const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null);
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [storeSchedule, setStoreSchedule] = useState({ openDay: 1, openTime: '00:00', closeDay: 5, closeTime: '12:00' });
@@ -57,31 +56,18 @@ const OrdersView: React.FC<OrdersViewProps> = ({ currentView, onNavigate, cartCo
     return orderDate >= currentWindow.start && orderDate < currentWindow.end;
   };
 
-  const canCancelOrder = (order: Order): boolean => {
-    if (order.status !== 'active') return false;
-    if (!storeSettings) return false;
-    if (!isStoreOpen(storeSettings)) return false;
-    const currentWindow = calculateOrderingWindow(
-      storeSchedule.openDay, storeSchedule.openTime,
-      storeSchedule.closeDay, storeSchedule.closeTime, 0
-    );
-    const orderDate = new Date(order.createdAt);
-    return orderDate >= currentWindow.start && orderDate < currentWindow.end;
-  };
-
   const sortedOrders = [...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-  const handleCancelOrder = async (order: Order) => {
-    setCancellingId(order.id);
-    await cancelOrder(order.id);
+  const handleCancelOrder = async (orderId: string) => {
+    setCancellingId(orderId);
+    await cancelOrder(orderId);
     refreshData();
     setCancellingId(null);
-    setConfirmCancelId(null);
+    setEditingOrderId(null);
   };
 
   const handleEditOrder = (order: Order) => {
     setEditingOrderId(order.id);
-    setConfirmCancelId(null);
   };
 
   const handleEditSuccess = () => {
@@ -127,7 +113,6 @@ const OrdersView: React.FC<OrdersViewProps> = ({ currentView, onNavigate, cartCo
             const isCompleted = order.status === 'completed';
             const isInactive = isCancelled || isCompleted;
             const isMerged = (order.mergeCount || 1) > 1;
-            const showCancelButton = canCancelOrder(order);
             const showEditButton = canModifyOrder(order);
             const isEditing = editingOrderId === order.id;
 
@@ -178,6 +163,8 @@ const OrdersView: React.FC<OrdersViewProps> = ({ currentView, onNavigate, cartCo
                     originalTotal={order.total}
                     onClose={() => setEditingOrderId(null)}
                     onSuccess={handleEditSuccess}
+                    onCancelOrder={() => handleCancelOrder(order.id)}
+                    isCancelling={cancellingId === order.id}
                   />
                 ) : (
                   <div className="p-4">
@@ -213,60 +200,20 @@ const OrdersView: React.FC<OrdersViewProps> = ({ currentView, onNavigate, cartCo
                         {t('orders.total')} <span className={isCancelled ? 'text-gray-400 line-through' : 'text-primary'}>{formatPrice(order.total, language)}</span>
                       </p>
                       <div className="flex gap-2 flex-wrap justify-end">
-                        {order.status === 'active' && showCancelButton && (
-                          <>
-                            {confirmCancelId === order.id ? (
-                              <div className="flex items-center gap-2">
-                                <button
-                                  className="px-3 py-2 text-xs font-semibold text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
-                                  onClick={() => handleCancelOrder(order)}
-                                  disabled={cancellingId === order.id}
-                                >
-                                  {cancellingId === order.id ? t('common.loading') : t('orders.confirmCancel')}
-                                </button>
-                                <button
-                                  className="px-3 py-2 text-xs font-semibold text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                                  onClick={() => setConfirmCancelId(null)}
-                                >
-                                  {t('common.back')}
-                                </button>
-                              </div>
-                            ) : (
-                              <>
-                                <button
-                                  className="px-3 py-2 text-xs font-semibold text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                                  onClick={() => setConfirmCancelId(order.id)}
-                                >
-                                  {t('orders.cancel')}
-                                </button>
-                                {showEditButton && (
-                                  <button
-                                    className="px-3 py-2 text-xs font-semibold text-primary border border-primary/30 rounded-lg hover:bg-primary/5 transition-colors"
-                                    onClick={() => handleEditOrder(order)}
-                                  >
-                                    {t('orders.editOrder')}
-                                  </button>
-                                )}
-                              </>
-                            )}
-                          </>
-                        )}
-                        {(isInactive || !showCancelButton) && (
+                        {order.status === 'active' && showEditButton && (
                           <button
-                            className="px-4 py-2 text-sm font-semibold text-primary border border-primary rounded-lg hover:bg-primary/5 transition-colors"
-                            onClick={() => onBuyAgain(order.items)}
+                            className="px-3 py-2 text-xs font-semibold text-primary border border-primary/30 rounded-lg hover:bg-primary/5 transition-colors"
+                            onClick={() => handleEditOrder(order)}
                           >
-                            {t('orders.buyAgain')}
+                            {t('orders.editOrder')}
                           </button>
                         )}
-                        {order.status === 'active' && showCancelButton && confirmCancelId !== order.id && (
-                          <button
-                            className="px-4 py-2 text-sm font-semibold text-primary border border-primary rounded-lg hover:bg-primary/5 transition-colors"
-                            onClick={() => onBuyAgain(order.items)}
-                          >
-                            {t('orders.buyAgain')}
-                          </button>
-                        )}
+                        <button
+                          className="px-4 py-2 text-sm font-semibold text-primary border border-primary rounded-lg hover:bg-primary/5 transition-colors"
+                          onClick={() => onBuyAgain(order.items)}
+                        >
+                          {t('orders.buyAgain')}
+                        </button>
                       </div>
                     </div>
                   </div>
