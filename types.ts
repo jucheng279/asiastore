@@ -54,6 +54,7 @@ export interface Order {
   paidWithPoints?: boolean;
   pointsAmount?: number;
   paymentMethod?: 'cashOrSwish' | 'points' | 'payAtStore';
+  mergeCount?: number;
 }
 
 export type ViewState = 'HOME' | 'LISTING' | 'DETAILS' | 'CART' | 'CHECKOUT' | 'DEALS' | 'ACCOUNT' | 'FAVORITES' | 'ORDERS' | 'PAYMENT_METHODS' | 'ADDRESSES' | 'NOTIFICATIONS' | 'BEST_SELLERS' | 'POINTS' | 'LOGIN' | 'REGISTER' | 'FORGOT_PASSWORD' | 'RESET_PASSWORD' | 'CONTACT_US';

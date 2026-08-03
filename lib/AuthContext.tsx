@@ -44,7 +44,7 @@ function toLocalAddress(ua: UserAddress): Address {
   };
 }
 
-function dbOrderToLocal(dbOrder: { order: { id: string; total: number; contact_email: string; contact_phone: string; shipping_address: Record<string, unknown>; delivery_instructions: string | null; created_at: string; status?: string; paid_with_points?: boolean; points_amount?: number; payment_method?: string }; items: { product_id: string; name: string; image: string; price: number; quantity: number }[] }): Order {
+function dbOrderToLocal(dbOrder: { order: { id: string; total: number; contact_email: string; contact_phone: string; shipping_address: Record<string, unknown>; delivery_instructions: string | null; created_at: string; status?: string; paid_with_points?: boolean; points_amount?: number; payment_method?: string; merge_count?: number }; items: { product_id: string; name: string; image: string; price: number; quantity: number }[] }): Order {
   const o = dbOrder.order;
   const addr = o.shipping_address as Record<string, string | boolean | undefined>;
   return {
@@ -78,6 +78,7 @@ function dbOrderToLocal(dbOrder: { order: { id: string; total: number; contact_e
     paidWithPoints: o.paid_with_points || false,
     pointsAmount: o.points_amount || 0,
     paymentMethod: (o.payment_method as 'cashOrSwish' | 'points' | 'payAtStore') || 'cashOrSwish',
+    mergeCount: o.merge_count || 1,
   };
 }
 
@@ -116,7 +117,7 @@ interface AuthContextType {
     pointsAmount?: number;
     paymentMethod?: 'cashOrSwish' | 'points' | 'payAtStore';
     items: { id: string; name: string; image: string; price: number; quantity: number }[];
-  }) => Promise<{ order: Order | null; error: string | null }>;
+  }) => Promise<{ order: Order | null; error: string | null; merged?: boolean }>;
   cancelOrder: (orderId: string) => Promise<{ success: boolean; error: string | null }>;
   modifyOrder: (orderId: string, items: { id: string; name: string; image: string; price: number; quantity: number }[]) => Promise<{ result: ModifyOrderResult | null; error: string | null }>;
 }
@@ -386,6 +387,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setPoints(prev => Math.max(0, prev - orderData.pointsAmount!));
     }
 
+    const existingOrder = orders.find(o => o.id === result.orderId);
+    if (existingOrder) {
+      const mergedItems = [...existingOrder.items];
+      for (const newItem of orderData.items) {
+        const existing = mergedItems.find(i => i.id === newItem.id);
+        if (existing) {
+          existing.qty += newItem.quantity;
+        } else {
+          mergedItems.push({ id: newItem.id, name: newItem.name, qty: newItem.quantity, image: newItem.image, price: newItem.price });
+        }
+      }
+      const updatedOrder: Order = {
+        ...existingOrder,
+        items: mergedItems,
+        total: existingOrder.total + orderData.total,
+        mergeCount: (existingOrder.mergeCount || 1) + 1,
+      };
+      setOrders(prev => prev.map(o => o.id === result.orderId ? updatedOrder : o));
+      return { order: updatedOrder, error: null, merged: true };
+    }
+
     const newOrder: Order = {
       id: result.orderId,
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
@@ -406,6 +428,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       paidWithPoints: orderData.paidWithPoints,
       pointsAmount: orderData.pointsAmount,
       paymentMethod: orderData.paymentMethod || 'cashOrSwish',
+      mergeCount: 1,
     };
 
     setOrders(prev => [newOrder, ...prev]);

@@ -235,9 +235,9 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
                             )}
                             <div>
                               <span className="font-semibold text-slate-800">{row.nickname}</span>
-                              {row.orderIds.length > 1 && (
+                              {row.mergeCount > 1 && (
                                 <span className="ml-1.5 px-1.5 py-0.5 bg-slate-100 text-slate-500 text-[10px] rounded-full font-medium">
-                                  {row.orderIds.length} merged
+                                  {row.mergeCount} merged
                                 </span>
                               )}
                               {hasMultipleRows && isFirst && (

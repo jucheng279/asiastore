@@ -368,6 +368,7 @@
     "orderFailedStock": "部分商品已缺货并已移除，请检查购物车。",
     "orderFailedStockItem": "\"{{name}}\"已缺货，已从购物车中移除。",
     "cartAdjustedToStock": "部分商品数量已根据库存调整。",
-    "orderingClosed": "目前暂停接单。"
+    "orderingClosed": "目前暂停接单。",
+    "orderMerged": "商品已添加到您现有的订单中。"
   }
 }

@@ -368,6 +368,7 @@
     "orderFailedStock": "Some items were out of stock and removed. Please review your cart.",
     "orderFailedStockItem": "\"{{name}}\" is out of stock and was removed from your cart.",
     "cartAdjustedToStock": "Some quantities were reduced to match available stock.",
-    "orderingClosed": "Ordering is currently closed."
+    "orderingClosed": "Ordering is currently closed.",
+    "orderMerged": "Items added to your existing order."
   }
 }

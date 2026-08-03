@@ -49,8 +49,8 @@ function generatePrintHtml(
       const paymentLabel = PAYMENT_LABELS[row.paymentMethod] || row.paymentMethod;
 
       const merged =
-        row.orderIds.length > 1
-          ? ` <span class="badge">${row.orderIds.length} merged</span>`
+        row.mergeCount > 1
+          ? ` <span class="badge">${row.mergeCount} merged</span>`
           : '';
 
       return `<tr class="${index % 2 === 0 ? 'even' : 'odd'}">

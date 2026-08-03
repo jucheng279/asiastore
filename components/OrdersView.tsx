@@ -1,106 +1,13 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useProductData } from '../lib/ProductDataContext';
 import { useAuth } from '../lib/AuthContext';
 import { formatPrice, formatDate } from '../lib/formatters';
-import { NavigationProps, Order, OrderItem } from '../types';
+import { NavigationProps, Order } from '../types';
 import { fetchStoreSettings, isStoreOpen, type StoreSettings } from '../lib/storeStatus';
 import { calculateOrderingWindow } from '../lib/orderSummaryApi';
 import BottomNav from './BottomNav';
 import OrderEditMode from './OrderEditMode';
-
-interface ConsolidatedOrder {
-  id: string;
-  date: string;
-  total: number;
-  items: OrderItem[];
-  contactEmail: string;
-  contactPhone: string;
-  shippingAddress: Order['shippingAddress'];
-  deliveryInstructions?: string;
-  status: 'active' | 'cancelled' | 'completed';
-  paidWithPoints?: boolean;
-  pointsAmount?: number;
-  paymentMethod?: string;
-  mergedOrderIds: string[];
-  createdAt: string;
-}
-
-function consolidateOrders(
-  orders: Order[],
-  openDay: number,
-  openTime: string,
-  closeDay: number,
-  closeTime: string
-): ConsolidatedOrder[] {
-  const getWindowKey = (dateStr: string): string => {
-    const orderDate = new Date(dateStr);
-    for (let offset = 0; offset >= -52; offset--) {
-      const win = calculateOrderingWindow(openDay, openTime, closeDay, closeTime, offset);
-      if (orderDate >= win.start && orderDate < win.end) {
-        return win.start.toISOString();
-      }
-    }
-    return dateStr;
-  };
-
-  const addrKey = (addr: Order['shippingAddress']): string =>
-    `${(addr.streetAddress || '').trim().toLowerCase()}|${(addr.postalCode || '').trim().toLowerCase()}|${(addr.city || '').trim().toLowerCase()}`;
-
-  const grouped = new Map<string, Order[]>();
-  for (const order of orders) {
-    const windowKey = getWindowKey(order.createdAt);
-    const key = `${windowKey}|${order.contactPhone.trim()}|${order.contactEmail.trim().toLowerCase()}|${order.paymentMethod || 'cashOrSwish'}|${addrKey(order.shippingAddress)}|${order.status}`;
-    const list = grouped.get(key) || [];
-    list.push(order);
-    grouped.set(key, list);
-  }
-
-  const result: ConsolidatedOrder[] = [];
-  for (const group of grouped.values()) {
-    if (group.length === 1) {
-      result.push({ ...group[0], mergedOrderIds: [group[0].id], createdAt: group[0].createdAt });
-    } else {
-      const first = group[0];
-      const mergedItems: OrderItem[] = [];
-      let totalSum = 0;
-      let pointsSum = 0;
-
-      for (const order of group) {
-        totalSum += order.total;
-        pointsSum += order.pointsAmount || 0;
-        for (const item of order.items) {
-          const existing = mergedItems.find(m => m.id === item.id && m.price === item.price);
-          if (existing) {
-            existing.qty += item.qty;
-          } else {
-            mergedItems.push({ ...item });
-          }
-        }
-      }
-
-      result.push({
-        id: first.id,
-        date: first.date,
-        total: totalSum,
-        items: mergedItems,
-        contactEmail: first.contactEmail,
-        contactPhone: first.contactPhone,
-        shippingAddress: first.shippingAddress,
-        deliveryInstructions: first.deliveryInstructions || group.find(o => o.deliveryInstructions)?.deliveryInstructions,
-        status: first.status,
-        paidWithPoints: first.paidWithPoints,
-        pointsAmount: pointsSum || undefined,
-        paymentMethod: first.paymentMethod,
-        mergedOrderIds: group.map(o => o.id),
-        createdAt: first.createdAt,
-      });
-    }
-  }
-
-  result.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  return result;
-}
 
 interface OrdersViewProps extends NavigationProps {
   orders: Order[];
@@ -138,20 +45,7 @@ const OrdersView: React.FC<OrdersViewProps> = ({ currentView, onNavigate, cartCo
     }
   }, [successMessage]);
 
-  const canModifyOrder = (order: ConsolidatedOrder): boolean => {
-    if (order.status !== 'active') return false;
-    if (order.mergedOrderIds.length > 1) return false;
-    if (!storeSettings) return false;
-    if (!isStoreOpen(storeSettings)) return false;
-    const currentWindow = calculateOrderingWindow(
-      storeSchedule.openDay, storeSchedule.openTime,
-      storeSchedule.closeDay, storeSchedule.closeTime, 0
-    );
-    const orderDate = new Date(order.createdAt);
-    return orderDate >= currentWindow.start && orderDate < currentWindow.end;
-  };
-
-  const canCancelOrder = (order: ConsolidatedOrder): boolean => {
+  const canModifyOrder = (order: Order): boolean => {
     if (order.status !== 'active') return false;
     if (!storeSettings) return false;
     if (!isStoreOpen(storeSettings)) return false;
@@ -163,22 +57,29 @@ const OrdersView: React.FC<OrdersViewProps> = ({ currentView, onNavigate, cartCo
     return orderDate >= currentWindow.start && orderDate < currentWindow.end;
   };
 
-  const consolidatedOrders = useMemo(
-    () => consolidateOrders(orders, storeSchedule.openDay, storeSchedule.openTime, storeSchedule.closeDay, storeSchedule.closeTime),
-    [orders, storeSchedule]
-  );
+  const canCancelOrder = (order: Order): boolean => {
+    if (order.status !== 'active') return false;
+    if (!storeSettings) return false;
+    if (!isStoreOpen(storeSettings)) return false;
+    const currentWindow = calculateOrderingWindow(
+      storeSchedule.openDay, storeSchedule.openTime,
+      storeSchedule.closeDay, storeSchedule.closeTime, 0
+    );
+    const orderDate = new Date(order.createdAt);
+    return orderDate >= currentWindow.start && orderDate < currentWindow.end;
+  };
 
-  const handleCancelOrder = async (consolidated: ConsolidatedOrder) => {
-    setCancellingId(consolidated.id);
-    for (const orderId of consolidated.mergedOrderIds) {
-      await cancelOrder(orderId);
-    }
+  const sortedOrders = [...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  const handleCancelOrder = async (order: Order) => {
+    setCancellingId(order.id);
+    await cancelOrder(order.id);
     refreshData();
     setCancellingId(null);
     setConfirmCancelId(null);
   };
 
-  const handleEditOrder = (order: ConsolidatedOrder) => {
+  const handleEditOrder = (order: Order) => {
     setEditingOrderId(order.id);
     setConfirmCancelId(null);
   };
@@ -219,13 +120,13 @@ const OrdersView: React.FC<OrdersViewProps> = ({ currentView, onNavigate, cartCo
         </div>
       )}
 
-      {consolidatedOrders.length > 0 ? (
+      {sortedOrders.length > 0 ? (
         <div className="flex flex-col lg:grid lg:grid-cols-2 gap-4 px-4 lg:px-6 py-4">
-          {consolidatedOrders.map((order) => {
+          {sortedOrders.map((order) => {
             const isCancelled = order.status === 'cancelled';
             const isCompleted = order.status === 'completed';
             const isInactive = isCancelled || isCompleted;
-            const isMerged = order.mergedOrderIds.length > 1;
+            const isMerged = (order.mergeCount || 1) > 1;
             const showCancelButton = canCancelOrder(order);
             const showEditButton = canModifyOrder(order);
             const isEditing = editingOrderId === order.id;
@@ -261,7 +162,7 @@ const OrdersView: React.FC<OrdersViewProps> = ({ currentView, onNavigate, cartCo
                       )}
                       {isMerged && (
                         <span className="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-bold">
-                          {order.mergedOrderIds.length} orders combined
+                          {order.mergeCount} merged
                         </span>
                       )}
                     </div>
@@ -271,7 +172,7 @@ const OrdersView: React.FC<OrdersViewProps> = ({ currentView, onNavigate, cartCo
 
                 {isEditing ? (
                   <OrderEditMode
-                    orderId={order.mergedOrderIds[0]}
+                    orderId={order.id}
                     items={order.items}
                     paidWithPoints={order.paidWithPoints}
                     originalTotal={order.total}

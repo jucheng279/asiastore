@@ -206,7 +206,7 @@ function AppContent() {
       const pointsDiscount = payWithPoints ? totalBeforeDiscount * POINTS_DISCOUNT_RATE : 0;
       const total = Math.round((totalBeforeDiscount - pointsDiscount) * 100) / 100;
 
-      const { order, error } = await createOrder({
+      const { order, error, merged } = await createOrder({
         total,
         contactEmail: shippingAddress.email || '',
         contactPhone: shippingAddress.phone,
@@ -243,6 +243,9 @@ function AppContent() {
 
       clearCart();
       await refreshData();
+      if (merged) {
+        showToast(t('toast.orderMerged'), 'success');
+      }
       setCurrentView('ORDERS');
     } finally {
       setIsSubmittingOrder(false);

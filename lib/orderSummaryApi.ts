@@ -25,7 +25,8 @@ export interface OrderSummaryRow {
   contactEmail: string;
   paymentMethod: string;
   total: number;
-  orderIds: string[];
+  orderId: string;
+  mergeCount: number;
   createdAt: string;
 }
 
@@ -83,22 +84,6 @@ export function calculateOrderingWindow(
   return { start: windowStart, end: windowEnd, label };
 }
 
-function addressKey(addr: Record<string, unknown>): string {
-  const street = ((addr.streetAddress as string) || '').trim().toLowerCase();
-  const postal = ((addr.postalCode as string) || '').trim().toLowerCase();
-  const city = ((addr.city as string) || '').trim().toLowerCase();
-  return `${street}|${postal}|${city}`;
-}
-
-function consolidationKey(order: {
-  contactPhone: string;
-  contactEmail: string;
-  paymentMethod: string;
-  addressStr: string;
-}): string {
-  return `${order.contactPhone.trim()}|${order.contactEmail.trim().toLowerCase()}|${order.paymentMethod}|${order.addressStr}`;
-}
-
 export async function fetchOrderSummary(
   windowStart: Date,
   windowEnd: Date
@@ -146,90 +131,34 @@ export async function fetchOrderSummary(
     });
   }
 
-  const grouped = new Map<string, {
-    userId: string;
-    nickname: string;
-    items: OrderSummaryItem[];
-    addr: Record<string, unknown>;
-    deliveryInstructions?: string;
-    contactPhone: string;
-    contactEmail: string;
-    paymentMethod: string;
-    total: number;
-    orderIds: string[];
-    createdAt: string;
-  }>();
-
-  for (const order of orders) {
+  const rows: OrderSummaryRow[] = orders.map(order => {
     const profile = profileMap.get(order.user_id);
     const nickname = profile?.nickname || 'Unknown User';
     const addr = (order.shipping_address || {}) as Record<string, unknown>;
-    const addrStr = addressKey(addr);
     const pm = order.payment_method || (order.paid_with_points ? 'points' : 'cashOrSwish');
 
-    const key = `${order.user_id}|${consolidationKey({
+    return {
+      userId: order.user_id,
+      nickname,
+      items: itemsByOrder.get(order.id) || [],
+      address: {
+        streetAddress: (addr.streetAddress as string) || '',
+        postalCode: (addr.postalCode as string) || '',
+        city: (addr.city as string) || '',
+        country: (addr.country as string) || '',
+        fullName: (addr.fullName as string) || '',
+        label: (addr.label as string) || '',
+      },
+      deliveryInstructions: order.delivery_instructions || undefined,
       contactPhone: order.contact_phone,
       contactEmail: order.contact_email,
       paymentMethod: pm,
-      addressStr: addrStr,
-    })}`;
-
-    const existing = grouped.get(key);
-    if (existing) {
-      const orderItems = itemsByOrder.get(order.id) || [];
-      for (const item of orderItems) {
-        const match = existing.items.find(i => i.productId === item.productId && i.price === item.price);
-        if (match) {
-          match.quantity += item.quantity;
-        } else {
-          existing.items.push({ ...item });
-        }
-      }
-      existing.total += order.total;
-      existing.orderIds.push(order.id);
-      if (order.delivery_instructions && !existing.deliveryInstructions) {
-        existing.deliveryInstructions = order.delivery_instructions;
-      }
-    } else {
-      grouped.set(key, {
-        userId: order.user_id,
-        nickname,
-        items: [...(itemsByOrder.get(order.id) || [])],
-        addr,
-        deliveryInstructions: order.delivery_instructions || undefined,
-        contactPhone: order.contact_phone,
-        contactEmail: order.contact_email,
-        paymentMethod: pm,
-        total: order.total,
-        orderIds: [order.id],
-        createdAt: order.created_at,
-      });
-    }
-  }
-
-  const rows: OrderSummaryRow[] = [];
-  for (const g of grouped.values()) {
-    rows.push({
-      userId: g.userId,
-      nickname: g.nickname,
-      items: g.items,
-      address: {
-        streetAddress: (g.addr.streetAddress as string) || '',
-        postalCode: (g.addr.postalCode as string) || '',
-        city: (g.addr.city as string) || '',
-        country: (g.addr.country as string) || '',
-        fullName: (g.addr.fullName as string) || '',
-        label: (g.addr.label as string) || '',
-      },
-      deliveryInstructions: g.deliveryInstructions,
-      contactPhone: g.contactPhone,
-      contactEmail: g.contactEmail,
-      paymentMethod: g.paymentMethod,
-      total: g.total,
-      orderIds: g.orderIds,
-      createdAt: g.createdAt,
-    });
-  }
+      total: order.total,
+      orderId: order.id,
+      mergeCount: order.merge_count || 1,
+      createdAt: order.created_at,
+    };
+  });
 
   rows.sort((a, b) => a.nickname.localeCompare(b.nickname));
 
