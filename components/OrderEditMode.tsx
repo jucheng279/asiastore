@@ -44,8 +44,6 @@ interface OrderEditModeProps {
   originalTotal: number;
   onClose: () => void;
   onSuccess: () => void;
-  onCancelOrder: () => void;
-  isCancelling: boolean;
 }
 
 const OrderEditMode: React.FC<OrderEditModeProps> = ({
@@ -55,8 +53,6 @@ const OrderEditMode: React.FC<OrderEditModeProps> = ({
   originalTotal,
   onClose,
   onSuccess,
-  onCancelOrder,
-  isCancelling,
 }) => {
   const { t } = useTranslation();
   const { language, allProducts, productMap, refreshData } = useProductData();
@@ -82,7 +78,6 @@ const OrderEditMode: React.FC<OrderEditModeProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [confirmingCancel, setConfirmingCancel] = useState(false);
 
   const editItemIds = useMemo(() => new Set(editItems.map(i => i.id)), [editItems]);
 
@@ -210,35 +205,6 @@ const OrderEditMode: React.FC<OrderEditModeProps> = ({
 
   return (
     <div className="p-4 space-y-4">
-      {/* Header with cancel button top-right */}
-      <div className="flex items-center justify-end">
-        {confirmingCancel ? (
-          <div className="flex items-center gap-2">
-            <button
-              className="px-3 py-1.5 text-xs font-semibold text-red-600 border border-red-300 dark:border-red-700 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
-              onClick={onCancelOrder}
-              disabled={isCancelling}
-            >
-              {isCancelling ? t('common.loading') : t('orders.confirmCancel')}
-            </button>
-            <button
-              className="px-3 py-1.5 text-xs font-semibold text-gray-500 border border-gray-200 dark:border-white/10 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
-              onClick={() => setConfirmingCancel(false)}
-            >
-              {t('common.back')}
-            </button>
-          </div>
-        ) : (
-          <button
-            className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-            onClick={() => setConfirmingCancel(true)}
-          >
-            <span className="material-symbols-outlined text-[14px]">delete</span>
-            {t('orders.cancel')}
-          </button>
-        )}
-      </div>
-
       <div className="flex flex-col gap-3">
         {editItems.map((item) => {
           const maxStock = getMaxStock(item.id, item.originalQty);

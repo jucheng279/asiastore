@@ -20,6 +20,7 @@ const OrdersView: React.FC<OrdersViewProps> = ({ currentView, onNavigate, cartCo
   const { cancelOrder } = useAuth();
   const { refreshData } = useProductData();
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [confirmingCancelId, setConfirmingCancelId] = useState<string | null>(null);
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [storeSchedule, setStoreSchedule] = useState({ openDay: 1, openTime: '00:00', closeDay: 5, closeTime: '12:00' });
@@ -63,6 +64,7 @@ const OrdersView: React.FC<OrdersViewProps> = ({ currentView, onNavigate, cartCo
     await cancelOrder(orderId);
     refreshData();
     setCancellingId(null);
+    setConfirmingCancelId(null);
     setEditingOrderId(null);
   };
 
@@ -153,6 +155,35 @@ const OrdersView: React.FC<OrdersViewProps> = ({ currentView, onNavigate, cartCo
                     </div>
                     <p className="text-text-sub text-sm">{formatDate(order.date, language)}</p>
                   </div>
+                  {isEditing && (
+                    <div className="shrink-0">
+                      {confirmingCancelId === order.id ? (
+                        <div className="flex items-center gap-2">
+                          <button
+                            className="px-3 py-1.5 text-xs font-semibold text-red-600 border border-red-300 dark:border-red-700 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                            onClick={() => handleCancelOrder(order.id)}
+                            disabled={cancellingId === order.id}
+                          >
+                            {cancellingId === order.id ? t('common.loading') : t('orders.confirmCancel')}
+                          </button>
+                          <button
+                            className="px-3 py-1.5 text-xs font-semibold text-gray-500 border border-gray-200 dark:border-white/10 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                            onClick={() => setConfirmingCancelId(null)}
+                          >
+                            {t('common.back')}
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          onClick={() => setConfirmingCancelId(order.id)}
+                        >
+                          <span className="material-symbols-outlined text-[14px]">delete</span>
+                          {t('orders.cancel')}
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {isEditing ? (
@@ -163,8 +194,6 @@ const OrdersView: React.FC<OrdersViewProps> = ({ currentView, onNavigate, cartCo
                     originalTotal={order.total}
                     onClose={() => setEditingOrderId(null)}
                     onSuccess={handleEditSuccess}
-                    onCancelOrder={() => handleCancelOrder(order.id)}
-                    isCancelling={cancellingId === order.id}
                   />
                 ) : (
                   <div className="p-4">
