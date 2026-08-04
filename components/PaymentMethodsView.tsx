@@ -20,6 +20,13 @@ const PaymentMethodsView: React.FC<NavigationProps> = ({ onNavigate }) => {
       </header>
 
       <div className="p-4 lg:px-6 lg:max-w-3xl">
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/30 rounded-xl p-3 mb-4">
+          <div className="flex items-start gap-2">
+            <span className="material-symbols-outlined text-blue-600 dark:text-blue-400 text-[18px] mt-0.5">info</span>
+            <p className="text-xs text-blue-800 dark:text-blue-200">{t('payment.deliveryPaymentNotice')}</p>
+          </div>
+        </div>
+
         <div className="bg-surface-light dark:bg-surface-dark rounded-2xl overflow-hidden shadow-sm">
           <div className="divide-y divide-gray-100 dark:divide-white/10">
             <div className="p-4">

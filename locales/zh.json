@@ -272,8 +272,9 @@
   },
   "payment": {
     "title": "支付方式",
+    "deliveryPaymentNotice": "请注意：货到付款，请在订单送达时准备好您的支付方式。",
     "payAtStore": "门店支付",
-    "payAtStoreDesc": "稍后使用现金或刷卡支付。",
+    "payAtStoreDesc": "到店自取时使用现金或刷卡支付。",
     "storeAddress": "门店地址",
     "payWithSwish": "Swish支付",
     "payWithSwishDesc": "下单后通过Swish发送付款。",

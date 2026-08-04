@@ -272,8 +272,9 @@
   },
   "payment": {
     "title": "Betalning",
+    "deliveryPaymentNotice": "Observera: Betalning sker vid leverans. Ha din betalningsmetod redo nar din bestallning ankommit.",
     "payAtStore": "Betala i butik",
-    "payAtStoreDesc": "Betala med kontanter eller kort senare.",
+    "payAtStoreDesc": "Betala med kontanter eller kort vid avhamtning i butik.",
     "storeAddress": "Butiksadress",
     "payWithSwish": "Betala med Swish",
     "payWithSwishDesc": "Skicka betalning via Swish efter att du lagt din bestallning.",
