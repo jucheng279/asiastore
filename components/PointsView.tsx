@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NavigationProps } from '../types';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
 
 const EARN_METHODS = [
@@ -31,8 +31,9 @@ const EARN_METHODS = [
   },
 ];
 
-const PointsView: React.FC<NavigationProps> = ({ onNavigate }) => {
+const PointsView: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { isAuthenticated, points, checkedInToday, performDailyCheckin } = useAuth();
   const [isCheckingIn, setIsCheckingIn] = useState(false);
   const [checkinMessage, setCheckinMessage] = useState<string | null>(null);
@@ -58,7 +59,7 @@ const PointsView: React.FC<NavigationProps> = ({ onNavigate }) => {
       <div className="sticky top-0 z-50 flex items-center bg-surface-light dark:bg-surface-dark p-4 pb-3 shadow-sm">
         <button
           className="flex items-center justify-center rounded-lg h-10 w-10 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-          onClick={() => onNavigate('ACCOUNT')}
+          onClick={() => navigate('/account')}
         >
           <span className="material-symbols-outlined text-text-main dark:text-white text-[24px]">arrow_back</span>
         </button>

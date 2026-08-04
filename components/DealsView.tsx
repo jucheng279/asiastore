@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useProductData } from '../lib/ProductDataContext';
-import { NavigationProps } from '../types';
+import { useCart } from '../lib/CartContext';
+import { useAuth } from '../lib/AuthContext';
 import BottomNav from './BottomNav';
 import ProductCard from './ProductCard';
 
@@ -13,20 +15,12 @@ const TABS: { id: DealTab; labelKey: string; icon: string; color: string; active
   { id: 'catalog-deals', labelKey: 'deals.catalogDeals', icon: 'loyalty', color: 'red', activeBg: 'bg-primary', activeText: 'text-white' },
 ];
 
-const DealsView: React.FC<NavigationProps> = ({
-  currentView,
-  onNavigate,
-  cartCount,
-  favorites = new Set(),
-  onToggleFavorite,
-  cartQuantities = new Map(),
-  onIncreaseQuantity,
-  onDecreaseQuantity,
-  onNavigateToProduct,
-  orderingClosed,
-}) => {
+const DealsView: React.FC = () => {
   const { t } = useTranslation();
-  const { catalogProducts, expiryProducts, flashSaleProducts } = useProductData();
+  const navigate = useNavigate();
+  const { catalogProducts, expiryProducts, flashSaleProducts, orderingOpen } = useProductData();
+  const { cartQuantities, cartCount, increaseQuantity, decreaseQuantity } = useCart();
+  const { favorites, toggleFavorite } = useAuth();
   const [activeTab, setActiveTab] = useState<DealTab>('near-expiry');
 
   const catalogDeals = useMemo(() => {
@@ -57,7 +51,7 @@ const DealsView: React.FC<NavigationProps> = ({
           <div className="flex w-12 items-center justify-end lg:hidden">
             <button
               className="flex relative cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 bg-transparent text-text-main dark:text-white gap-2 min-w-0 p-0"
-              onClick={() => onNavigate('CART')}
+              onClick={() => navigate('/cart')}
             >
               <span className="material-symbols-outlined text-[26px]">shopping_cart</span>
               {cartCount > 0 && (
@@ -140,11 +134,11 @@ const DealsView: React.FC<NavigationProps> = ({
                   product={product}
                   quantity={cartQuantities.get(product.id) || 0}
                   isFavorite={favorites.has(favoriteId)}
-                  onNavigate={() => onNavigateToProduct?.(product.id)}
-                  onToggleFavorite={() => onToggleFavorite?.(favoriteId)}
-                  onIncrease={() => onIncreaseQuantity?.(product.id)}
-                  onDecrease={() => onDecreaseQuantity?.(product.id)}
-                  orderingClosed={orderingClosed}
+                  onNavigate={() => navigate('/product/' + product.id)}
+                  onToggleFavorite={() => toggleFavorite(favoriteId)}
+                  onIncrease={() => increaseQuantity(product.id)}
+                  onDecrease={() => decreaseQuantity(product.id)}
+                  orderingClosed={!orderingOpen}
                 />
               );
             })}
@@ -160,7 +154,7 @@ const DealsView: React.FC<NavigationProps> = ({
         )}
       </main>
 
-      <BottomNav currentView={currentView} onNavigate={onNavigate} />
+      <BottomNav />
     </div>
   );
 };

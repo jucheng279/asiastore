@@ -1,14 +1,10 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
-import type { ViewState } from '../types';
 
-interface RegisterViewProps {
-  onNavigate: (view: ViewState) => void;
-  onAuthSuccess?: () => void;
-}
-
-const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onAuthSuccess }) => {
+const RegisterView: React.FC = () => {
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const { signUp } = useAuth();
   const [nickname, setNickname] = useState('');
@@ -42,7 +38,7 @@ const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onAuthSuccess }
     if (err) {
       setError(err);
     } else {
-      onAuthSuccess?.();
+      navigate('/');
     }
   };
 
@@ -141,7 +137,7 @@ const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onAuthSuccess }
           <p className="text-center text-sm text-text-sub mt-6">
             {t('auth.alreadyHaveAccount')}{' '}
             <button
-              onClick={() => onNavigate('LOGIN')}
+              onClick={() => navigate('/login')}
               className="text-primary font-semibold hover:underline"
             >
               {t('common.signIn')}
@@ -149,7 +145,7 @@ const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onAuthSuccess }
           </p>
 
           <button
-            onClick={() => onNavigate('HOME')}
+            onClick={() => navigate('/')}
             className="w-full mt-4 py-3 text-text-sub text-sm font-medium hover:text-text-main transition-colors"
           >
             {t('auth.browseAsGuest')}

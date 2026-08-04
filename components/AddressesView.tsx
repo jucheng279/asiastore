@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NavigationProps, Address } from '../types';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../lib/AuthContext';
+import { Address } from '../types';
 import { LABEL_OPTIONS, getLabelIcon } from '../lib/addressLabels';
 
 interface AddressFormModalProps {
@@ -368,14 +370,10 @@ const EmptyState: React.FC<{ onAddNew: () => void }> = ({ onAddNew }) => {
   );
 };
 
-interface AddressesViewProps extends NavigationProps {
-  addresses: Address[];
-  onSaveAddress: (address: Omit<Address, 'id'> & { id?: string }) => void;
-  onDeleteAddress: (addressId: string) => void;
-}
-
-const AddressesView: React.FC<AddressesViewProps> = ({ onNavigate, addresses, onSaveAddress, onDeleteAddress }) => {
+const AddressesView: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { addresses, saveAddress, deleteAddress } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
 
@@ -400,7 +398,7 @@ const AddressesView: React.FC<AddressesViewProps> = ({ onNavigate, addresses, on
         <div className="flex items-center gap-3">
           <button
             className="flex size-10 items-center justify-center rounded-full text-text-main dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-            onClick={() => onNavigate('ACCOUNT')}
+            onClick={() => navigate('/account')}
           >
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
@@ -426,7 +424,7 @@ const AddressesView: React.FC<AddressesViewProps> = ({ onNavigate, addresses, on
                   key={address.id}
                   address={address}
                   onEdit={() => handleEdit(address)}
-                  onDelete={() => onDeleteAddress(address.id)}
+                  onDelete={() => deleteAddress(address.id)}
                 />
               ))}
             </div>
@@ -445,7 +443,7 @@ const AddressesView: React.FC<AddressesViewProps> = ({ onNavigate, addresses, on
       <AddressFormModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        onSave={onSaveAddress}
+        onSave={saveAddress}
         address={editingAddress}
       />
 

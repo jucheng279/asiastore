@@ -1,24 +1,18 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useProductData } from '../lib/ProductDataContext';
-import { NavigationProps } from '../types';
+import { useCart } from '../lib/CartContext';
+import { useAuth } from '../lib/AuthContext';
 import BottomNav from './BottomNav';
 import ProductCard from './ProductCard';
 
-const BestSellersView: React.FC<NavigationProps> = ({
-  currentView,
-  onNavigate,
-  cartCount,
-  favorites = new Set(),
-  onToggleFavorite,
-  cartQuantities = new Map(),
-  onIncreaseQuantity,
-  onDecreaseQuantity,
-  onNavigateToProduct,
-  orderingClosed,
-}) => {
+const BestSellersView: React.FC = () => {
   const { t } = useTranslation();
-  const { bestSellerProducts } = useProductData();
+  const navigate = useNavigate();
+  const { bestSellerProducts, orderingOpen } = useProductData();
+  const { cartQuantities, cartCount, increaseQuantity, decreaseQuantity } = useCart();
+  const { favorites, toggleFavorite } = useAuth();
 
   return (
     <div className="bg-background-light dark:bg-background-dark min-h-screen pb-20 lg:pb-8">
@@ -26,7 +20,7 @@ const BestSellersView: React.FC<NavigationProps> = ({
         <div className="flex items-center justify-between">
           <button
             className="flex size-10 items-center justify-center rounded-full text-text-main dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-            onClick={() => onNavigate('HOME')}
+            onClick={() => navigate('/')}
           >
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
@@ -34,7 +28,7 @@ const BestSellersView: React.FC<NavigationProps> = ({
           <div className="relative">
             <button
               className="flex size-10 items-center justify-center rounded-full text-text-main dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-              onClick={() => onNavigate('CART')}
+              onClick={() => navigate('/cart')}
             >
               <span className="material-symbols-outlined">shopping_cart</span>
             </button>
@@ -61,17 +55,17 @@ const BestSellersView: React.FC<NavigationProps> = ({
               product={product}
               quantity={cartQuantities.get(product.id) || 0}
               isFavorite={favorites.has(product.id)}
-              onNavigate={() => onNavigateToProduct?.(product.id)}
-              onToggleFavorite={() => onToggleFavorite?.(product.id)}
-              onIncrease={() => onIncreaseQuantity?.(product.id)}
-              onDecrease={() => onDecreaseQuantity?.(product.id)}
-              orderingClosed={orderingClosed}
+              onNavigate={() => navigate('/product/' + product.id)}
+              onToggleFavorite={() => toggleFavorite(product.id)}
+              onIncrease={() => increaseQuantity(product.id)}
+              onDecrease={() => decreaseQuantity(product.id)}
+              orderingClosed={!orderingOpen}
             />
           ))}
         </div>
       </main>
 
-      <BottomNav currentView={currentView} onNavigate={onNavigate} />
+      <BottomNav />
     </div>
   );
 };

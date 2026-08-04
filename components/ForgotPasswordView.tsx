@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
-import type { ViewState } from '../types';
 
-interface ForgotPasswordViewProps {
-  onNavigate: (view: ViewState) => void;
-}
-
-const ForgotPasswordView: React.FC<ForgotPasswordViewProps> = ({ onNavigate }) => {
+const ForgotPasswordView: React.FC = () => {
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const { resetPassword } = useAuth();
   const [email, setEmail] = useState('');
@@ -65,7 +62,7 @@ const ForgotPasswordView: React.FC<ForgotPasswordViewProps> = ({ onNavigate }) =
               </div>
 
               <button
-                onClick={() => onNavigate('LOGIN')}
+                onClick={() => navigate('/login')}
                 className="w-full py-3.5 bg-primary text-white rounded-xl font-semibold text-sm hover:bg-red-700 transition-all flex items-center justify-center gap-2 mt-6"
               >
                 {t('auth.backToSignIn')}
@@ -112,7 +109,7 @@ const ForgotPasswordView: React.FC<ForgotPasswordViewProps> = ({ onNavigate }) =
           <p className="text-center text-sm text-text-sub mt-8">
             {t('auth.rememberPassword')}{' '}
             <button
-              onClick={() => onNavigate('LOGIN')}
+              onClick={() => navigate('/login')}
               className="text-primary font-semibold hover:underline"
             >
               {t('common.signIn')}

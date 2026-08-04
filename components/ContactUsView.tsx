@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { NavigationProps } from '../types';
+import { useNavigate } from 'react-router-dom';
 import BottomNav from './BottomNav';
 
 const PHONE = '0790557790';
@@ -8,8 +8,9 @@ const EMAIL = 'kontakt@asiashop.se';
 const ADDRESS = 'Storgatan 52, 582 23 Linköping';
 const MAPS_URL = 'https://www.google.com/maps/search/?api=1&query=Storgatan+52+582+23+Linköping';
 
-const ContactUsView: React.FC<NavigationProps> = ({ currentView, onNavigate, cartCount }) => {
+const ContactUsView: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   return (
     <div className="bg-background-light dark:bg-background-dark min-h-screen pb-24 lg:pb-8">
@@ -17,7 +18,7 @@ const ContactUsView: React.FC<NavigationProps> = ({ currentView, onNavigate, car
         <div className="flex items-center gap-3">
           <button
             className="flex size-10 items-center justify-center rounded-full text-text-main dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-            onClick={() => onNavigate('ACCOUNT')}
+            onClick={() => navigate('/account')}
           >
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
@@ -75,7 +76,7 @@ const ContactUsView: React.FC<NavigationProps> = ({ currentView, onNavigate, car
         </div>
       </div>
 
-      <BottomNav currentView={currentView} onNavigate={onNavigate} />
+      <BottomNav />
     </div>
   );
 };

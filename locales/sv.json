@@ -370,6 +370,7 @@
     "orderFailedStockItem": "\"{{name}}\" ar slut i lager och har tagits bort fran varukorgen.",
     "cartAdjustedToStock": "Vissa antal har justerats efter tillgangligt lager.",
     "orderingClosed": "Bestallning ar for tillfallet stangd.",
-    "orderMerged": "Varor tillagda till din befintliga bestallning."
+    "orderMerged": "Varor tillagda till din befintliga bestallning.",
+    "orderPlaced": "Bestallningen ar lagd!"
   }
 }

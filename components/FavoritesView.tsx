@@ -1,8 +1,11 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useProductData } from '../lib/ProductDataContext';
+import { useCart } from '../lib/CartContext';
+import { useAuth } from '../lib/AuthContext';
 import { formatPrice, getExpiryText, formatFlashTimeRemaining } from '../lib/formatters';
-import { NavigationProps, Product } from '../types';
+import { Product } from '../types';
 import BottomNav from './BottomNav';
 
 function computeDaysUntilExpiry(expiryDate: string): number {
@@ -15,7 +18,7 @@ function computeDaysUntilExpiry(expiryDate: string): number {
 
 function NotAvailableCard({ favoriteId, onToggleFavorite, t }: {
   favoriteId: string;
-  onToggleFavorite?: (id: string) => void;
+  onToggleFavorite: (id: string) => void;
   t: (key: string) => string;
 }) {
   return (
@@ -32,7 +35,7 @@ function NotAvailableCard({ favoriteId, onToggleFavorite, t }: {
         <div className="flex items-end justify-end mt-2">
           <button
             className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 dark:bg-white/10 text-gray-400 hover:text-primary hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
-            onClick={() => onToggleFavorite?.(favoriteId)}
+            onClick={() => onToggleFavorite(favoriteId)}
           >
             <span className="material-symbols-outlined text-[20px]">delete</span>
           </button>
@@ -45,9 +48,9 @@ function NotAvailableCard({ favoriteId, onToggleFavorite, t }: {
 function AvailableCard({ product, favoriteId, onToggleFavorite, onAddToCart, onNavigateToProduct, t, language }: {
   product: Product;
   favoriteId: string;
-  onToggleFavorite?: (id: string) => void;
-  onAddToCart?: (product: Product) => void;
-  onNavigateToProduct?: (id: string) => void;
+  onToggleFavorite: (id: string) => void;
+  onAddToCart: (product: Product) => void;
+  onNavigateToProduct: (id: string) => void;
   t: (key: string, opts?: Record<string, unknown>) => string;
   language: string;
 }) {
@@ -59,7 +62,7 @@ function AvailableCard({ product, favoriteId, onToggleFavorite, onAddToCart, onN
     <div className="flex gap-4 bg-white dark:bg-white/5 rounded-2xl p-3 shadow-sm border border-gray-100 dark:border-white/5">
       <div
         className="relative w-28 h-28 shrink-0 rounded-xl bg-gray-50 dark:bg-white/10 overflow-hidden cursor-pointer"
-        onClick={() => onNavigateToProduct?.(product.id)}
+        onClick={() => onNavigateToProduct(product.id)}
       >
         <div
           className="w-full h-full bg-center bg-no-repeat bg-contain"
@@ -78,7 +81,7 @@ function AvailableCard({ product, favoriteId, onToggleFavorite, onAddToCart, onN
         <div>
           <h3
             className="text-text-main dark:text-white font-bold leading-tight line-clamp-2 cursor-pointer hover:text-primary transition-colors"
-            onClick={() => onNavigateToProduct?.(product.id)}
+            onClick={() => onNavigateToProduct(product.id)}
           >
             {product.name}
           </h3>
@@ -122,7 +125,7 @@ function AvailableCard({ product, favoriteId, onToggleFavorite, onAddToCart, onN
           <div className="flex items-center gap-2">
             <button
               className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 dark:bg-white/10 text-gray-500 hover:text-primary hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
-              onClick={() => onToggleFavorite?.(favoriteId)}
+              onClick={() => onToggleFavorite(favoriteId)}
             >
               <span className="material-symbols-outlined text-[20px]">delete</span>
             </button>
@@ -133,14 +136,14 @@ function AvailableCard({ product, favoriteId, onToggleFavorite, onAddToCart, onN
             ) : product.hasChildren ? (
               <button
                 className="w-9 h-9 flex items-center justify-center rounded-full bg-primary text-white hover:bg-red-700 shadow-md transition-colors"
-                onClick={() => onNavigateToProduct?.(product.id)}
+                onClick={() => onNavigateToProduct(product.id)}
               >
                 <span className="material-symbols-outlined text-[20px]">tune</span>
               </button>
             ) : (
               <button
                 className="w-9 h-9 flex items-center justify-center rounded-full bg-primary text-white hover:bg-red-700 shadow-md transition-colors"
-                onClick={() => onAddToCart?.(product)}
+                onClick={() => onAddToCart(product)}
               >
                 <span className="material-symbols-outlined text-[20px]">add_shopping_cart</span>
               </button>
@@ -152,14 +155,26 @@ function AvailableCard({ product, favoriteId, onToggleFavorite, onAddToCart, onN
   );
 }
 
-const FavoritesView: React.FC<NavigationProps> = ({ currentView, onNavigate, cartCount, favorites = new Set(), onToggleFavorite, onAddToCart, onNavigateToProduct }) => {
+const FavoritesView: React.FC = () => {
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const { productMap, language } = useProductData();
+  const { cartCount, increaseQuantity } = useCart();
+  const { favorites, toggleFavorite } = useAuth();
+
   const favoriteEntries: { product: Product | null; favoriteId: string }[] = [];
   favorites.forEach(id => {
     const product = productMap.get(id) ?? null;
     favoriteEntries.push({ product, favoriteId: id });
   });
+
+  const handleAddToCart = (product: Product) => {
+    increaseQuantity(product.id);
+  };
+
+  const handleNavigateToProduct = (id: string) => {
+    navigate('/product/' + id);
+  };
 
   return (
     <div className="bg-background-light dark:bg-background-dark min-h-screen pb-24 lg:pb-8">
@@ -167,7 +182,7 @@ const FavoritesView: React.FC<NavigationProps> = ({ currentView, onNavigate, car
         <div className="flex items-center gap-3">
           <button
             className="flex size-10 items-center justify-center rounded-full text-text-main dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-            onClick={() => onNavigate('ACCOUNT')}
+            onClick={() => navigate('/')}
           >
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
@@ -175,7 +190,7 @@ const FavoritesView: React.FC<NavigationProps> = ({ currentView, onNavigate, car
         </div>
         <button
           className="flex relative items-center justify-center text-text-main dark:text-white"
-          onClick={() => onNavigate('CART')}
+          onClick={() => navigate('/cart')}
         >
           <span className="material-symbols-outlined text-[26px]">shopping_cart</span>
           {cartCount > 0 && (
@@ -197,9 +212,9 @@ const FavoritesView: React.FC<NavigationProps> = ({ currentView, onNavigate, car
                   key={favoriteId}
                   product={product}
                   favoriteId={favoriteId}
-                  onToggleFavorite={onToggleFavorite}
-                  onAddToCart={onAddToCart}
-                  onNavigateToProduct={onNavigateToProduct}
+                  onToggleFavorite={toggleFavorite}
+                  onAddToCart={handleAddToCart}
+                  onNavigateToProduct={handleNavigateToProduct}
                   t={t}
                   language={language}
                 />
@@ -207,7 +222,7 @@ const FavoritesView: React.FC<NavigationProps> = ({ currentView, onNavigate, car
                 <NotAvailableCard
                   key={favoriteId}
                   favoriteId={favoriteId}
-                  onToggleFavorite={onToggleFavorite}
+                  onToggleFavorite={toggleFavorite}
                   t={t}
                 />
               )
@@ -217,7 +232,7 @@ const FavoritesView: React.FC<NavigationProps> = ({ currentView, onNavigate, car
           <div className="px-4 py-6">
             <button
               className="w-full py-3 bg-primary text-white font-bold rounded-xl hover:bg-red-700 transition-colors"
-              onClick={() => onNavigate('LISTING')}
+              onClick={() => navigate('/')}
             >
               {t('common.continueShopping')}
             </button>
@@ -232,14 +247,14 @@ const FavoritesView: React.FC<NavigationProps> = ({ currentView, onNavigate, car
           <p className="text-text-sub text-center mb-6">{t('favorites.noFavoritesDesc')}</p>
           <button
             className="px-6 py-3 bg-primary text-white font-bold rounded-xl hover:bg-red-700 transition-colors"
-            onClick={() => onNavigate('HOME')}
+            onClick={() => navigate('/')}
           >
             {t('common.browseProducts')}
           </button>
         </div>
       )}
 
-      <BottomNav currentView={currentView} onNavigate={onNavigate} />
+      <BottomNav />
     </div>
   );
 };

@@ -1,24 +1,22 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useProductData } from '../lib/ProductDataContext';
 import { useAuth } from '../lib/AuthContext';
+import { useCart } from '../lib/CartContext';
 import { formatPrice, formatDate } from '../lib/formatters';
-import { NavigationProps, Order } from '../types';
+import { Order } from '../types';
 import { fetchStoreSettings, isStoreOpen, type StoreSettings } from '../lib/storeStatus';
 import { calculateOrderingWindow } from '../lib/orderSummaryApi';
 import BottomNav from './BottomNav';
 import OrderEditMode from './OrderEditMode';
 
-interface OrdersViewProps extends NavigationProps {
-  orders: Order[];
-  onBuyAgain: (items: Order['items']) => void;
-}
-
-const OrdersView: React.FC<OrdersViewProps> = ({ currentView, onNavigate, cartCount, orders, onBuyAgain }) => {
+const OrdersView: React.FC = () => {
+  const navigate = useNavigate();
   const { t } = useTranslation();
-  const { language } = useProductData();
-  const { cancelOrder } = useAuth();
-  const { refreshData } = useProductData();
+  const { language, refreshData, orderingOpen } = useProductData();
+  const { orders, cancelOrder } = useAuth();
+  const { buyAgain, cartCount } = useCart();
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [confirmingCancelId, setConfirmingCancelId] = useState<string | null>(null);
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
@@ -78,13 +76,18 @@ const OrdersView: React.FC<OrdersViewProps> = ({ currentView, onNavigate, cartCo
     refreshData();
   };
 
+  const handleBuyAgain = (items: Order['items']) => {
+    buyAgain(items.map(i => ({ id: i.id, qty: i.qty })));
+    navigate('/cart');
+  };
+
   return (
     <div className="bg-background-light dark:bg-background-dark min-h-screen pb-24 lg:pb-8">
       <header className="sticky top-0 z-30 flex items-center justify-between bg-background-light/90 dark:bg-background-dark/90 px-5 py-4 backdrop-blur-md">
         <div className="flex items-center gap-3">
           <button
             className="flex size-10 items-center justify-center rounded-full text-text-main dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-            onClick={() => onNavigate('ACCOUNT')}
+            onClick={() => navigate('/account')}
           >
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
@@ -92,7 +95,7 @@ const OrdersView: React.FC<OrdersViewProps> = ({ currentView, onNavigate, cartCo
         </div>
         <button
           className="flex relative items-center justify-center text-text-main dark:text-white"
-          onClick={() => onNavigate('CART')}
+          onClick={() => navigate('/cart')}
         >
           <span className="material-symbols-outlined text-[26px]">shopping_cart</span>
           {cartCount > 0 && (
@@ -239,7 +242,7 @@ const OrdersView: React.FC<OrdersViewProps> = ({ currentView, onNavigate, cartCo
                         )}
                         <button
                           className="px-4 py-2 text-sm font-semibold text-primary border border-primary rounded-lg hover:bg-primary/5 transition-colors"
-                          onClick={() => onBuyAgain(order.items)}
+                          onClick={() => handleBuyAgain(order.items)}
                         >
                           {t('orders.buyAgain')}
                         </button>
@@ -260,14 +263,14 @@ const OrdersView: React.FC<OrdersViewProps> = ({ currentView, onNavigate, cartCo
           <p className="text-text-sub text-center mb-6">{t('orders.noOrdersDesc')}</p>
           <button
             className="px-6 py-3 bg-primary text-white font-bold rounded-xl hover:bg-red-700 transition-colors"
-            onClick={() => onNavigate('HOME')}
+            onClick={() => navigate('/')}
           >
             {t('common.startShopping')}
           </button>
         </div>
       )}
 
-      <BottomNav currentView={currentView} onNavigate={onNavigate} />
+      <BottomNav />
     </div>
   );
 };

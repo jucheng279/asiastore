@@ -1,14 +1,21 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useProductData } from '../lib/ProductDataContext';
-import { NavigationProps } from '../types';
+import { useCart } from '../lib/CartContext';
+import { useAuth } from '../lib/AuthContext';
 import BottomNav from './BottomNav';
 import ProductCard from './ProductCard';
 import LanguageSwitcher from './LanguageSwitcher';
 
-const HomeView: React.FC<NavigationProps> = ({ currentView, onNavigate, cartCount, favorites = new Set(), onToggleFavorite, cartQuantities = new Map(), onIncreaseQuantity, onDecreaseQuantity, onNavigateWithCategory, onNavigateToProduct, orderingClosed }) => {
+const HomeView: React.FC = () => {
   const { t } = useTranslation();
-  const { categories, bestSellerProducts, expiryProducts, flashSaleProducts } = useProductData();
+  const navigate = useNavigate();
+  const { categories, bestSellerProducts, expiryProducts, flashSaleProducts, orderingOpen } = useProductData();
+  const { cartQuantities, increaseQuantity, decreaseQuantity, cartCount } = useCart();
+  const { favorites, toggleFavorite } = useAuth();
+
+  const orderingClosed = !orderingOpen;
 
   return (
     <div className="bg-background-light dark:bg-background-dark min-h-screen pb-24 lg:pb-8">
@@ -26,7 +33,7 @@ const HomeView: React.FC<NavigationProps> = ({ currentView, onNavigate, cartCoun
             </div>
             <button
               className="flex relative cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 bg-transparent text-text-main dark:text-white p-0 lg:hidden"
-              onClick={() => onNavigate('CART')}
+              onClick={() => navigate('/cart')}
             >
               <span className="material-symbols-outlined text-[26px]">shopping_cart</span>
               {cartCount > 0 && (
@@ -46,7 +53,7 @@ const HomeView: React.FC<NavigationProps> = ({ currentView, onNavigate, cartCoun
                 className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-main dark:text-white focus:outline-0 focus:ring-0 border-none bg-transparent focus:border-none h-full placeholder:text-text-sub px-4 rounded-l-none border-l-0 pl-2 pr-4 text-base font-normal leading-normal cursor-pointer"
                 placeholder={t('home.searchPlaceholder')}
                 readOnly
-                onClick={() => onNavigate('LISTING')}
+                onClick={() => navigate('/products')}
               />
             </div>
           </label>
@@ -76,13 +83,13 @@ const HomeView: React.FC<NavigationProps> = ({ currentView, onNavigate, cartCoun
           <h2 className="text-text-main dark:text-white text-[19px] font-bold leading-tight tracking-[-0.015em]">{t('home.shopByCategory')}</h2>
           <span
             className="text-primary text-sm font-bold cursor-pointer"
-            onClick={() => onNavigate('LISTING')}
+            onClick={() => navigate('/products')}
           >{t('common.viewAll')}</span>
         </div>
         <div className="flex w-full overflow-x-auto lg:overflow-x-visible no-scrollbar pt-1 pb-3">
           <div className="flex min-h-min flex-row items-start justify-start gap-6 lg:flex-wrap">
             {categories.map((cat) => (
-              <div key={cat.id} className="flex flex-col items-center gap-2 min-w-[70px] lg:min-w-[80px]" onClick={() => onNavigateWithCategory?.('LISTING', cat.id)}>
+              <div key={cat.id} className="flex flex-col items-center gap-2 min-w-[70px] lg:min-w-[80px]" onClick={() => navigate('/products/' + cat.id)}>
                 <div className="w-[60px] h-[60px] lg:w-[70px] lg:h-[70px] bg-center bg-no-repeat bg-cover rounded-full border-2 border-transparent hover:border-primary transition-all cursor-pointer shadow-sm" style={{ backgroundImage: `url("${cat.image_url}")` }}></div>
                 <p className="text-text-main dark:text-white text-xs font-medium leading-normal">{cat.name}</p>
               </div>
@@ -95,7 +102,7 @@ const HomeView: React.FC<NavigationProps> = ({ currentView, onNavigate, cartCoun
 
       <div className="flex justify-between items-center px-4 lg:px-6 pt-6 pb-4 bg-surface-light dark:bg-surface-dark">
         <h2 className="text-text-main dark:text-white text-[20px] font-bold leading-tight tracking-[-0.015em]">{t('home.trendingProducts')}</h2>
-        <a className="text-primary text-sm font-bold flex items-center" href="#" onClick={(e) => { e.preventDefault(); onNavigate('BEST_SELLERS'); }}>
+        <a className="text-primary text-sm font-bold flex items-center" href="#" onClick={(e) => { e.preventDefault(); navigate('/best-sellers'); }}>
           {t('common.seeAll')} <span className="material-symbols-outlined text-sm ml-1">arrow_forward</span>
         </a>
       </div>
@@ -108,10 +115,10 @@ const HomeView: React.FC<NavigationProps> = ({ currentView, onNavigate, cartCoun
                 product={product}
                 quantity={cartQuantities.get(product.id) || 0}
                 isFavorite={favorites.has(product.id)}
-                onNavigate={() => onNavigateToProduct?.(product.id)}
-                onToggleFavorite={() => onToggleFavorite?.(product.id)}
-                onIncrease={() => onIncreaseQuantity?.(product.id)}
-                onDecrease={() => onDecreaseQuantity?.(product.id)}
+                onNavigate={() => navigate('/product/' + product.id)}
+                onToggleFavorite={() => toggleFavorite(product.id)}
+                onIncrease={() => increaseQuantity(product.id)}
+                onDecrease={() => decreaseQuantity(product.id)}
                 orderingClosed={orderingClosed}
               />
             </div>
@@ -126,7 +133,7 @@ const HomeView: React.FC<NavigationProps> = ({ currentView, onNavigate, cartCoun
           <span className="material-symbols-outlined text-amber-500 text-xl">schedule</span>
           <h2 className="text-text-main dark:text-white text-[20px] font-bold leading-tight tracking-[-0.015em]">{t('home.nearExpiryDeals')}</h2>
         </div>
-        <a className="text-primary text-sm font-bold flex items-center" href="#" onClick={(e) => { e.preventDefault(); onNavigate('DEALS'); }}>
+        <a className="text-primary text-sm font-bold flex items-center" href="#" onClick={(e) => { e.preventDefault(); navigate('/deals'); }}>
           {t('common.seeAll')} <span className="material-symbols-outlined text-sm ml-1">arrow_forward</span>
         </a>
       </div>
@@ -140,10 +147,10 @@ const HomeView: React.FC<NavigationProps> = ({ currentView, onNavigate, cartCoun
                   product={product}
                   quantity={cartQuantities.get(product.id) || 0}
                   isFavorite={favorites.has(favoriteId)}
-                  onNavigate={() => onNavigateToProduct?.(product.id)}
-                  onToggleFavorite={() => onToggleFavorite?.(favoriteId)}
-                  onIncrease={() => onIncreaseQuantity?.(product.id)}
-                  onDecrease={() => onDecreaseQuantity?.(product.id)}
+                  onNavigate={() => navigate('/product/' + product.id)}
+                  onToggleFavorite={() => toggleFavorite(favoriteId)}
+                  onIncrease={() => increaseQuantity(product.id)}
+                  onDecrease={() => decreaseQuantity(product.id)}
                   orderingClosed={orderingClosed}
                 />
               </div>
@@ -159,7 +166,7 @@ const HomeView: React.FC<NavigationProps> = ({ currentView, onNavigate, cartCoun
           <span className="material-symbols-outlined text-orange-500 text-xl">bolt</span>
           <h2 className="text-text-main dark:text-white text-[20px] font-bold leading-tight tracking-[-0.015em]">{t('home.flashSale')}</h2>
         </div>
-        <a className="text-primary text-sm font-bold flex items-center" href="#" onClick={(e) => { e.preventDefault(); onNavigate('DEALS'); }}>
+        <a className="text-primary text-sm font-bold flex items-center" href="#" onClick={(e) => { e.preventDefault(); navigate('/deals'); }}>
           {t('common.seeAll')} <span className="material-symbols-outlined text-sm ml-1">arrow_forward</span>
         </a>
       </div>
@@ -173,10 +180,10 @@ const HomeView: React.FC<NavigationProps> = ({ currentView, onNavigate, cartCoun
                   product={product}
                   quantity={cartQuantities.get(product.id) || 0}
                   isFavorite={favorites.has(favoriteId)}
-                  onNavigate={() => onNavigateToProduct?.(product.id)}
-                  onToggleFavorite={() => onToggleFavorite?.(favoriteId)}
-                  onIncrease={() => onIncreaseQuantity?.(product.id)}
-                  onDecrease={() => onDecreaseQuantity?.(product.id)}
+                  onNavigate={() => navigate('/product/' + product.id)}
+                  onToggleFavorite={() => toggleFavorite(favoriteId)}
+                  onIncrease={() => increaseQuantity(product.id)}
+                  onDecrease={() => decreaseQuantity(product.id)}
                   orderingClosed={orderingClosed}
                 />
               </div>
@@ -185,7 +192,7 @@ const HomeView: React.FC<NavigationProps> = ({ currentView, onNavigate, cartCoun
         </div>
       </div>
 
-      <BottomNav currentView={currentView} onNavigate={onNavigate} />
+      <BottomNav />
     </div>
   );
 };

@@ -1,27 +1,21 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useProductData } from '../lib/ProductDataContext';
+import { useCart } from '../lib/CartContext';
+import { useAuth } from '../lib/AuthContext';
 import { formatPrice } from '../lib/formatters';
-import { NavigationProps } from '../types';
 
-interface ProductDetailProps extends NavigationProps {
-  selectedProductId: string | null;
-  onGoBack: () => void;
-}
-
-const ProductDetailView: React.FC<ProductDetailProps> = ({
-  onNavigate,
-  cartCount,
-  selectedProductId,
-  onGoBack,
-  cartQuantities = new Map(),
-  favorites = new Set(),
-  onToggleFavorite,
-  onAddQuantityToCart,
-  orderingClosed = false,
-}) => {
+const ProductDetailView: React.FC = () => {
   const { t } = useTranslation();
-  const { productMap, language } = useProductData();
+  const navigate = useNavigate();
+  const { productId: selectedProductId } = useParams<{ productId: string }>();
+  const { productMap, language, orderingOpen } = useProductData();
+  const { cartQuantities, cartCount, addQuantityToCart } = useCart();
+  const { favorites, toggleFavorite } = useAuth();
+
+  const orderingClosed = !orderingOpen;
+
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [localQty, setLocalQty] = useState(1);
 
@@ -82,13 +76,17 @@ const ProductDetailView: React.FC<ProductDetailProps> = ({
   };
 
   const handleAddToCart = () => {
-    if (!cartProductId || !onAddQuantityToCart || isOutOfStock || orderingClosed) return;
+    if (!cartProductId || isOutOfStock || orderingClosed) return;
     const cartQty = cartQuantities.get(cartProductId) || 0;
     const canAdd = available !== undefined ? Math.min(localQty, available - cartQty) : localQty;
     if (canAdd > 0) {
-      onAddQuantityToCart(cartProductId, canAdd);
+      addQuantityToCart(cartProductId, canAdd);
       setLocalQty(1);
     }
+  };
+
+  const handleGoBack = () => {
+    navigate(-1);
   };
 
   if (!resolvedProduct || !displayProduct) {
@@ -101,7 +99,7 @@ const ProductDetailView: React.FC<ProductDetailProps> = ({
         <p className="text-text-sub text-sm text-center mb-6">{t('product.productNotFoundDesc')}</p>
         <button
           className="px-6 py-3 bg-primary text-white font-bold rounded-xl hover:bg-red-700 transition-colors"
-          onClick={onGoBack}
+          onClick={handleGoBack}
         >
           {t('common.goBack')}
         </button>
@@ -181,7 +179,7 @@ const ProductDetailView: React.FC<ProductDetailProps> = ({
       <nav className="sticky top-0 z-50 flex items-center justify-between bg-surface-light/95 dark:bg-background-dark/95 backdrop-blur-sm p-4 border-b border-gray-100 dark:border-white/10">
         <button
           className="flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-text-main dark:text-white"
-          onClick={onGoBack}
+          onClick={handleGoBack}
         >
           <span className="material-symbols-outlined">arrow_back</span>
         </button>
@@ -193,7 +191,7 @@ const ProductDetailView: React.FC<ProductDetailProps> = ({
             className={`flex size-10 shrink-0 items-center justify-center rounded-full transition-colors ${
               isFavorite ? 'text-primary' : 'text-text-main dark:text-white hover:bg-gray-100 dark:hover:bg-white/10'
             }`}
-            onClick={() => onToggleFavorite?.(favoriteId)}
+            onClick={() => toggleFavorite(favoriteId)}
           >
             <span
               className="material-symbols-outlined"
@@ -204,7 +202,7 @@ const ProductDetailView: React.FC<ProductDetailProps> = ({
           </button>
           <button
             className="relative flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-text-main dark:text-white lg:hidden"
-            onClick={() => onNavigate('CART')}
+            onClick={() => navigate('/cart')}
           >
             <span className="material-symbols-outlined">shopping_cart</span>
             {cartCount > 0 && <span className="absolute top-1.5 right-1.5 size-2.5 rounded-full bg-primary border-2 border-white dark:border-background-dark"></span>}

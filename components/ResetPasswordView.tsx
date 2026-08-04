@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
-import type { ViewState } from '../types';
 
-interface ResetPasswordViewProps {
-  onNavigate: (view: ViewState) => void;
-}
-
-const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({ onNavigate }) => {
+const ResetPasswordView: React.FC = () => {
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const { updatePassword, clearPasswordRecovery } = useAuth();
   const [password, setPassword] = useState('');
@@ -42,7 +39,7 @@ const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({ onNavigate }) => 
 
   const handleGoToSignIn = () => {
     clearPasswordRecovery();
-    onNavigate('LOGIN');
+    navigate('/login');
   };
 
   const inputClass = "w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all text-sm";

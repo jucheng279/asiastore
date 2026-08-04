@@ -1,32 +1,24 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useProductData } from '../lib/ProductDataContext';
+import { useAuth } from '../lib/AuthContext';
+import { useCart } from '../lib/CartContext';
+import { useToast } from '../lib/ToastContext';
 import { formatPrice } from '../lib/formatters';
-import { NavigationProps, CartItem, Address } from '../types';
+import type { Address, CartItem } from '../types';
 import { LABEL_OPTIONS, getLabelIcon } from '../lib/addressLabels';
 import { useVerifiedTotal } from '../lib/useVerifiedTotal';
 
-interface CheckoutViewProps extends NavigationProps {
-  cartItems: CartItem[];
-  addresses: Address[];
-  userPoints: number;
-  onConfirmOrder: (address: Address, instructions?: string, payWithPoints?: boolean, paymentMethod?: 'cashOrSwish' | 'points' | 'payAtStore') => void;
-  onSaveAddress: (address: Omit<Address, 'id'> & { id?: string }) => void;
-  isSubmitting?: boolean;
-}
-
-const CheckoutView: React.FC<CheckoutViewProps> = ({
-  onNavigate,
-  cartItems,
-  addresses,
-  userPoints,
-  onConfirmOrder,
-  onSaveAddress,
-  isSubmitting = false,
-  orderingClosed = false,
-}) => {
+const CheckoutView: React.FC = () => {
+  const navigate = useNavigate();
   const { t } = useTranslation();
-  const { language } = useProductData();
+  const { language, orderingOpen, refreshData } = useProductData();
+  const { addresses, saveAddress, points: userPoints, createOrder } = useAuth();
+  const { cartItems, clearCart } = useCart();
+  const { showToast } = useToast();
+  const orderingClosed = !orderingOpen;
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [addressMode, setAddressMode] = useState<'saved' | 'manual'>(
     addresses.length > 0 ? 'saved' : 'manual'
@@ -76,7 +68,7 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({
   const formValid =
     addressMode === 'saved' ? !!selectedAddress : manualValid;
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     setAttempted(true);
     if (!formValid) return;
 
@@ -99,7 +91,7 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({
       };
 
       if (saveToBook) {
-        onSaveAddress({
+        saveAddress({
           label: addressLabel,
           fullName: fullName.trim(),
           phone: phone.trim(),
@@ -113,12 +105,39 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({
       }
     }
 
-    onConfirmOrder(
-      address,
-      deliveryInstructions.trim() || undefined,
-      payWithPoints,
-      paymentMethod
-    );
+    setIsSubmitting(true);
+    try {
+      const items = cartItems.map(ci => ({
+        id: ci.id,
+        name: ci.name,
+        image: ci.image,
+        price: ci.price,
+        quantity: ci.quantity,
+      }));
+      const { error, merged } = await createOrder({
+        total: totalRounded,
+        contactEmail: address.email || '',
+        contactPhone: address.phone,
+        shippingAddress: address,
+        deliveryInstructions: deliveryInstructions.trim() || undefined,
+        paidWithPoints: payWithPoints,
+        pointsAmount: payWithPoints ? totalRounded : undefined,
+        paymentMethod,
+        items,
+      });
+      if (error) {
+        showToast(error, 'warning');
+      } else {
+        clearCart();
+        await refreshData();
+        showToast(merged ? t('toast.orderMerged') : t('toast.orderPlaced'));
+        navigate('/orders');
+      }
+    } catch {
+      showToast(t('toast.orderFailed'), 'warning');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const inputClass = (valid: boolean) =>
@@ -133,7 +152,7 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({
       <div className="sticky top-0 z-50 flex items-center bg-surface-light dark:bg-surface-dark p-4 pb-3 justify-between border-b border-gray-100 dark:border-gray-800">
         <button
           className="text-text-main dark:text-white flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          onClick={() => onNavigate('CART')}
+          onClick={() => navigate('/cart')}
         >
           <span className="material-symbols-outlined">arrow_back_ios_new</span>
         </button>

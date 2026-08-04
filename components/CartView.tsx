@@ -1,41 +1,22 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { NavigationProps, CartItem } from '../types';
+import { useNavigate } from 'react-router-dom';
 import { TAX_RATE, FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from '../lib/businessConstants';
 import ProductCard from './ProductCard';
 import { useProductData } from '../lib/ProductDataContext';
+import { useCart } from '../lib/CartContext';
+import { useAuth } from '../lib/AuthContext';
 import { formatPrice } from '../lib/formatters';
 import { useCartRecommendations } from '../lib/useCartRecommendations';
 
-interface CartViewProps extends NavigationProps {
-  cartItems: CartItem[];
-  onIncreaseQuantity: (productId: string) => void;
-  onDecreaseQuantity: (productId: string) => void;
-  onRemoveItem: (productId: string) => void;
-  onClearCart: () => void;
-  onPlaceOrder: () => void;
-  cartQuantities: Map<string, number>;
-  favorites: Set<string>;
-  onToggleFavorite: (productId: string) => void;
-  onNavigateToProduct: (productId: string) => void;
-}
-
-const CartView: React.FC<CartViewProps> = ({
-  onNavigate,
-  cartItems,
-  onIncreaseQuantity,
-  onDecreaseQuantity,
-  onRemoveItem,
-  onClearCart,
-  onPlaceOrder,
-  cartQuantities,
-  favorites,
-  onToggleFavorite,
-  onNavigateToProduct,
-  orderingClosed = false,
-}) => {
+const CartView: React.FC = () => {
   const { t } = useTranslation();
-  const { language } = useProductData();
+  const navigate = useNavigate();
+  const { language, allProducts, orderingOpen } = useProductData();
+  const { cartItems, cartQuantities, cartCount, increaseQuantity, decreaseQuantity, removeFromCart, clearCart } = useCart();
+  const { favorites, toggleFavorite } = useAuth();
+
+  const orderingClosed = !orderingOpen;
   const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
@@ -44,7 +25,6 @@ const CartView: React.FC<CartViewProps> = ({
   const amountToFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
   const shippingProgress = Math.min(100, (subtotal / FREE_SHIPPING_THRESHOLD) * 100);
 
-  const { allProducts } = useProductData();
   const recommendations = useCartRecommendations(cartItems, allProducts);
   const isEmpty = cartItems.length === 0;
   const hasOverstock = cartItems.some(item => item.availableStock !== undefined && item.quantity > item.availableStock);
@@ -55,7 +35,7 @@ const CartView: React.FC<CartViewProps> = ({
         <div className="flex items-center gap-3">
           <button
             className="flex size-10 items-center justify-center rounded-full text-text-main dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-            onClick={() => onNavigate('HOME')}
+            onClick={() => navigate('/')}
           >
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
@@ -64,7 +44,7 @@ const CartView: React.FC<CartViewProps> = ({
         {!isEmpty && (
           <button
             className="text-sm font-semibold text-primary hover:text-red-700 transition-colors"
-            onClick={onClearCart}
+            onClick={clearCart}
           >
             {t('common.clearAll')}
           </button>
@@ -80,7 +60,7 @@ const CartView: React.FC<CartViewProps> = ({
           <p className="text-text-sub text-center mb-6">{t('cart.emptyCartDesc')}</p>
           <button
             className="px-6 py-3 bg-primary text-white font-bold rounded-xl hover:bg-red-700 transition-colors"
-            onClick={() => onNavigate('HOME')}
+            onClick={() => navigate('/')}
           >
             {t('common.continueShopping')}
           </button>
@@ -123,7 +103,7 @@ const CartView: React.FC<CartViewProps> = ({
                           <h3 className="font-bold text-slate-900 dark:text-white leading-tight pr-4">{item.name}</h3>
                           <button
                             className="text-slate-400 hover:text-primary transition-colors"
-                            onClick={() => onRemoveItem(item.id)}
+                            onClick={() => removeFromCart(item.id)}
                           >
                             <span className="material-symbols-outlined text-[20px]">delete</span>
                           </button>
@@ -142,7 +122,7 @@ const CartView: React.FC<CartViewProps> = ({
                         <div className="flex items-center gap-3 rounded-lg bg-slate-50 dark:bg-white/10 px-2 py-1">
                           <button
                             className="flex h-6 w-6 items-center justify-center rounded bg-white dark:bg-white/10 shadow-sm text-slate-600 dark:text-white hover:text-primary disabled:opacity-50"
-                            onClick={() => onDecreaseQuantity(item.id)}
+                            onClick={() => decreaseQuantity(item.id)}
                           >
                             <span className="material-symbols-outlined text-[16px]">remove</span>
                           </button>
@@ -153,7 +133,7 @@ const CartView: React.FC<CartViewProps> = ({
                                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                 : 'bg-primary text-white hover:bg-red-700'
                             }`}
-                            onClick={() => { if (!atMax && !orderingClosed) onIncreaseQuantity(item.id); }}
+                            onClick={() => { if (!atMax && !orderingClosed) increaseQuantity(item.id); }}
                             disabled={atMax || orderingClosed}
                           >
                             <span className="material-symbols-outlined text-[16px]">add</span>
@@ -178,10 +158,10 @@ const CartView: React.FC<CartViewProps> = ({
                         product={product}
                         quantity={cartQuantities.get(product.id) || 0}
                         isFavorite={favorites.has(product.id)}
-                        onNavigate={() => onNavigateToProduct(product.id)}
-                        onToggleFavorite={() => onToggleFavorite(product.id)}
-                        onIncrease={() => onIncreaseQuantity(product.id)}
-                        onDecrease={() => onDecreaseQuantity(product.id)}
+                        onNavigate={() => navigate('/product/' + product.id)}
+                        onToggleFavorite={() => toggleFavorite(product.id)}
+                        onIncrease={() => increaseQuantity(product.id)}
+                        onDecrease={() => decreaseQuantity(product.id)}
                         orderingClosed={orderingClosed}
                       />
                     </div>
@@ -220,7 +200,7 @@ const CartView: React.FC<CartViewProps> = ({
                     ? 'bg-gray-400 cursor-not-allowed'
                     : 'bg-primary shadow-primary/20 active:scale-[0.98] hover:bg-red-600'
                 }`}
-                onClick={onPlaceOrder}
+                onClick={() => navigate('/checkout')}
                 disabled={hasOverstock || orderingClosed}
               >
                 <span>{orderingClosed ? t('store.closedCheckout') : t('cart.checkout')}</span>
@@ -240,7 +220,7 @@ const CartView: React.FC<CartViewProps> = ({
                   ? 'bg-gray-400 cursor-not-allowed'
                   : 'bg-primary shadow-primary/20 active:scale-[0.98] hover:bg-red-600'
               }`}
-              onClick={onPlaceOrder}
+              onClick={() => navigate('/checkout')}
               disabled={hasOverstock || orderingClosed}
             >
               <span>{orderingClosed ? t('store.closedCheckout') : t('cart.checkout')}</span>

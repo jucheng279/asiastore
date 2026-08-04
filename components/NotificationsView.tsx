@@ -1,19 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NavigationProps } from '../types';
+import { useNavigate } from 'react-router-dom';
+import { useCart } from '../lib/CartContext';
 
-interface NotificationsViewProps extends NavigationProps {
-  emailNewsletter: boolean;
-  onToggleEmailNewsletter: () => void;
-}
-
-const NotificationsView: React.FC<NotificationsViewProps> = ({
-  onNavigate,
-  cartCount,
-  emailNewsletter,
-  onToggleEmailNewsletter
-}) => {
+const NotificationsView: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { cartCount } = useCart();
+  const [emailNewsletter, setEmailNewsletter] = useState(true);
+  const toggleEmailNewsletter = () => setEmailNewsletter(prev => !prev);
 
   return (
     <div className="bg-background-light dark:bg-background-dark min-h-screen">
@@ -21,7 +16,7 @@ const NotificationsView: React.FC<NotificationsViewProps> = ({
         <div className="flex items-center gap-3">
           <button
             className="flex size-10 items-center justify-center rounded-full text-text-main dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-            onClick={() => onNavigate('ACCOUNT')}
+            onClick={() => navigate('/account')}
           >
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
@@ -29,7 +24,7 @@ const NotificationsView: React.FC<NotificationsViewProps> = ({
         </div>
         <button
           className="flex relative items-center justify-center text-text-main dark:text-white"
-          onClick={() => onNavigate('CART')}
+          onClick={() => navigate('/cart')}
         >
           <span className="material-symbols-outlined text-[26px]">shopping_cart</span>
           {cartCount > 0 && (
@@ -58,7 +53,7 @@ const NotificationsView: React.FC<NotificationsViewProps> = ({
                 {emailNewsletter ? t('notifications.subscribed') : t('notifications.notSubscribed')}
               </span>
               <button
-                onClick={onToggleEmailNewsletter}
+                onClick={toggleEmailNewsletter}
                 className={`relative w-14 h-8 rounded-full transition-colors duration-200 ${
                   emailNewsletter ? 'bg-primary' : 'bg-gray-300 dark:bg-white/20'
                 }`}

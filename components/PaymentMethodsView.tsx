@@ -1,9 +1,10 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { NavigationProps } from '../types';
+import { useNavigate } from 'react-router-dom';
 
-const PaymentMethodsView: React.FC<NavigationProps> = ({ onNavigate }) => {
+const PaymentMethodsView: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   return (
     <div className="bg-background-light dark:bg-background-dark min-h-screen">
@@ -11,7 +12,7 @@ const PaymentMethodsView: React.FC<NavigationProps> = ({ onNavigate }) => {
         <div className="flex items-center gap-3">
           <button
             className="flex size-10 items-center justify-center rounded-full text-text-main dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-            onClick={() => onNavigate('ACCOUNT')}
+            onClick={() => navigate('/account')}
           >
             <span className="material-symbols-outlined">arrow_back</span>
           </button>

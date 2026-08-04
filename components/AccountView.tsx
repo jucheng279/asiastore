@@ -1,25 +1,23 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NavigationProps } from '../types';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
+import { useCart } from '../lib/CartContext';
 import BottomNav from './BottomNav';
 
 const MENU_ITEMS = [
-  { icon: 'receipt_long', labelKey: 'account.myOrders', view: 'ORDERS' as const },
-  { icon: 'favorite', labelKey: 'nav.favorites', view: 'FAVORITES' as const },
-  { icon: 'local_shipping', labelKey: 'account.deliveryInfo', view: 'ADDRESSES' as const },
-  { icon: 'credit_card', labelKey: 'account.payment', view: 'PAYMENT_METHODS' as const },
-  { icon: 'notifications', labelKey: 'account.notifications', view: 'NOTIFICATIONS' as const },
+  { icon: 'receipt_long', labelKey: 'account.myOrders', path: '/orders' },
+  { icon: 'favorite', labelKey: 'nav.favorites', path: '/favorites' },
+  { icon: 'local_shipping', labelKey: 'account.deliveryInfo', path: '/addresses' },
+  { icon: 'credit_card', labelKey: 'account.payment', path: '/payment-methods' },
+  { icon: 'notifications', labelKey: 'account.notifications', path: '/notifications' },
 ];
 
-
-interface AccountViewProps extends NavigationProps {
-  onSignOut?: () => Promise<void>;
-}
-
-const AccountView: React.FC<AccountViewProps> = ({ currentView, onNavigate, cartCount, onSignOut }) => {
+const AccountView: React.FC = () => {
   const { t } = useTranslation();
-  const { profile, updateProfile, points, isAdmin } = useAuth();
+  const navigate = useNavigate();
+  const { profile, updateProfile, points, isAdmin, signOut } = useAuth();
+  const { itemCount: cartCount } = useCart();
   const [isEditing, setIsEditing] = useState(false);
   const [editNickname, setEditNickname] = useState('');
   const [editError, setEditError] = useState<string | null>(null);
@@ -49,6 +47,11 @@ const AccountView: React.FC<AccountViewProps> = ({ currentView, onNavigate, cart
     }
   };
 
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login');
+  };
+
   const inputClass = "w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-text-main placeholder:text-text-sub focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm";
 
   return (
@@ -61,7 +64,7 @@ const AccountView: React.FC<AccountViewProps> = ({ currentView, onNavigate, cart
         <div className="flex w-12 items-center justify-end lg:hidden">
           <button
             className="flex relative max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 bg-transparent text-text-main dark:text-white gap-2 min-w-0 p-0"
-            onClick={() => onNavigate('CART')}
+            onClick={() => navigate('/cart')}
           >
             <span className="material-symbols-outlined text-[26px]">shopping_cart</span>
             {cartCount > 0 && (
@@ -136,7 +139,7 @@ const AccountView: React.FC<AccountViewProps> = ({ currentView, onNavigate, cart
       <div className="px-4 py-4 bg-surface-light dark:bg-surface-dark">
         <button
           className="w-full flex justify-between items-center bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl p-4 border border-amber-200 dark:border-amber-800/30 cursor-pointer hover:border-amber-300 dark:hover:border-amber-700/40 transition-colors"
-          onClick={() => onNavigate('POINTS')}
+          onClick={() => navigate('/points')}
         >
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center">
@@ -162,7 +165,7 @@ const AccountView: React.FC<AccountViewProps> = ({ currentView, onNavigate, cart
             <button
               key={index}
               className="flex items-center gap-4 px-4 py-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors border-b border-gray-100 dark:border-white/5 last:border-b-0"
-              onClick={() => item.view && onNavigate(item.view)}
+              onClick={() => navigate(item.path)}
             >
               <div className="w-10 h-10 bg-gray-100 dark:bg-white/10 rounded-full flex items-center justify-center">
                 <span className="material-symbols-outlined text-primary text-[22px]">{item.icon}</span>
@@ -185,7 +188,7 @@ const AccountView: React.FC<AccountViewProps> = ({ currentView, onNavigate, cart
         <div className="flex flex-col">
           <button
             className="flex items-center gap-4 px-4 py-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
-            onClick={() => onNavigate('CONTACT_US')}
+            onClick={() => navigate('/contact')}
           >
             <div className="w-10 h-10 bg-gray-100 dark:bg-white/10 rounded-full flex items-center justify-center">
               <span className="material-symbols-outlined text-text-sub text-[22px]">chat</span>
@@ -219,14 +222,14 @@ const AccountView: React.FC<AccountViewProps> = ({ currentView, onNavigate, cart
       <div className="px-4 py-6 bg-surface-light dark:bg-surface-dark">
         <button
           className="w-full py-3 text-gray-500 dark:text-gray-400 font-medium text-center hover:text-primary transition-colors"
-          onClick={onSignOut}
+          onClick={handleSignOut}
         >
           {t('common.signOut')}
         </button>
         <p className="text-center text-text-sub text-xs mt-4">Asia Shop <span className="italic">Linkoping</span> {t('common.version')}</p>
       </div>
 
-      <BottomNav currentView={currentView} onNavigate={onNavigate} />
+      <BottomNav />
     </div>
   );
 };

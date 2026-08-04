@@ -1,35 +1,37 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ViewState } from '../types';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useCart } from '../lib/CartContext';
 import LanguageSwitcher from './LanguageSwitcher';
 
-interface DesktopSidebarProps {
-  currentView: ViewState;
-  onNavigate: (view: ViewState) => void;
-  cartCount: number;
-}
-
-const NAV_ITEMS: { view: ViewState; icon: string; labelKey: string }[] = [
-  { view: 'HOME', icon: 'home', labelKey: 'nav.home' },
-  { view: 'LISTING', icon: 'category', labelKey: 'nav.catalog' },
-  { view: 'DEALS', icon: 'local_offer', labelKey: 'nav.deals' },
+const NAV_ITEMS = [
+  { path: '/', icon: 'home', labelKey: 'nav.home' },
+  { path: '/products', icon: 'category', labelKey: 'nav.catalog' },
+  { path: '/deals', icon: 'local_offer', labelKey: 'nav.deals' },
 ];
 
-const ACCOUNT_ITEMS: { view: ViewState; icon: string; labelKey: string }[] = [
-  { view: 'ACCOUNT', icon: 'person', labelKey: 'nav.account' },
-  { view: 'FAVORITES', icon: 'favorite', labelKey: 'nav.favorites' },
-  { view: 'ORDERS', icon: 'receipt_long', labelKey: 'nav.orders' },
+const ACCOUNT_ITEMS = [
+  { path: '/account', icon: 'person', labelKey: 'nav.account' },
+  { path: '/favorites', icon: 'favorite', labelKey: 'nav.favorites' },
+  { path: '/orders', icon: 'receipt_long', labelKey: 'nav.orders' },
 ];
 
-const DesktopSidebar: React.FC<DesktopSidebarProps> = ({ currentView, onNavigate, cartCount }) => {
+const DesktopSidebar: React.FC = () => {
   const { t } = useTranslation();
-  const isActive = (view: ViewState) => currentView === view;
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { cartCount } = useCart();
+
+  const isActive = (path: string) => {
+    if (path === '/') return location.pathname === '/';
+    return location.pathname.startsWith(path);
+  };
 
   return (
-    <aside className="hidden lg:flex flex-col w-64 h-screen sticky top-0 bg-surface-light dark:bg-surface-dark border-r border-gray-100 dark:border-white/5 shrink-0 z-50">
+    <aside className="hidden lg:flex flex-col w-64 h-screen fixed top-0 left-0 bg-surface-light dark:bg-surface-dark border-r border-gray-100 dark:border-white/5 shrink-0 z-50">
       <div className="px-6 py-5 border-b border-gray-100 dark:border-white/5">
         <button
-          onClick={() => onNavigate('HOME')}
+          onClick={() => navigate('/')}
           className="flex items-baseline gap-1 hover:opacity-80 transition-opacity"
         >
           <h1 className="text-xl font-bold text-text-main dark:text-white tracking-tight">
@@ -43,17 +45,17 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({ currentView, onNavigate
         <div className="space-y-1">
           {NAV_ITEMS.map((item) => (
             <button
-              key={item.view}
-              onClick={() => onNavigate(item.view)}
+              key={item.path}
+              onClick={() => navigate(item.path)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-                isActive(item.view)
+                isActive(item.path)
                   ? 'bg-primary/10 text-primary'
                   : 'text-text-main dark:text-white hover:bg-gray-50 dark:hover:bg-white/5'
               }`}
             >
               <span
                 className="material-symbols-outlined text-[22px]"
-                style={isActive(item.view) ? { fontVariationSettings: "'FILL' 1" } : undefined}
+                style={isActive(item.path) ? { fontVariationSettings: "'FILL' 1" } : undefined}
               >
                 {item.icon}
               </span>
@@ -67,17 +69,17 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({ currentView, onNavigate
         <div className="space-y-1">
           {ACCOUNT_ITEMS.map((item) => (
             <button
-              key={item.view}
-              onClick={() => onNavigate(item.view)}
+              key={item.path}
+              onClick={() => navigate(item.path)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-                isActive(item.view)
+                isActive(item.path)
                   ? 'bg-primary/10 text-primary'
                   : 'text-text-main dark:text-white hover:bg-gray-50 dark:hover:bg-white/5'
               }`}
             >
               <span
                 className="material-symbols-outlined text-[22px]"
-                style={isActive(item.view) ? { fontVariationSettings: "'FILL' 1" } : undefined}
+                style={isActive(item.path) ? { fontVariationSettings: "'FILL' 1" } : undefined}
               >
                 {item.icon}
               </span>
@@ -89,9 +91,9 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({ currentView, onNavigate
 
       <div className="px-3 py-3 border-t border-gray-100 dark:border-white/5">
         <button
-          onClick={() => onNavigate('CART')}
+          onClick={() => navigate('/cart')}
           className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-            isActive('CART')
+            isActive('/cart')
               ? 'bg-primary/10 text-primary'
               : 'text-text-main dark:text-white hover:bg-gray-50 dark:hover:bg-white/5'
           }`}
