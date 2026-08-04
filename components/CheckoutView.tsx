@@ -126,7 +126,7 @@ const CheckoutView: React.FC = () => {
         items,
       });
       if (error) {
-        showToast(error, 'warning');
+        showToast(t('toast.orderFailed'), 'warning');
       } else {
         clearCart();
         await refreshData();

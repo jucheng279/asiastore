@@ -1,5 +1,33 @@
 import { supabase } from './supabase';
 
+// Only messages that describe an expected business condition are shown to users.
+// Anything else (database, policy or constraint text) is replaced with a generic
+// message so internal details are not disclosed.
+const SAFE_MESSAGES: [RegExp, string][] = [
+  [/ordering is currently closed/i, 'Ordering is currently closed'],
+  [/no longer available/i, 'This is no longer available for this order'],
+  [/insufficient stock|product not found/i, 'Some items are no longer available in the requested quantity'],
+  [/insufficient points/i, 'Insufficient points'],
+  [/order not found/i, 'Order not found'],
+  [/cannot be cancelled/i, 'This order can no longer be cancelled'],
+  [/cannot be modified/i, 'This order can no longer be changed'],
+  [/already cancelled/i, 'This order is already cancelled'],
+  [/authentication required|not authorized/i, 'Please sign in again'],
+  [/invalid quantity|no items provided|could not be priced/i, 'Please review the items in your cart'],
+];
+
+export function safeErrorMessage(
+  raw?: string | null,
+  fallback = 'Something went wrong. Please try again.'
+): string {
+  if (!raw) return fallback;
+  for (const [pattern, message] of SAFE_MESSAGES) {
+    if (pattern.test(raw)) return message;
+  }
+  console.error('[request failed]', raw);
+  return fallback;
+}
+
 export async function signUp(
   email: string,
   password: string,
@@ -14,7 +42,16 @@ export async function signUp(
     },
   });
 
-  if (error) return { user: null, error: error.message };
+  if (error) {
+    // Do not reveal whether an account already exists for this address.
+    if (/already registered|already exists|already been registered/i.test(error.message)) {
+      return {
+        user: null,
+        error: 'We could not complete sign up with those details. Please try again or sign in.',
+      };
+    }
+    return { user: null, error: safeErrorMessage(error.message) };
+  }
 
   if (data.user) {
     const { error: profileError } = await supabase
@@ -26,7 +63,7 @@ export async function signUp(
       });
 
     if (profileError && profileError.code !== '23505') {
-      return { user: data.user, error: profileError.message };
+      return { user: data.user, error: safeErrorMessage(profileError.message) };
     }
   }
 
@@ -103,7 +140,7 @@ export async function updateProfile(
     .select()
     .maybeSingle();
 
-  if (error) return { profile: null, error: error.message };
+  if (error) return { profile: null, error: safeErrorMessage(error.message) };
   return { profile: data as UserProfile, error: null };
 }
 
@@ -174,7 +211,7 @@ export async function saveUserAddress(
       .select()
       .maybeSingle();
 
-    if (error) return { address: null, error: error.message };
+    if (error) return { address: null, error: safeErrorMessage(error.message) };
     return { address: data as UserAddress, error: null };
   }
 
@@ -195,7 +232,7 @@ export async function saveUserAddress(
     .select()
     .maybeSingle();
 
-  if (error) return { address: null, error: error.message };
+  if (error) return { address: null, error: safeErrorMessage(error.message) };
   return { address: data as UserAddress, error: null };
 }
 
@@ -362,7 +399,7 @@ export async function dailyCheckin(userId: string): Promise<{ success: boolean; 
     if (error.code === '23505') {
       return { success: false, error: 'Already checked in today' };
     }
-    return { success: false, error: error.message };
+    return { success: false, error: safeErrorMessage(error.message, 'Check-in is unavailable right now. Please try again later.') };
   }
 
   return { success: true, error: null };
@@ -377,7 +414,7 @@ export async function deductPoints(
     p_amount: amount,
   });
 
-  if (error) return { success: false, error: error.message };
+  if (error) return { success: false, error: safeErrorMessage(error.message) };
   if (data === -1) return { success: false, error: 'Insufficient points' };
   return { success: true, newBalance: data as number, error: null };
 }
@@ -417,7 +454,7 @@ export async function createUserOrder(
     p_payment_method: orderData.paymentMethod || 'cashOrSwish',
   });
 
-  if (error) return { orderId: null, error: error.message };
+  if (error) return { orderId: null, error: safeErrorMessage(error.message) };
   return { orderId: data as string, error: null };
 }
 
@@ -430,7 +467,7 @@ export async function cancelUserOrder(
     p_order_id: orderId,
   });
 
-  if (error) return { success: false, error: error.message };
+  if (error) return { success: false, error: safeErrorMessage(error.message) };
   return { success: true, error: null };
 }
 
@@ -461,6 +498,6 @@ export async function modifyUserOrder(
     p_items: itemsPayload,
   });
 
-  if (error) return { result: null, error: error.message };
+  if (error) return { result: null, error: safeErrorMessage(error.message) };
   return { result: data as ModifyOrderResult, error: null };
 }

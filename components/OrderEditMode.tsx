@@ -184,7 +184,7 @@ const OrderEditMode: React.FC<OrderEditModeProps> = ({
             : t('orders.stockAdjusted');
           setError(msg);
         } else {
-          setError(result.error);
+          setError(t('orders.editFailed'));
         }
         setSaving(false);
         return;

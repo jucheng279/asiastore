@@ -261,7 +261,8 @@
     "depositHighlight": "Min 1 000 kr",
     "signUpBonus": "Registreringsbonus",
     "signUpBonusDesc": "Skapa ett nytt konto och fa 5 kr gratis som valkomstgava.",
-    "signUpBonusHighlight": "+5 kr gratis"
+    "signUpBonusHighlight": "+5 kr gratis",
+    "checkinFailed": "Incheckning ar inte tillganglig just nu. Forsok igen senare."
   },
   "notifications": {
     "title": "Aviseringar",

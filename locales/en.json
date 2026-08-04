@@ -261,7 +261,8 @@
     "depositHighlight": "Min 1,000 kr",
     "signUpBonus": "Sign Up Bonus",
     "signUpBonusDesc": "Create a new account and receive 5 kr for free as a welcome gift.",
-    "signUpBonusHighlight": "+5 kr free"
+    "signUpBonusHighlight": "+5 kr free",
+    "checkinFailed": "Check-in is unavailable right now. Please try again later."
   },
   "notifications": {
     "title": "Notifications",

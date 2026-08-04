@@ -46,7 +46,9 @@ const PointsView: React.FC = () => {
     if (result.success) {
       setCheckinMessage(t('points.pointEarned'));
     } else if (result.error) {
-      setCheckinMessage(result.error);
+      setCheckinMessage(
+        /already checked in/i.test(result.error) ? t('points.checkedInToday') : t('points.checkinFailed')
+      );
     }
     setIsCheckingIn(false);
     if (result.success) {

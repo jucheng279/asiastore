@@ -261,7 +261,8 @@
     "depositHighlight": "最低 1,000 kr",
     "signUpBonus": "注册奖励",
     "signUpBonusDesc": "创建新账户即可获得 5 kr 免费欢迎礼。",
-    "signUpBonusHighlight": "+5 kr 免费"
+    "signUpBonusHighlight": "+5 kr 免费",
+    "checkinFailed": "签到暂时无法使用，请稍后再试。"
   },
   "notifications": {
     "title": "通知",
