@@ -78,7 +78,7 @@ export function useFlashSaleItems(
 ) {
   const [flashSaleItems, setFlashSaleItems] = useState<FlashSaleItem[]>(options?.initialItems || []);
   const [flashSaleSettings, setFlashSaleSettings] = useState<FlashSaleSettings>(
-    options?.initialSettings || { defaultFlashDays: 7, defaultDiscountPercentage: 0 }
+    options?.initialSettings || { defaultFlashDays: 14, defaultDiscountPercentage: 30 }
   );
   const reverseSyncRef = useRef(false);
   useEffect(() => {
@@ -444,21 +444,25 @@ export function useFlashSaleItems(
   };
 
   const handleApplyFlashDiscount = () => {
+    const { defaultDiscountPercentage, defaultFlashDays } = flashSaleSettings;
     setFlashSaleItems(prev => {
       reverseSyncRef.current = true;
 
       const updated = prev.map(item => {
         const applyDiscount = (target: FlashSaleItem): FlashSaleItem => {
           const price = parseFloat(target.price);
-          if (isNaN(price) || price <= 0) return target;
-          const discount = target.flashDiscountPercentage || flashSaleSettings.defaultDiscountPercentage;
-          if (discount <= 0) return target;
-          const discounted = price * (1 - discount / 100);
+          const updatedTarget = {
+            ...target,
+            flashDiscountPercentage: defaultDiscountPercentage,
+            flashDays: defaultFlashDays,
+          };
+          if (isNaN(price) || price <= 0 || defaultDiscountPercentage <= 0) return updatedTarget;
+          const discounted = price * (1 - defaultDiscountPercentage / 100);
           const newPrice = discounted.toFixed(2);
           if (target.sourceProductId) {
             onUpdateProduct(target.sourceProductId, { newPrice });
           }
-          return { ...target, newPrice };
+          return { ...updatedTarget, newPrice };
         };
 
         const discountedItem = applyDiscount(item);
@@ -479,6 +483,37 @@ export function useFlashSaleItems(
     });
   };
 
+  const handleResetAllDates = () => {
+    const today = new Date().toISOString().split('T')[0];
+    setFlashSaleItems(prev => {
+      const updated = prev.map(item => {
+        const resetItem = { ...item, flashStartDate: today };
+        if (resetItem.isStackParent && resetItem.childItems) {
+          resetItem.childItems = resetItem.childItems.map(child => ({ ...child, flashStartDate: today }));
+        }
+        return resetItem;
+      });
+      persistItems(updated);
+      return updated;
+    });
+  };
+
+  const handleResetItemDate = (itemId: string) => {
+    const today = new Date().toISOString().split('T')[0];
+    setFlashSaleItems(prev => {
+      const updated = prev.map(item => {
+        if (item.id !== itemId) return item;
+        const resetItem = { ...item, flashStartDate: today };
+        if (resetItem.isStackParent && resetItem.childItems) {
+          resetItem.childItems = resetItem.childItems.map(child => ({ ...child, flashStartDate: today }));
+        }
+        return resetItem;
+      });
+      persistItems(updated);
+      return updated;
+    });
+  };
+
   return {
     flashSaleItems,
     flashSaleSettings,
@@ -490,5 +525,7 @@ export function useFlashSaleItems(
     handleFlashSaleOrderChange,
     handleUpdateFlashSaleSettings,
     handleApplyFlashDiscount,
+    handleResetAllDates,
+    handleResetItemDate,
   };
 }

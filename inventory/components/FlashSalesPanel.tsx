@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Zap, Percent, Calendar, Link2, Timer } from 'lucide-react';
+import { Plus, Zap, Percent, Calendar, Link2, Timer, RotateCcw, TriangleAlert as AlertTriangle, X } from 'lucide-react';
 import { Product, Language, FlashSaleItem, FlashSaleSettings } from '../types';
 import { ProductTableHeader } from './ProductTableHeader';
 import { ProductRow } from './ProductRow';
@@ -17,6 +17,8 @@ interface FlashSalesPanelProps {
   onOrderChange: (itemId: string, newOrder: number) => void;
   onUpdateSettings: (updates: Partial<FlashSaleSettings>) => void;
   onApplyDiscount: () => void;
+  onResetAllDates: () => void;
+  onResetItemDate: (itemId: string) => void;
   highlightedProductId?: string | null;
 }
 
@@ -42,9 +44,12 @@ export function FlashSalesPanel({
   onOrderChange,
   onUpdateSettings,
   onApplyDiscount,
+  onResetAllDates,
+  onResetItemDate,
   highlightedProductId,
 }: FlashSalesPanelProps) {
   const [openSettingsId, setOpenSettingsId] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<'apply' | 'resetAll' | null>(null);
 
   useEffect(() => {
     if (!highlightedProductId) return;
@@ -79,8 +84,21 @@ export function FlashSalesPanel({
       <FlashSaleSettingsToolbar
         settings={flashSaleSettings}
         onUpdateSettings={onUpdateSettings}
-        onApplyDiscount={onApplyDiscount}
+        onApplyDiscount={() => setConfirmAction('apply')}
+        onResetAllDates={() => setConfirmAction('resetAll')}
         hasItems={items.length > 0}
+      />
+
+      <FlashSaleConfirmationModal
+        action={confirmAction}
+        settings={flashSaleSettings}
+        itemCount={items.length}
+        onConfirm={() => {
+          if (confirmAction === 'apply') onApplyDiscount();
+          else if (confirmAction === 'resetAll') onResetAllDates();
+          setConfirmAction(null);
+        }}
+        onCancel={() => setConfirmAction(null)}
       />
 
       <div className="flex-1 overflow-auto p-4">
@@ -111,6 +129,7 @@ export function FlashSalesPanel({
                   onUpdateChildItem={onUpdateChildItem}
                   onDeleteItem={onDeleteItem}
                   onOrderChange={onOrderChange}
+                  onResetItemDate={onResetItemDate}
                   isSettingsOpen={openSettingsId === item.id}
                   onSettingsToggle={setOpenSettingsId}
                 />
@@ -122,6 +141,7 @@ export function FlashSalesPanel({
                   onUpdateItem={onUpdateItem}
                   onDeleteItem={onDeleteItem}
                   onOrderChange={onOrderChange}
+                  onResetItemDate={onResetItemDate}
                   isSettingsOpen={openSettingsId === item.id}
                   onSettingsToggle={setOpenSettingsId}
                 />
@@ -140,6 +160,7 @@ interface FlashSaleRowProps {
   onUpdateItem: (itemId: string, updates: Partial<FlashSaleItem>) => void;
   onDeleteItem: (itemId: string) => void;
   onOrderChange: (itemId: string, newOrder: number) => void;
+  onResetItemDate: (itemId: string) => void;
   isSettingsOpen: boolean;
   onSettingsToggle: (id: string | null) => void;
 }
@@ -150,6 +171,7 @@ function FlashSaleRow({
   onUpdateItem,
   onDeleteItem,
   onOrderChange,
+  onResetItemDate,
   isSettingsOpen,
   onSettingsToggle,
 }: FlashSaleRowProps) {
@@ -325,6 +347,13 @@ function FlashSaleRow({
         <div className="flex items-center gap-1.5">
           <Calendar size={12} className="text-slate-500" />
           <span className="text-slate-500">Started {item.flashStartDate}</span>
+          <button
+            onClick={() => onResetItemDate(item.id)}
+            className="p-0.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors"
+            title="Reset start date to today"
+          >
+            <RotateCcw size={11} />
+          </button>
         </div>
 
         <span className={`ml-auto px-2 py-0.5 rounded-full font-medium ${
@@ -345,6 +374,7 @@ interface FlashSaleSettingsToolbarProps {
   settings: FlashSaleSettings;
   onUpdateSettings: (updates: Partial<FlashSaleSettings>) => void;
   onApplyDiscount: () => void;
+  onResetAllDates: () => void;
   hasItems: boolean;
 }
 
@@ -352,6 +382,7 @@ function FlashSaleSettingsToolbar({
   settings,
   onUpdateSettings,
   onApplyDiscount,
+  onResetAllDates,
   hasItems,
 }: FlashSaleSettingsToolbarProps) {
   const [daysInput, setDaysInput] = useState(String(settings.defaultFlashDays));
@@ -414,13 +445,110 @@ function FlashSaleSettingsToolbar({
         <span className="text-sm text-slate-500">%</span>
       </div>
 
-      <button
-        onClick={onApplyDiscount}
-        disabled={!hasItems || settings.defaultDiscountPercentage === 0}
-        className="ml-auto px-4 py-1.5 text-sm font-medium bg-primary-600 text-white rounded-lg transition-all duration-150 hover:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] shadow-soft"
+      <div className="ml-auto flex items-center gap-2">
+        <button
+          onClick={onResetAllDates}
+          disabled={!hasItems}
+          className="px-4 py-1.5 text-sm font-medium bg-white border border-slate-200 text-slate-700 rounded-lg transition-all duration-150 hover:bg-slate-50 hover:border-slate-300 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]"
+        >
+          <span className="flex items-center gap-1.5">
+            <RotateCcw size={13} />
+            Reset All Dates
+          </span>
+        </button>
+        <button
+          onClick={onApplyDiscount}
+          disabled={!hasItems || settings.defaultDiscountPercentage === 0}
+          className="px-4 py-1.5 text-sm font-medium bg-primary-600 text-white rounded-lg transition-all duration-150 hover:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] shadow-soft"
+        >
+          Apply Discount
+        </button>
+      </div>
+    </div>
+  );
+}
+
+interface FlashSaleConfirmationModalProps {
+  action: 'apply' | 'resetAll' | null;
+  settings: FlashSaleSettings;
+  itemCount: number;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+function FlashSaleConfirmationModal({
+  action,
+  settings,
+  itemCount,
+  onConfirm,
+  onCancel,
+}: FlashSaleConfirmationModalProps) {
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCancel();
+    };
+    if (action) {
+      document.addEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = '';
+    };
+  }, [action, onCancel]);
+
+  if (!action) return null;
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) onCancel();
+  };
+
+  const title = action === 'apply' ? 'Apply Discount to All Items' : 'Reset All Start Dates';
+  const message = action === 'apply'
+    ? `This will set all ${itemCount} flash sale item${itemCount === 1 ? '' : 's'} to ${settings.defaultDiscountPercentage}% off for ${settings.defaultFlashDays} days. Individual overrides will be lost.`
+    : `This will reset the start date of all ${itemCount} flash sale item${itemCount === 1 ? '' : 's'} to today. All countdowns will restart.`;
+  const confirmLabel = action === 'apply' ? 'Apply Discount' : 'Reset Dates';
+
+  return (
+    <div
+      className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in"
+      onClick={handleBackdropClick}
+    >
+      <div
+        ref={modalRef}
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 animate-scale-in"
       >
-        Apply Discount
-      </button>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <div className="flex items-center gap-3">
+            <div className={`p-2.5 rounded-xl ${action === 'apply' ? 'bg-amber-100' : 'bg-blue-100'}`}>
+              <AlertTriangle size={18} className={action === 'apply' ? 'text-amber-600' : 'text-blue-600'} />
+            </div>
+            <h3 className="font-semibold text-slate-800">{title}</h3>
+          </div>
+          <button
+            onClick={onCancel}
+            className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="px-5 py-4">
+          <p className="text-slate-600 leading-relaxed">{message}</p>
+        </div>
+
+        <div className="flex justify-end gap-3 px-5 py-4 border-t border-slate-100 bg-slate-50 rounded-b-2xl">
+          <button onClick={onCancel} className="btn-secondary">Cancel</button>
+          <button
+            onClick={onConfirm}
+            className={action === 'apply' ? 'btn-primary' : 'btn-primary'}
+          >
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

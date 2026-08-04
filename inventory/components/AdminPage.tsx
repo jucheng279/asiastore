@@ -160,6 +160,8 @@ export function AdminPage({ onSignOut }: AdminPageProps) {
     handleFlashSaleOrderChange,
     handleUpdateFlashSaleSettings,
     handleApplyFlashDiscount,
+    handleResetAllDates,
+    handleResetItemDate,
   } = useFlashSaleItems(products, handleUpdateProduct, flashOptions);
 
   useEffect(() => {
@@ -761,6 +763,8 @@ export function AdminPage({ onSignOut }: AdminPageProps) {
           onOrderChange={handleFlashSaleOrderChange}
           onUpdateSettings={handleUpdateFlashSaleSettings}
           onApplyDiscount={handleApplyFlashDiscount}
+          onResetAllDates={handleResetAllDates}
+          onResetItemDate={handleResetItemDate}
           highlightedProductId={highlightedProductId}
         />
       );

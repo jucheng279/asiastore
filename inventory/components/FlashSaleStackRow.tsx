@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Percent, Calendar, Link2, Timer } from 'lucide-react';
+import { Percent, Calendar, Link2, Timer, RotateCcw } from 'lucide-react';
 import { Product, Language, FlashSaleItem } from '../types';
 import { ProductRow } from './ProductRow';
 import { StackChildRow } from './StackChildRow';
@@ -21,6 +21,7 @@ interface FlashSaleStackRowProps {
   onUpdateChildItem: (parentItemId: string, childItemId: string, updates: Partial<FlashSaleItem>) => void;
   onDeleteItem: (itemId: string) => void;
   onOrderChange: (itemId: string, newOrder: number) => void;
+  onResetItemDate: (itemId: string) => void;
   isSettingsOpen: boolean;
   onSettingsToggle: (id: string | null) => void;
 }
@@ -32,6 +33,7 @@ export function FlashSaleStackRow({
   onUpdateChildItem,
   onDeleteItem,
   onOrderChange,
+  onResetItemDate,
   isSettingsOpen,
   onSettingsToggle,
 }: FlashSaleStackRowProps) {
@@ -235,6 +237,13 @@ export function FlashSaleStackRow({
         <div className="flex items-center gap-1.5">
           <Calendar size={12} className="text-slate-500" />
           <span className="text-slate-500">Started {item.flashStartDate}</span>
+          <button
+            onClick={() => onResetItemDate(item.id)}
+            className="p-0.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors"
+            title="Reset start date to today"
+          >
+            <RotateCcw size={11} />
+          </button>
         </div>
 
         <span className={`ml-auto px-2 py-0.5 rounded-full font-medium ${
