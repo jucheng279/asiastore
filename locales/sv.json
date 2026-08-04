@@ -272,7 +272,7 @@
   },
   "payment": {
     "title": "Betalning",
-    "deliveryPaymentNotice": "Observera: Betalning sker vid leverans. Ha din betalningsmetod redo nar din bestallning ankommit.",
+    "deliveryPaymentNotice": "Observera: Betalning sker vid leverans. Gor ingen betalning innan din bestallning har ankommit.",
     "payAtStore": "Betala i butik",
     "payAtStoreDesc": "Betala med kontanter eller kort vid avhamtning i butik.",
     "storeAddress": "Butiksadress",

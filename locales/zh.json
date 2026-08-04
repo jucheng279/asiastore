@@ -272,7 +272,7 @@
   },
   "payment": {
     "title": "支付方式",
-    "deliveryPaymentNotice": "请注意：货到付款，请在订单送达时准备好您的支付方式。",
+    "deliveryPaymentNotice": "请注意：货到付款。请勿在订单送达前进行任何付款。",
     "payAtStore": "门店支付",
     "payAtStoreDesc": "到店自取时使用现金或刷卡支付。",
     "storeAddress": "门店地址",

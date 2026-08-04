@@ -272,7 +272,7 @@
   },
   "payment": {
     "title": "Payment",
-    "deliveryPaymentNotice": "Please note: Payment is due upon delivery. Have your preferred payment method ready when your order arrives.",
+    "deliveryPaymentNotice": "Please note: Payment is due upon delivery. Do not make any payment before your order arrives.",
     "payAtStore": "Pay at Store",
     "payAtStoreDesc": "Pay with cash or card for in-store pickup.",
     "storeAddress": "Store Address",
