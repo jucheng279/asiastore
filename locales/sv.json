@@ -37,7 +37,7 @@
   },
   "nav": {
     "home": "Hem",
-    "catalog": "Katalog",
+    "catalog": "Produkter",
     "deals": "Erbjudanden",
     "account": "Konto",
     "favorites": "Favoriter",
@@ -105,7 +105,7 @@
     "dealsOffers": "Erbjudanden",
     "nearExpiry": "Kort datum",
     "flashSales": "Rea",
-    "catalogDeals": "Katalog",
+    "catalogDeals": "Erbjudanden",
     "reduceWaste": "Hjalp minska matsvinn!",
     "limitedFlash": "Begransad rea!",
     "catalogFavorites": "Spara pa katalogfavoriter!",
