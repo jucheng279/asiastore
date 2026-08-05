@@ -6,7 +6,7 @@ import {
   type OrderSummaryRow,
   type OrderingWindow,
 } from '../../lib/orderSummaryApi';
-import { printOrderSummary } from '../utils/printOrderSummary';
+import { printOrderSummary, type UserGroup } from '../utils/printOrderSummary';
 
 interface OrderSummaryPanelProps {
   storeSettings: {
@@ -68,17 +68,18 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
   }, [rows, searchQuery]);
 
   const userGroups = useMemo(() => {
-    const groups: { userId: string; startIdx: number; count: number }[] = [];
-    let lastUserId = '';
-    for (let i = 0; i < filteredRows.length; i++) {
-      if (filteredRows[i].userId !== lastUserId) {
-        groups.push({ userId: filteredRows[i].userId, startIdx: i, count: 1 });
-        lastUserId = filteredRows[i].userId;
-      } else {
-        groups[groups.length - 1].count++;
-      }
+    const map = new Map<string, OrderSummaryRow[]>();
+    for (const row of filteredRows) {
+      const list = map.get(row.userId) || [];
+      list.push(row);
+      map.set(row.userId, list);
     }
-    return groups;
+    return Array.from(map.entries()).map(([userId, orders]) => ({
+      userId,
+      nickname: orders[0].nickname,
+      orders,
+      subtotal: orders.reduce((sum, o) => sum + o.total, 0),
+    }));
   }, [filteredRows]);
 
   const grandTotal = useMemo(
@@ -91,17 +92,8 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
     [filteredRows]
   );
 
-  const isGroupedRow = (index: number): { isFirst: boolean; groupSize: number } => {
-    for (const g of userGroups) {
-      if (index >= g.startIdx && index < g.startIdx + g.count) {
-        return { isFirst: index === g.startIdx, groupSize: g.count };
-      }
-    }
-    return { isFirst: true, groupSize: 1 };
-  };
-
   const handlePrint = () => {
-    printOrderSummary(filteredRows, window.label, grandTotal, uniqueCustomers);
+    printOrderSummary(userGroups, window.label, grandTotal, uniqueCustomers);
   };
 
   if (isLoading) {
@@ -205,49 +197,40 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredRows.map((row, index) => {
-                    const { isFirst, groupSize } = isGroupedRow(index);
-                    const hasMultipleRows = groupSize > 1;
-                    const isEvenGroup = userGroups.findIndex(g => g.userId === row.userId) % 2 === 0;
-
-                    return (
+                  {userGroups.map((group, groupIdx) => {
+                    const hasMultiple = group.orders.length > 1;
+                    return group.orders.map((row, orderIdx) => (
                       <tr
-                        key={`${row.userId}-${index}`}
-                        className={`border-b border-slate-100 last:border-b-0 ${
-                          hasMultipleRows
-                            ? isEvenGroup
-                              ? 'bg-teal-50/30'
-                              : 'bg-amber-50/30'
-                            : index % 2 === 0
-                            ? 'bg-white'
-                            : 'bg-slate-50/50'
-                        }`}
+                        key={`${row.orderId}`}
+                        className={`${
+                          orderIdx < group.orders.length - 1
+                            ? 'border-b border-slate-100'
+                            : hasMultiple && orderIdx === group.orders.length - 1
+                            ? ''
+                            : 'border-b-2 border-slate-200'
+                        } ${groupIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}
                       >
-                        <td className="px-4 py-3 text-slate-500 font-medium align-top">
-                          {index + 1}
-                        </td>
-                        <td className="px-4 py-3 align-top">
-                          <div className="flex items-center gap-1.5">
-                            {hasMultipleRows && (
-                              <span className={`w-1 self-stretch rounded-full flex-shrink-0 ${
-                                isEvenGroup ? 'bg-teal-400' : 'bg-amber-400'
-                              }`} />
-                            )}
-                            <div>
-                              <span className="font-semibold text-slate-800">{row.nickname}</span>
-                              {row.mergeCount > 1 && (
-                                <span className="ml-1.5 px-1.5 py-0.5 bg-slate-100 text-slate-500 text-[10px] rounded-full font-medium">
-                                  {row.mergeCount} merged
-                                </span>
-                              )}
-                              {hasMultipleRows && isFirst && (
+                        {orderIdx === 0 && (
+                          <>
+                            <td
+                              rowSpan={hasMultiple ? group.orders.length + 1 : 1}
+                              className="px-4 py-3 text-slate-500 font-medium align-top border-b-2 border-slate-200"
+                            >
+                              {groupIdx + 1}
+                            </td>
+                            <td
+                              rowSpan={hasMultiple ? group.orders.length + 1 : 1}
+                              className="px-4 py-3 align-top border-b-2 border-slate-200"
+                            >
+                              <span className="font-semibold text-slate-800">{group.nickname}</span>
+                              {hasMultiple && (
                                 <p className="text-[10px] text-slate-400 mt-0.5">
-                                  {groupSize} separate deliveries
+                                  {group.orders.length} orders
                                 </p>
                               )}
-                            </div>
-                          </div>
-                        </td>
+                            </td>
+                          </>
+                        )}
                         <td className="px-4 py-3 align-top">
                           <div className="space-y-0.5">
                             {row.items.map((item, i) => (
@@ -293,13 +276,29 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
                           </span>
                         </td>
                       </tr>
+                    )).concat(
+                      hasMultiple
+                        ? [
+                            <tr
+                              key={`${group.userId}-subtotal`}
+                              className={`border-b-2 border-slate-200 ${groupIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}
+                            >
+                              <td colSpan={4} className="px-4 py-2 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                                Subtotal
+                              </td>
+                              <td className="px-4 py-2 text-right font-bold text-slate-700">
+                                {group.subtotal.toFixed(2)} kr
+                              </td>
+                            </tr>,
+                          ]
+                        : []
                     );
                   })}
                 </tbody>
                 <tfoot>
                   <tr className="bg-slate-100 border-t-2 border-slate-300">
                     <td colSpan={2} className="px-4 py-3 font-semibold text-slate-700">
-                      {filteredRows.length} deliver{filteredRows.length !== 1 ? 'ies' : 'y'} &middot; {uniqueCustomers} customer{uniqueCustomers !== 1 ? 's' : ''}
+                      {uniqueCustomers} customer{uniqueCustomers !== 1 ? 's' : ''}
                     </td>
                     <td colSpan={4} className="px-4 py-3 text-right font-semibold text-slate-600">
                       Grand Total

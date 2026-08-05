@@ -1,5 +1,12 @@
 import type { OrderSummaryRow } from '../../lib/orderSummaryApi';
 
+export interface UserGroup {
+  userId: string;
+  nickname: string;
+  orders: OrderSummaryRow[];
+  subtotal: number;
+}
+
 const PAYMENT_LABELS: Record<string, string> = {
   cashOrSwish: 'Cash / Swish',
   points: 'Points',
@@ -15,53 +22,69 @@ function escapeHtml(str: string): string {
 }
 
 function generatePrintHtml(
-  rows: OrderSummaryRow[],
+  groups: UserGroup[],
   windowLabel: string,
   grandTotal: number,
   uniqueCustomers: number
 ): string {
-  const tableRows = rows
-    .map((row, index) => {
-      const items = row.items
-        .map(
-          (item) =>
-            `<span>${escapeHtml(item.name)} <span class="qty">x${item.quantity}</span></span>`
-        )
-        .join('<br/>');
+  const tableRows = groups
+    .map((group, groupIdx) => {
+      const hasMultiple = group.orders.length > 1;
+      const rowClass = groupIdx % 2 === 0 ? 'even' : 'odd';
 
-      const addressLines = [
-        `<strong>${escapeHtml(row.address.fullName)}</strong>`,
-        escapeHtml(row.address.streetAddress),
-        `${escapeHtml(row.address.postalCode)} ${escapeHtml(row.address.city)}`,
-      ].join('<br/>');
+      const orderRows = group.orders.map((row, orderIdx) => {
+        const items = row.items
+          .map(
+            (item) =>
+              `<span>${escapeHtml(item.name)} <span class="qty">x${item.quantity}</span></span>`
+          )
+          .join('<br/>');
 
-      const delivery = row.deliveryInstructions
-        ? `<br/><em class="delivery-note">${escapeHtml(row.deliveryInstructions)}</em>`
-        : '';
+        const addressLines = [
+          `<strong>${escapeHtml(row.address.fullName)}</strong>`,
+          escapeHtml(row.address.streetAddress),
+          `${escapeHtml(row.address.postalCode)} ${escapeHtml(row.address.city)}`,
+        ].join('<br/>');
 
-      const contact = [
-        `<strong>${escapeHtml(row.contactPhone)}</strong>`,
-        row.contactEmail ? `<span class="email">${escapeHtml(row.contactEmail)}</span>` : '',
-      ]
-        .filter(Boolean)
-        .join('<br/>');
-
-      const paymentLabel = PAYMENT_LABELS[row.paymentMethod] || row.paymentMethod;
-
-      const merged =
-        row.mergeCount > 1
-          ? ` <span class="badge">${row.mergeCount} merged</span>`
+        const delivery = row.deliveryInstructions
+          ? `<br/><em class="delivery-note">${escapeHtml(row.deliveryInstructions)}</em>`
           : '';
 
-      return `<tr class="${index % 2 === 0 ? 'even' : 'odd'}">
-        <td class="row-num">${index + 1}</td>
-        <td><strong>${escapeHtml(row.nickname)}</strong>${merged}</td>
-        <td class="items">${items}</td>
-        <td>${addressLines}${delivery}</td>
-        <td>${contact}</td>
-        <td>${escapeHtml(paymentLabel)}</td>
-        <td class="total">${row.total.toFixed(2)} kr</td>
-      </tr>`;
+        const contact = [
+          `<strong>${escapeHtml(row.contactPhone)}</strong>`,
+          row.contactEmail ? `<span class="email">${escapeHtml(row.contactEmail)}</span>` : '',
+        ]
+          .filter(Boolean)
+          .join('<br/>');
+
+        const paymentLabel = PAYMENT_LABELS[row.paymentMethod] || row.paymentMethod;
+
+        const numCell = orderIdx === 0
+          ? `<td class="row-num" rowspan="${hasMultiple ? group.orders.length + 1 : 1}">${groupIdx + 1}</td>`
+          : '';
+        const nameCell = orderIdx === 0
+          ? `<td rowspan="${hasMultiple ? group.orders.length + 1 : 1}"><strong>${escapeHtml(group.nickname)}</strong>${hasMultiple ? `<br/><span class="sub-count">${group.orders.length} orders</span>` : ''}</td>`
+          : '';
+
+        return `<tr class="${rowClass}${orderIdx > 0 ? ' sub-row' : ''}">
+          ${numCell}
+          ${nameCell}
+          <td class="items">${items}</td>
+          <td>${addressLines}${delivery}</td>
+          <td>${contact}</td>
+          <td>${escapeHtml(paymentLabel)}</td>
+          <td class="total">${row.total.toFixed(2)} kr</td>
+        </tr>`;
+      });
+
+      if (hasMultiple) {
+        orderRows.push(`<tr class="${rowClass} subtotal-row">
+          <td colspan="4" style="text-align:right;"><strong>Subtotal</strong></td>
+          <td class="total"><strong>${group.subtotal.toFixed(2)} kr</strong></td>
+        </tr>`);
+      }
+
+      return orderRows.join('\n');
     })
     .join('\n');
 
@@ -126,15 +149,18 @@ function generatePrintHtml(
       font-weight: 600;
       white-space: nowrap;
     }
-    .badge {
-      display: inline-block;
-      background: #f1f5f9;
-      color: #64748b;
+    .sub-count {
       font-size: 9px;
-      padding: 1px 5px;
-      border-radius: 8px;
-      font-weight: 500;
-      margin-left: 4px;
+      color: #64748b;
+    }
+    .sub-row td {
+      border-bottom: 1px dashed #e2e8f0;
+    }
+    .subtotal-row td {
+      border-bottom: 2px solid #cbd5e1;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
     }
     .delivery-note {
       font-size: 10px;
@@ -166,7 +192,7 @@ function generatePrintHtml(
 <body>
   <div class="header">
     <h1>Order Summary &mdash; ${escapeHtml(windowLabel)}</h1>
-    <p>${rows.length} deliver${rows.length !== 1 ? 'ies' : 'y'} &middot; ${uniqueCustomers} customer${uniqueCustomers !== 1 ? 's' : ''} &middot; Total: ${grandTotal.toFixed(2)} kr</p>
+    <p>${uniqueCustomers} customer${uniqueCustomers !== 1 ? 's' : ''} &middot; Total: ${grandTotal.toFixed(2)} kr</p>
   </div>
   <table>
     <thead>
@@ -185,7 +211,7 @@ function generatePrintHtml(
     </tbody>
     <tfoot>
       <tr>
-        <td colspan="2">${rows.length} deliver${rows.length !== 1 ? 'ies' : 'y'} &middot; ${uniqueCustomers} customer${uniqueCustomers !== 1 ? 's' : ''}</td>
+        <td colspan="2">${uniqueCustomers} customer${uniqueCustomers !== 1 ? 's' : ''}</td>
         <td colspan="4" style="text-align:right;">Grand Total</td>
         <td class="grand-total">${grandTotal.toFixed(2)} kr</td>
       </tr>
@@ -196,12 +222,12 @@ function generatePrintHtml(
 }
 
 export function printOrderSummary(
-  rows: OrderSummaryRow[],
+  groups: UserGroup[],
   windowLabel: string,
   grandTotal: number,
   uniqueCustomers: number
 ): void {
-  const html = generatePrintHtml(rows, windowLabel, grandTotal, uniqueCustomers);
+  const html = generatePrintHtml(groups, windowLabel, grandTotal, uniqueCustomers);
   const printWindow = globalThis.open('', '_blank', 'width=900,height=700');
   if (!printWindow) return;
 
