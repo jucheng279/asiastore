@@ -101,7 +101,7 @@
     "onlyXLeft": "仅剩 {{count}} 件",
     "notAvailable": "商品已下架",
     "fromPrice": "{{price}} 起",
-    "viewOptions": "查看选项"
+    "viewOptions": "查看"
   },
   "deals": {
     "dealsOffers": "优惠活动",

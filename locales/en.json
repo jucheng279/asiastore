@@ -101,7 +101,7 @@
     "onlyXLeft": "Only {{count}} left",
     "notAvailable": "Not Available",
     "fromPrice": "from {{price}}",
-    "viewOptions": "View Options"
+    "viewOptions": "View"
   },
   "deals": {
     "dealsOffers": "Deals & Offers",

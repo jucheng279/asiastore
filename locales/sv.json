@@ -101,7 +101,7 @@
     "onlyXLeft": "Bara {{count}} kvar",
     "notAvailable": "Ej tillganglig",
     "fromPrice": "från {{price}}",
-    "viewOptions": "Se alternativ"
+    "viewOptions": "Visa"
   },
   "deals": {
     "dealsOffers": "Erbjudanden",
