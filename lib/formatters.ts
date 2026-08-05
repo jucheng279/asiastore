@@ -40,6 +40,10 @@ export function formatFlashTimeRemaining(
   return t('product.timeRemainingHoursMinutes', { hours, minutes });
 }
 
+export function formatFromPrice(amount: number, lang: Language, t: (key: string, opts?: Record<string, unknown>) => string): string {
+  return t('product.fromPrice', { price: formatPrice(amount, lang) });
+}
+
 export function getExpiryText(
   days: number,
   t: (key: string, opts?: Record<string, unknown>) => string

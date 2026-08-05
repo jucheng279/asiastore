@@ -54,7 +54,9 @@ const ProductDetailView: React.FC = () => {
     return resolvedProduct;
   }, [resolvedProduct, actualChildId]);
 
-  const cartProductId = actualChildId || resolvedProduct?.id || '';
+  const cartProductId = resolvedProduct?.hasChildren
+    ? (actualChildId || '')
+    : (actualChildId || resolvedProduct?.id || '');
   const favoriteId = resolvedProduct?.sourceProductId || resolvedProduct?.id || '';
   const isFavorite = favorites.has(favoriteId);
 
@@ -77,6 +79,7 @@ const ProductDetailView: React.FC = () => {
 
   const handleAddToCart = () => {
     if (!cartProductId || isOutOfStock || orderingClosed) return;
+    if (resolvedProduct?.hasChildren && !actualChildId) return;
     const cartQty = cartQuantities.get(cartProductId) || 0;
     const canAdd = available !== undefined ? Math.min(localQty, available - cartQty) : localQty;
     if (canAdd > 0) {

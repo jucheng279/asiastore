@@ -67,6 +67,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const clamped = new Map(cartQuantities);
     clamped.forEach((qty, productId) => {
       const product = productMap.get(productId);
+      if (product?.hasChildren) {
+        clamped.delete(productId);
+        needsUpdate = true;
+        return;
+      }
       const available = product?.availableStock;
       if (available === undefined) return;
       if (available <= 0) {
@@ -86,6 +91,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const increaseQuantity = useCallback((productId: string) => {
     if (!orderingOpen) return;
     const product = productMap.get(productId);
+    if (product?.hasChildren) return;
     const available = product?.availableStock;
     setCartQuantities(prev => {
       const newMap = new Map(prev);
@@ -112,6 +118,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const addQuantityToCart = useCallback((productId: string, quantity: number) => {
     if (!orderingOpen) return;
     const product = productMap.get(productId);
+    if (product?.hasChildren) return;
     const available = product?.availableStock;
     setCartQuantities(prev => {
       const newMap = new Map(prev);

@@ -99,7 +99,9 @@
     "itemsSaved_other": "已收藏 {{count}} 件商品",
     "outOfStock": "缺货",
     "onlyXLeft": "仅剩 {{count}} 件",
-    "notAvailable": "商品已下架"
+    "notAvailable": "商品已下架",
+    "fromPrice": "{{price}} 起",
+    "viewOptions": "查看选项"
   },
   "deals": {
     "dealsOffers": "优惠活动",

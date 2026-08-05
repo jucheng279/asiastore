@@ -182,7 +182,7 @@ export function FlashSaleStackRow({
         onOrderChange={onOrderChange}
         isSettingsOpen={isSettingsOpen}
         onSettingsToggle={onSettingsToggle}
-        isReadOnly={false}
+        isReadOnly={hasVariants}
         isExpanded={isExpanded}
         onToggleExpand={() => setIsExpanded(!isExpanded)}
         subProductCount={childCount}
@@ -193,7 +193,7 @@ export function FlashSaleStackRow({
       <div className="flex items-center gap-4 px-4 py-2 bg-slate-50/80 border-b border-slate-100 text-xs">
         <span className="flex items-center gap-1 text-blue-600">
           <Link2 size={12} />
-          <span className="font-medium">Synced Stack</span>
+          <span className="font-medium">Group Controls</span>
         </span>
 
         <div className="flex items-center gap-1.5">
@@ -260,16 +260,126 @@ export function FlashSaleStackRow({
       {isExpanded && item.childItems && item.childItems.length > 0 && (
         <div className="bg-slate-50/60">
           {item.childItems.map(child => (
-            <StackChildRow
+            <FlashChildWithControls
               key={child.id}
-              product={child}
+              child={child}
               currentLanguage={currentLanguage}
-              isReadOnly={false}
               onUpdate={(childId, updates) => handleChildUpdate(childId, updates)}
             />
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+interface FlashChildWithControlsProps {
+  child: FlashSaleItem;
+  currentLanguage: Language;
+  onUpdate: (childId: string, updates: Partial<FlashSaleItem>) => void;
+}
+
+function FlashChildWithControls({ child, currentLanguage, onUpdate }: FlashChildWithControlsProps) {
+  const [daysInput, setDaysInput] = useState(String(child.flashDays));
+  const [discountInput, setDiscountInput] = useState(String(child.flashDiscountPercentage));
+
+  useEffect(() => {
+    setDaysInput(String(child.flashDays));
+  }, [child.flashDays]);
+
+  useEffect(() => {
+    const price = parseFloat(child.price);
+    const newPrice = parseFloat(child.newPrice);
+    if (!isNaN(price) && price > 0 && !isNaN(newPrice) && newPrice >= 0) {
+      setDiscountInput(String(Math.round(((price - newPrice) / price) * 100)));
+    } else {
+      setDiscountInput(String(child.flashDiscountPercentage));
+    }
+  }, [child.price, child.newPrice, child.flashDiscountPercentage]);
+
+  const handleDiscountChange = (value: string) => {
+    setDiscountInput(value);
+    const val = parseFloat(value);
+    const price = parseFloat(child.price);
+    if (!isNaN(val) && val >= 0 && val <= 100 && !isNaN(price) && price > 0) {
+      const computed = (price * (1 - val / 100)).toFixed(2);
+      onUpdate(child.id, { flashDiscountPercentage: Math.round(val), newPrice: computed });
+    }
+  };
+
+  const remaining = getRemainingDays(child.flashStartDate, child.flashDays);
+  const isExpired = remaining <= 0;
+
+  return (
+    <div>
+      <StackChildRow
+        product={child}
+        currentLanguage={currentLanguage}
+        isReadOnly={false}
+        onUpdate={(childId, updates) => onUpdate(childId, updates)}
+      />
+      <div className="flex items-center gap-3 pl-8 pr-4 py-1.5 bg-slate-100/50 border-b border-slate-100 text-xs">
+        <div className="flex items-center gap-1.5">
+          <Timer size={11} className="text-slate-400" />
+          <input
+            type="number"
+            value={daysInput}
+            onChange={e => setDaysInput(e.target.value)}
+            onBlur={() => {
+              const val = parseInt(daysInput, 10);
+              if (!isNaN(val) && val >= 0) {
+                onUpdate(child.id, { flashDays: val });
+              } else {
+                setDaysInput(String(child.flashDays));
+              }
+            }}
+            onWheel={e => e.currentTarget.blur()}
+            className="w-12 px-1 py-0.5 text-xs bg-white border border-slate-200 rounded text-center focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+            min="0"
+          />
+          <span className="text-slate-400">days</span>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <Percent size={11} className="text-slate-400" />
+          <input
+            type="number"
+            value={discountInput}
+            onChange={e => handleDiscountChange(e.target.value)}
+            onBlur={() => {
+              const val = parseFloat(discountInput);
+              if (isNaN(val) || val < 0 || val > 100) {
+                setDiscountInput(String(child.flashDiscountPercentage));
+              }
+            }}
+            onWheel={e => e.currentTarget.blur()}
+            className="w-12 px-1 py-0.5 text-xs bg-white border border-slate-200 rounded text-center focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+            min="0"
+            max="100"
+          />
+          <span className="text-slate-400">%</span>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <Calendar size={11} className="text-slate-400" />
+          <input
+            type="date"
+            value={child.flashStartDate}
+            onChange={e => onUpdate(child.id, { flashStartDate: e.target.value })}
+            className="px-1 py-0.5 text-xs bg-white border border-slate-200 rounded focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+          />
+        </div>
+
+        <span className={`ml-auto px-1.5 py-0.5 rounded-full font-medium text-[10px] ${
+          isExpired
+            ? 'bg-red-100 text-red-700'
+            : remaining <= 2
+              ? 'bg-amber-100 text-amber-700'
+              : 'bg-emerald-100 text-emerald-700'
+        }`}>
+          {isExpired ? 'Expired' : `${remaining}d`}
+        </span>
+      </div>
     </div>
   );
 }

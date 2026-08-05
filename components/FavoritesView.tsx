@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useProductData } from '../lib/ProductDataContext';
 import { useCart } from '../lib/CartContext';
 import { useAuth } from '../lib/AuthContext';
-import { formatPrice, getExpiryText, formatFlashTimeRemaining } from '../lib/formatters';
+import { formatPrice, formatFromPrice, getExpiryText, formatFlashTimeRemaining } from '../lib/formatters';
 import { Product } from '../types';
 import BottomNav from './BottomNav';
 
@@ -117,8 +117,10 @@ function AvailableCard({ product, favoriteId, onToggleFavorite, onAddToCart, onN
 
         <div className="flex items-end justify-between mt-2">
           <div className="flex items-baseline gap-2">
-            <span className="text-primary text-lg font-bold">{formatPrice(product.price, language)}</span>
-            {product.originalPrice && (
+            <span className="text-primary text-lg font-bold">
+              {product.hasChildren ? formatFromPrice(product.price, language, t) : formatPrice(product.price, language)}
+            </span>
+            {!product.hasChildren && product.originalPrice && (
               <span className="text-gray-400 text-sm line-through">{formatPrice(product.originalPrice, language)}</span>
             )}
           </div>

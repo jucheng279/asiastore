@@ -99,7 +99,9 @@
     "itemsSaved_other": "{{count}} varor sparade",
     "outOfStock": "Slut i lager",
     "onlyXLeft": "Bara {{count}} kvar",
-    "notAvailable": "Ej tillganglig"
+    "notAvailable": "Ej tillganglig",
+    "fromPrice": "från {{price}}",
+    "viewOptions": "Se alternativ"
   },
   "deals": {
     "dealsOffers": "Erbjudanden",

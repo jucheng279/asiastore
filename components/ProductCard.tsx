@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useProductData } from '../lib/ProductDataContext';
-import { formatPrice, getExpiryText, formatFlashTimeRemaining } from '../lib/formatters';
+import { formatPrice, formatFromPrice, getExpiryText, formatFlashTimeRemaining } from '../lib/formatters';
 import { Product } from '../types';
 
 interface ProductCardProps {
@@ -41,9 +41,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
     ? formatFlashTimeRemaining(product.flashStartDate, product.flashDays, t)
     : product.flashSaleEndsIn;
 
+  const isGroupContainer = !!product.hasChildren;
   const available = product.availableStock ?? undefined;
-  const isOutOfStock = !product.hasChildren && available !== undefined && available <= 0;
-  const isLowStock = !product.hasChildren && available !== undefined && available > 0 && available <= 10;
+  const isOutOfStock = !isGroupContainer && available !== undefined && available <= 0;
+  const isLowStock = !isGroupContainer && available !== undefined && available > 0 && available <= 10;
   const atMaxQty = available !== undefined && quantity >= available;
 
   return (
@@ -124,7 +125,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
         )}
         <div className="mt-auto flex items-center justify-between pt-3">
           <div className="flex flex-row flex-wrap items-baseline gap-x-1.5 leading-none min-w-0">
-            {product.originalPrice ? (
+            {isGroupContainer ? (
+              <span className="text-base font-bold text-text-main dark:text-white whitespace-nowrap">
+                {formatFromPrice(product.price, language, t)}
+              </span>
+            ) : product.originalPrice ? (
               <>
                 <span className="text-[11px] text-text-sub line-through whitespace-nowrap">
                   {formatPrice(product.originalPrice, language)}
@@ -145,8 +150,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
               </span>
             )}
           </div>
-          {product.hasChildren ? (
-            <span className="text-xs font-semibold text-primary whitespace-nowrap">{t('common.viewAll')}</span>
+          {isGroupContainer ? (
+            <span className="text-xs font-semibold text-primary whitespace-nowrap">{t('product.viewOptions')}</span>
           ) : isOutOfStock ? (
             <span className="text-[10px] font-semibold text-gray-400 uppercase whitespace-nowrap">
               {t('product.outOfStock')}

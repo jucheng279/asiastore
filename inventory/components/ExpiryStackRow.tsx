@@ -59,6 +59,7 @@ export function ExpiryStackRow({
         onOrderChange={onOrderChange}
         isSettingsOpen={isSettingsOpen}
         onSettingsToggle={onSettingsToggle}
+        isReadOnly={hasVariants}
         isExpanded={isExpanded}
         onToggleExpand={() => setIsExpanded(!isExpanded)}
         subProductCount={childCount}

@@ -170,10 +170,10 @@ export function ProductRow({
           {hasVariants && variantAggregates ? (
             <>
               <div className="w-20 px-1.5 py-1 border-r border-slate-100 flex items-center">
-                <span className="w-full px-2.5 py-1.5 text-sm text-slate-500 italic">{variantAggregates.price || '--'}</span>
+                <span className="w-full px-2.5 py-1.5 text-sm text-slate-500 italic" title="Lowest variant price">fr. {variantAggregates.price || '--'}</span>
               </div>
               <div className="w-20 px-1.5 py-1 border-r border-slate-100 flex items-center">
-                <span className="w-full px-2.5 py-1.5 text-sm text-slate-500 italic">{variantAggregates.salePrice || '--'}</span>
+                <span className="w-full px-2.5 py-1.5 text-sm text-slate-500 italic" title="Lowest variant sale price">fr. {variantAggregates.salePrice || '--'}</span>
               </div>
               <div className="w-14 px-1.5 py-1 border-r border-slate-100 flex items-center justify-center">
                 <span className="text-sm text-slate-500 italic">{variantAggregates.stock}</span>
