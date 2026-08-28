@@ -390,19 +390,21 @@ export function useFlashSaleItems(
   };
 
   const handleUpdateFlashSaleChildItem = (parentItemId: string, childItemId: string, updates: Partial<FlashSaleItem>) => {
+    const { flashDays: _fd, flashStartDate: _fsd, ...safeUpdates } = updates;
+
     setFlashSaleItems(prev => {
       const updated = prev.map(item => {
         if (item.id !== parentItemId || !item.childItems) return item;
 
         const child = item.childItems.find(c => c.id === childItemId);
         if (child?.sourceProductId) {
-          reverseSync(child.sourceProductId, updates);
+          reverseSync(child.sourceProductId, safeUpdates);
         }
 
         return {
           ...item,
           childItems: item.childItems.map(c =>
-            c.id === childItemId ? { ...c, ...updates } : c
+            c.id === childItemId ? { ...c, ...safeUpdates } : c
           ),
         };
       });
