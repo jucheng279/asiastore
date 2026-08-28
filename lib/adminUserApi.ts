@@ -50,11 +50,20 @@ export async function adminAdjustUserPoints(
 }
 
 export async function adminDeleteUser(userId: string) {
-  const { error } = await supabase
-    .from('profiles')
-    .delete()
-    .eq('id', userId);
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return { error: 'Not authenticated' };
 
-  if (error) return { error: error.message };
+  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-delete-user`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ user_id: userId }),
+  });
+
+  const body = await res.json();
+  if (!res.ok || body.error) return { error: body.error || 'Delete failed' };
   return { error: null };
 }
