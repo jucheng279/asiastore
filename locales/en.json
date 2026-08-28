@@ -351,7 +351,9 @@
     "newPassword": "New Password",
     "repeatNewPassword": "Repeat your new password",
     "updating": "Updating...",
-    "updatePassword": "Update Password"
+    "updatePassword": "Update Password",
+    "agreeToPrivacy": "I have read and agree to the",
+    "mustAgreePrivacy": "You must agree to the Privacy Policy to create an account"
   },
   "contact": {
     "title": "Contact Us",
@@ -375,5 +377,32 @@
     "orderingClosed": "Ordering is currently closed.",
     "orderMerged": "Items added to your existing order.",
     "orderPlaced": "Order placed successfully!"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last updated: August 2026",
+    "whatWeCollectTitle": "What We Collect",
+    "whatWeCollectIntro": "When you create an account or place an order, we collect:",
+    "collectEmail": "Email address (for your account login)",
+    "collectName": "Full name (for deliveries)",
+    "collectPhone": "Phone number (so we can reach you about your order)",
+    "collectAddress": "Delivery address (to deliver your order)",
+    "collectOrders": "Order history and loyalty points balance",
+    "whyWeCollectTitle": "Why We Collect It",
+    "whyDeliver": "To deliver your orders to the correct address",
+    "whyContact": "To contact you if there is an issue with your order",
+    "whyPoints": "To manage your loyalty points and rewards",
+    "whyImprove": "To improve our service and product selection",
+    "sharingTitle": "Sharing Your Data",
+    "sharingDesc": "We do not sell or share your personal information with any third parties. Your data is only accessible to us as the store operator.",
+    "retentionTitle": "How Long We Keep Your Data",
+    "retentionDesc": "We keep your data for as long as your account is active. Order records are kept for bookkeeping purposes as required by Swedish law. If you delete your account, your personal data will be removed.",
+    "yourRightsTitle": "Your Rights",
+    "yourRightsDesc": "Under GDPR, you have the right to:",
+    "rightAccess": "Request a copy of all data we hold about you",
+    "rightCorrect": "Correct any inaccurate information",
+    "rightDelete": "Request deletion of your account and data",
+    "contactTitle": "Contact Us",
+    "contactDesc": "For any privacy-related questions or to exercise your rights, please contact us at:"
   }
 }

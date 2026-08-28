@@ -351,7 +351,9 @@
     "newPassword": "Nytt losenord",
     "repeatNewPassword": "Upprepa ditt nya losenord",
     "updating": "Uppdaterar...",
-    "updatePassword": "Uppdatera losenord"
+    "updatePassword": "Uppdatera losenord",
+    "agreeToPrivacy": "Jag har last och godkanner",
+    "mustAgreePrivacy": "Du maste godkanna integritetspolicyn for att skapa ett konto"
   },
   "contact": {
     "title": "Kontakta oss",
@@ -375,5 +377,32 @@
     "orderingClosed": "Bestallning ar for tillfallet stangd.",
     "orderMerged": "Varor tillagda till din befintliga bestallning.",
     "orderPlaced": "Bestallningen ar lagd!"
+  },
+  "privacy": {
+    "title": "Integritetspolicy",
+    "lastUpdated": "Senast uppdaterad: augusti 2026",
+    "whatWeCollectTitle": "Vad vi samlar in",
+    "whatWeCollectIntro": "Nar du skapar ett konto eller lagger en bestallning samlar vi in:",
+    "collectEmail": "E-postadress (for ditt kontologin)",
+    "collectName": "Fullstandigt namn (for leveranser)",
+    "collectPhone": "Telefonnummer (sa att vi kan na dig angaende din bestallning)",
+    "collectAddress": "Leveransadress (for att leverera din bestallning)",
+    "collectOrders": "Bestallningshistorik och saldo for bonuspoang",
+    "whyWeCollectTitle": "Varfor vi samlar in det",
+    "whyDeliver": "For att leverera dina bestallningar till ratt adress",
+    "whyContact": "For att kontakta dig om det uppstar problem med din bestallning",
+    "whyPoints": "For att hantera dina bonuspoang och beloaningar",
+    "whyImprove": "For att forbattra var service och produkturval",
+    "sharingTitle": "Delning av dina uppgifter",
+    "sharingDesc": "Vi saljer eller delar inte dina personuppgifter med nagra tredje parter. Dina uppgifter ar endast tillgangliga for oss som butiksoperator.",
+    "retentionTitle": "Hur lange vi sparar dina uppgifter",
+    "retentionDesc": "Vi sparar dina uppgifter sa lange ditt konto ar aktivt. Bestallningshistorik sparas for bokforingssyfte enligt svensk lag. Om du tar bort ditt konto kommer dina personuppgifter att raderas.",
+    "yourRightsTitle": "Dina rattigheter",
+    "yourRightsDesc": "Enligt GDPR har du ratt att:",
+    "rightAccess": "Begara en kopia av alla uppgifter vi har om dig",
+    "rightCorrect": "Ratta felaktig information",
+    "rightDelete": "Begara radering av ditt konto och uppgifter",
+    "contactTitle": "Kontakta oss",
+    "contactDesc": "For fragor om integritet eller for att utova dina rattigheter, kontakta oss pa:"
   }
 }

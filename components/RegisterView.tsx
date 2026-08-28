@@ -11,6 +11,7 @@ const RegisterView: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -28,6 +29,10 @@ const RegisterView: React.FC = () => {
     }
     if (password !== confirmPassword) {
       setError(t('auth.passwordsNoMatch'));
+      return;
+    }
+    if (!agreedToPrivacy) {
+      setError(t('auth.mustAgreePrivacy'));
       return;
     }
 
@@ -111,6 +116,27 @@ const RegisterView: React.FC = () => {
                 placeholder={t('auth.repeatPassword')}
                 autoComplete="new-password"
               />
+            </div>
+
+            <div className="flex items-start gap-3 mt-2">
+              <input
+                type="checkbox"
+                id="privacy-consent"
+                checked={agreedToPrivacy}
+                onChange={(e) => setAgreedToPrivacy(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary/40 cursor-pointer"
+              />
+              <label htmlFor="privacy-consent" className="text-sm text-text-sub leading-snug cursor-pointer">
+                {t('auth.agreeToPrivacy')}{' '}
+                <a
+                  href="/privacy-policy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary font-medium hover:underline"
+                >
+                  {t('account.privacyPolicy')}
+                </a>
+              </label>
             </div>
 
             <button

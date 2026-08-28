@@ -351,7 +351,9 @@
     "newPassword": "新密码",
     "repeatNewPassword": "重复新密码",
     "updating": "更新中...",
-    "updatePassword": "更新密码"
+    "updatePassword": "更新密码",
+    "agreeToPrivacy": "我已阅读并同意",
+    "mustAgreePrivacy": "您必须同意隐私政策才能创建账户"
   },
   "contact": {
     "title": "联系我们",
@@ -375,5 +377,32 @@
     "orderingClosed": "目前暂停接单。",
     "orderMerged": "商品已添加到您现有的订单中。",
     "orderPlaced": "订单已成功下单！"
+  },
+  "privacy": {
+    "title": "隐私政策",
+    "lastUpdated": "最后更新：2026年8月",
+    "whatWeCollectTitle": "我们收集的信息",
+    "whatWeCollectIntro": "当您创建账户或下订单时，我们会收集：",
+    "collectEmail": "电子邮箱（用于账户登录）",
+    "collectName": "全名（用于配送）",
+    "collectPhone": "电话号码（以便我们就订单问题联系您）",
+    "collectAddress": "配送地址（用于配送您的订单）",
+    "collectOrders": "订单历史和积分余额",
+    "whyWeCollectTitle": "收集原因",
+    "whyDeliver": "将您的订单配送到正确的地址",
+    "whyContact": "在订单出现问题时联系您",
+    "whyPoints": "管理您的积分和奖励",
+    "whyImprove": "改善我们的服务和产品选择",
+    "sharingTitle": "数据共享",
+    "sharingDesc": "我们不会向任何第三方出售或共享您的个人信息。您的数据仅供我们作为店铺运营方访问。",
+    "retentionTitle": "数据保留期限",
+    "retentionDesc": "只要您的账户处于活跃状态，我们就会保留您的数据。根据瑞典法律要求，订单记录将用于记账目的。如果您删除账户，您的个人数据将被移除。",
+    "yourRightsTitle": "您的权利",
+    "yourRightsDesc": "根据 GDPR，您有权：",
+    "rightAccess": "要求获取我们持有的所有关于您的数据副本",
+    "rightCorrect": "更正任何不准确的信息",
+    "rightDelete": "要求删除您的账户和数据",
+    "contactTitle": "联系我们",
+    "contactDesc": "如有任何隐私相关问题或行使您的权利，请通过以下方式联系我们："
   }
 }

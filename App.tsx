@@ -24,6 +24,7 @@ import RegisterView from './components/RegisterView';
 import ForgotPasswordView from './components/ForgotPasswordView';
 import ResetPasswordView from './components/ResetPasswordView';
 import ContactUsView from './components/ContactUsView';
+import PrivacyPolicyView from './components/PrivacyPolicyView';
 import AuthGuard from './components/AuthGuard';
 
 const App: React.FC = () => {
@@ -38,6 +39,7 @@ const App: React.FC = () => {
                 <Route path="/register" element={<RegisterView />} />
                 <Route path="/forgot-password" element={<ForgotPasswordView />} />
                 <Route path="/reset-password" element={<ResetPasswordView />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicyView />} />
                 <Route element={<AppShell />}>
                   <Route index element={<HomeView />} />
                   <Route path="/products" element={<ListingView />} />
