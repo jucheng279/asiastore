@@ -11,7 +11,7 @@ import LanguageSwitcher from './LanguageSwitcher';
 const HomeView: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { categories, bestSellerProducts, expiryProducts, flashSaleProducts, orderingOpen } = useProductData();
+  const { categories, bestSellerProducts, expiryProducts, flashSaleProducts, orderingOpen, closedMessage, nextOpenTime } = useProductData();
   const { cartQuantities, increaseQuantity, decreaseQuantity, cartCount } = useCart();
   const { favorites, toggleFavorite } = useAuth();
 
@@ -60,6 +60,20 @@ const HomeView: React.FC = () => {
         </div>
 
       </div>
+
+      {!orderingOpen && closedMessage && (
+        <div className="px-4 lg:px-6 pt-3 bg-surface-light dark:bg-surface-dark">
+          <div className="flex items-start gap-3 px-4 py-3.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-xl">
+            <span className="material-symbols-outlined text-amber-600 dark:text-amber-400 text-[20px] mt-0.5 shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>schedule</span>
+            <div className="flex flex-col gap-0.5">
+              <p className="text-amber-800 dark:text-amber-200 text-sm font-medium leading-snug">{closedMessage}</p>
+              {nextOpenTime && (
+                <p className="text-amber-600 dark:text-amber-400 text-xs mt-0.5">{t('home.opensAt')} {nextOpenTime}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="pt-4 px-4 lg:px-6 pb-2 bg-surface-light dark:bg-surface-dark">
         <div className="w-full rounded-xl bg-primary shadow-lg overflow-hidden">
