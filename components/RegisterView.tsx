@@ -2,11 +2,15 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
+import { useProductData } from '../lib/ProductDataContext';
+import AuthLanguagePicker from './AuthLanguagePicker';
+import type { Language } from '../lib/api';
 
 const RegisterView: React.FC = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
-  const { signUp } = useAuth();
+  const { t, i18n } = useTranslation();
+  const { signUp, saveLanguagePreference } = useAuth();
+  const { setLanguage } = useProductData();
   const [nickname, setNickname] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -14,6 +18,13 @@ const RegisterView: React.FC = () => {
   const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [localLang, setLocalLang] = useState<Language>((i18n.language as Language) || 'en');
+
+  const handleLanguageChange = (lang: Language) => {
+    setLocalLang(lang);
+    i18n.changeLanguage(lang);
+    setLanguage(lang);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,6 +54,7 @@ const RegisterView: React.FC = () => {
     if (err) {
       setError(err);
     } else {
+      saveLanguagePreference(localLang);
       navigate('/');
     }
   };
@@ -51,6 +63,10 @@ const RegisterView: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background-light flex flex-col">
+      <div className="flex justify-end px-4 pt-4">
+        <AuthLanguagePicker value={localLang} onChange={handleLanguageChange} />
+      </div>
+
       <div className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-sm">
           <div className="text-center mb-10">

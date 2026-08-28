@@ -101,6 +101,7 @@ interface AuthContextType {
   updatePassword: (newPassword: string) => Promise<string | null>;
   clearPasswordRecovery: () => void;
   updateProfile: (updates: { nickname?: string; email?: string }) => Promise<string | null>;
+  saveLanguagePreference: (lang: 'en' | 'sv' | 'zh') => void;
   loadAddresses: () => Promise<void>;
   saveAddress: (addressData: Omit<Address, 'id'> & { id?: string }) => Promise<void>;
   deleteAddress: (addressId: string) => Promise<void>;
@@ -249,6 +250,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (result.profile) setProfile(result.profile);
     return null;
   };
+
+  const handleSaveLanguagePreference = useCallback((lang: 'en' | 'sv' | 'zh') => {
+    if (!user) return;
+    authUpdateProfile(user.id, { preferred_language: lang }).then(res => {
+      if (res.profile) setProfile(res.profile);
+    });
+  }, [user]);
 
   const handleSaveAddress = async (addressData: Omit<Address, 'id'> & { id?: string }) => {
     if (!user) return;
@@ -525,6 +533,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         updatePassword: handleUpdatePassword,
         clearPasswordRecovery,
         updateProfile: handleUpdateProfile,
+        saveLanguagePreference: handleSaveLanguagePreference,
         loadAddresses,
         saveAddress: handleSaveAddress,
         deleteAddress: handleDeleteAddress,

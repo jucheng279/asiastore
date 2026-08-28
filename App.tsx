@@ -4,6 +4,7 @@ import { ProductDataProvider } from './lib/ProductDataContext';
 import { AuthProvider } from './lib/AuthContext';
 import { ToastProvider } from './lib/ToastContext';
 import { CartProvider } from './lib/CartContext';
+import { LanguageSync } from './components/LanguageSync';
 import AppShell from './components/AppShell';
 import HomeView from './components/HomeView';
 import ListingView from './components/ListingView';
@@ -34,6 +35,7 @@ const App: React.FC = () => {
         <ProductDataProvider>
           <ToastProvider>
             <CartProvider>
+              <LanguageSync />
               <Routes>
                 <Route path="/login" element={<LoginView />} />
                 <Route path="/register" element={<RegisterView />} />

@@ -114,6 +114,7 @@ export interface UserProfile {
   nickname: string | null;
   email: string;
   is_admin: boolean;
+  preferred_language: 'en' | 'sv' | 'zh';
   created_at: string;
   updated_at: string;
 }
@@ -131,7 +132,7 @@ export async function fetchProfile(userId: string): Promise<UserProfile | null> 
 
 export async function updateProfile(
   userId: string,
-  updates: { nickname?: string; email?: string }
+  updates: { nickname?: string; email?: string; preferred_language?: 'en' | 'sv' | 'zh' }
 ) {
   const { data, error } = await supabase
     .from('profiles')

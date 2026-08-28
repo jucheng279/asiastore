@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useProductData } from '../lib/ProductDataContext';
-import { useAuth } from '../lib/AuthContext';
-import type { Language } from '../lib/api';
+
+type Language = 'en' | 'sv' | 'zh';
 
 const LANGUAGES: { code: Language; label: string }[] = [
   { code: 'en', label: 'EN' },
@@ -10,10 +9,12 @@ const LANGUAGES: { code: Language; label: string }[] = [
   { code: 'zh', label: 'ZH' },
 ];
 
-const LanguageSwitcher: React.FC = () => {
-  const { language, setLanguage } = useProductData();
-  const { isAuthenticated, saveLanguagePreference } = useAuth();
-  const { i18n } = useTranslation();
+interface Props {
+  value: Language;
+  onChange: (lang: Language) => void;
+}
+
+const AuthLanguagePicker: React.FC<Props> = ({ value, onChange }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -27,21 +28,18 @@ const LanguageSwitcher: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const current = LANGUAGES.find(l => l.code === language) || LANGUAGES[0];
+  const current = LANGUAGES.find(l => l.code === value) || LANGUAGES[0];
 
-  const handleLanguageChange = (code: Language) => {
-    setLanguage(code);
-    i18n.changeLanguage(code);
-    if (isAuthenticated) {
-      saveLanguagePreference(code);
-    }
+  const handleChange = (code: Language) => {
+    onChange(code);
     setOpen(false);
   };
 
   return (
     <div className="relative" ref={ref}>
       <button
-        className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-bold text-text-main dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+        type="button"
+        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-text-sub hover:bg-gray-100 transition-colors"
         onClick={() => setOpen(!open)}
       >
         <span className="material-symbols-outlined text-[16px]">language</span>
@@ -51,16 +49,17 @@ const LanguageSwitcher: React.FC = () => {
         </span>
       </button>
       {open && (
-        <div className="absolute left-0 top-full mt-1 bg-surface-light dark:bg-surface-dark rounded-lg shadow-lg border border-gray-100 dark:border-white/10 overflow-hidden z-[100] min-w-[100px]">
+        <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden z-[100] min-w-[100px]">
           {LANGUAGES.map((lang) => (
             <button
               key={lang.code}
+              type="button"
               className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors ${
-                language === lang.code
+                value === lang.code
                   ? 'bg-primary/10 text-primary'
-                  : 'text-text-main dark:text-white hover:bg-gray-50 dark:hover:bg-white/5'
+                  : 'text-text-main hover:bg-gray-50'
               }`}
-              onClick={() => handleLanguageChange(lang.code)}
+              onClick={() => handleChange(lang.code)}
             >
               <span>{lang.label}</span>
             </button>
@@ -71,4 +70,4 @@ const LanguageSwitcher: React.FC = () => {
   );
 };
 
-export default LanguageSwitcher;
+export default AuthLanguagePicker;
