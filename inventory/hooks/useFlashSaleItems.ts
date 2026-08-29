@@ -371,12 +371,27 @@ export function useFlashSaleItems(
               'flashDiscountPercentage' in updates;
 
             if (flashFieldsUpdated) {
-              updatedItem.childItems = i.childItems.map(child => ({
-                ...child,
-                ...(updates.flashDays !== undefined && { flashDays: updates.flashDays }),
-                ...(updates.flashStartDate !== undefined && { flashStartDate: updates.flashStartDate }),
-                ...(updates.flashDiscountPercentage !== undefined && { flashDiscountPercentage: updates.flashDiscountPercentage }),
-              }));
+              const newDiscount = updates.flashDiscountPercentage;
+              updatedItem.childItems = i.childItems.map(child => {
+                const childUpdate: Partial<FlashSaleItem> = {
+                  ...(updates.flashDays !== undefined && { flashDays: updates.flashDays }),
+                  ...(updates.flashStartDate !== undefined && { flashStartDate: updates.flashStartDate }),
+                };
+
+                if (newDiscount !== undefined) {
+                  childUpdate.flashDiscountPercentage = newDiscount;
+                  const childPrice = parseFloat(child.price);
+                  if (!isNaN(childPrice) && childPrice > 0) {
+                    const computed = (childPrice * (1 - newDiscount / 100)).toFixed(2);
+                    childUpdate.newPrice = computed;
+                    if (child.sourceProductId) {
+                      reverseSync(child.sourceProductId, { newPrice: computed });
+                    }
+                  }
+                }
+
+                return { ...child, ...childUpdate };
+              });
             }
           }
 
