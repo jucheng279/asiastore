@@ -75,9 +75,9 @@
     "description": "描述",
     "productNotFound": "商品未找到",
     "productNotFoundDesc": "您查找的商品不存在或已被删除。",
-    "addToCart": "加入订单",
+    "addToCart": "加入购物车",
     "addToOrder": "加入订单",
-    "inOrder": "订单中已有 {{count}} 件",
+    "inCart": "购物车中已有 {{count}} 件",
     "lowStock": "仅剩 {{count}} 件",
     "notFound": "商品未找到",
     "selectVariant": "选择规格",
@@ -123,10 +123,9 @@
     "checkBack": "请稍后再查看新优惠！"
   },
   "cart": {
-    "weeklyOrder": "本周订单",
-    "emptyCart": "订单中没有商品",
-    "emptyCartDesc": "添加商品开始本周订单",
-    "orderSummary": "订单摘要",
+    "myCart": "我的购物车",
+    "emptyCart": "购物车是空的",
+    "emptyCartDesc": "浏览商品并添加到购物车",
     "subtotal": "小计",
     "deliveryFee": "配送费",
     "estimatedTotal": "预计总额",
@@ -135,9 +134,12 @@
     "deliveryFeeWarning": "将收取 {{fee}} 配送费",
     "addMoreToAvoid": "再加 {{amount}} 即可免配送费",
     "finalTotalNote": "最终总额（含配送费）将在订购期结束时计算",
-    "viewOrder": "查看我的订单",
-    "cancelOrder": "取消订单",
-    "exceedsStock": "最大可购: {{max}}"
+    "addToOrder": "加入订单",
+    "clearAll": "清空全部",
+    "exceedsStock": "最大可购: {{max}}",
+    "stockChanged": "部分商品库存有限，数量已调整。",
+    "orderSuccess": "商品已添加到您的每周订单！",
+    "youMightLike": "你可能还喜欢"
   },
   "checkout": {
     "title": "结账",
@@ -375,7 +377,7 @@
     "closedCheckout": "暂停接单"
   },
   "toast": {
-    "addedToOrder": "已添加到本周订单",
+    "addedToCart": "已加入购物车",
     "orderingClosed": "目前暂停接单。",
     "addressRequired": "请先保存配送地址。",
     "loginRequired": "请登录后添加商品。"

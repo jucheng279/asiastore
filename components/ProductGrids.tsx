@@ -13,7 +13,7 @@ interface ProductGridProps {
 
 const ProductGrid: React.FC<ProductGridProps> = ({ products, useFavoriteSourceId = false }) => {
   const navigate = useNavigate();
-  const { cartQuantities, addToWeeklyOrder, removeFromWeeklyOrder } = useCart();
+  const { cartQuantities, addToCart, removeFromCart } = useCart();
   const { favorites, toggleFavorite } = useAuth();
   const { orderingOpen } = useProductData();
 
@@ -29,8 +29,8 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, useFavoriteSourceId
             isFavorite={favorites.has(favoriteId)}
             onNavigate={() => navigate('/product/' + product.id)}
             onToggleFavorite={() => toggleFavorite(favoriteId)}
-            onIncrease={() => addToWeeklyOrder(product, 1)}
-            onDecrease={() => removeFromWeeklyOrder(product.id, 1)}
+            onIncrease={() => addToCart(product, 1)}
+            onDecrease={() => removeFromCart(product.id, 1)}
             orderingClosed={!orderingOpen}
           />
         );
@@ -47,7 +47,7 @@ interface ProductCarouselProps {
 
 const ProductCarousel: React.FC<ProductCarouselProps> = ({ products, useFavoriteSourceId = false, itemWidth = '160px' }) => {
   const navigate = useNavigate();
-  const { cartQuantities, addToWeeklyOrder, removeFromWeeklyOrder } = useCart();
+  const { cartQuantities, addToCart, removeFromCart } = useCart();
   const { favorites, toggleFavorite } = useAuth();
   const { orderingOpen } = useProductData();
 
@@ -65,8 +65,8 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ products, useFavorite
               isFavorite={favorites.has(favoriteId)}
               onNavigate={() => navigate('/product/' + product.id)}
               onToggleFavorite={() => toggleFavorite(favoriteId)}
-              onIncrease={() => addToWeeklyOrder(product, 1)}
-              onDecrease={() => removeFromWeeklyOrder(product.id, 1)}
+              onIncrease={() => addToCart(product, 1)}
+              onDecrease={() => removeFromCart(product.id, 1)}
               orderingClosed={!orderingOpen}
             />
           </div>

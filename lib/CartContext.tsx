@@ -1,138 +1,139 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useProductData } from './ProductDataContext';
-import { useAuth } from './AuthContext';
-import { useToast } from './ToastContext';
-import type { Product, CartItem, Order } from '../types';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import type { Product, CartItem } from '../types';
+
+const STORAGE_KEY = 'local_cart';
+
+interface LocalCartEntry {
+  productId: string;
+  name: string;
+  price: number;
+  image: string;
+  quantity: number;
+}
 
 interface CartContextType {
+  cartItems: CartItem[];
   cartQuantities: Map<string, number>;
   cartCount: number;
-  cartItems: CartItem[];
-  weeklyOrder: Order | null;
-  isAdding: boolean;
-  addToWeeklyOrder: (product: Product, quantity?: number) => Promise<void>;
-  removeFromWeeklyOrder: (productId: string, quantity?: number) => Promise<void>;
+  addToCart: (product: Product, quantity?: number) => void;
+  removeFromCart: (productId: string, quantity?: number) => void;
   clearCart: () => void;
+  setItemQuantity: (productId: string, quantity: number) => void;
 }
 
 const CartContext = createContext<CartContextType>({
+  cartItems: [],
   cartQuantities: new Map(),
   cartCount: 0,
-  cartItems: [],
-  weeklyOrder: null,
-  isAdding: false,
-  addToWeeklyOrder: async () => {},
-  removeFromWeeklyOrder: async () => {},
+  addToCart: () => {},
+  removeFromCart: () => {},
   clearCart: () => {},
+  setItemQuantity: () => {},
 });
 
 export function useCart() {
   return useContext(CartContext);
 }
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
-  const { t } = useTranslation();
-  const { productMap, orderingOpen } = useProductData();
-  const { isAuthenticated, orders, addToOrder, removeFromOrder, addresses, refreshOrders } = useAuth();
-  const { showToast } = useToast();
-  const [isAdding, setIsAdding] = useState(false);
-  const [needsAddress, setNeedsAddress] = useState(false);
-
-  const weeklyOrder = orders.find(o => o.status === 'active') || null;
-
-  const cartQuantities = new Map<string, number>();
-  if (weeklyOrder) {
-    for (const item of weeklyOrder.items) {
-      cartQuantities.set(item.id, item.qty);
-    }
+function loadCart(): LocalCartEntry[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw) as LocalCartEntry[];
+  } catch {
+    return [];
   }
+}
 
-  const cartCount = weeklyOrder
-    ? weeklyOrder.items.reduce((sum, item) => sum + item.qty, 0)
-    : 0;
+function saveCart(entries: LocalCartEntry[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+  } catch { /* quota exceeded — ignore */ }
+}
 
-  const cartItems: CartItem[] = weeklyOrder
-    ? weeklyOrder.items.map(item => {
-        const product = productMap.get(item.id);
-        return {
-          id: item.id,
-          name: item.name,
-          price: item.price,
-          image: item.image,
-          quantity: item.qty,
-          availableStock: product?.availableStock,
-        } as CartItem;
-      })
-    : [];
+export function CartProvider({ children }: { children: React.ReactNode }) {
+  const [entries, setEntries] = useState<LocalCartEntry[]>(() => loadCart());
 
-  const handleAddToWeeklyOrder = useCallback(async (product: Product, quantity = 1) => {
-    if (!orderingOpen) {
-      showToast(t('toast.orderingClosed'), 'warning');
-      return;
-    }
-    if (!isAuthenticated) {
-      showToast(t('toast.loginRequired'), 'warning');
-      return;
-    }
+  useEffect(() => {
+    saveCart(entries);
+  }, [entries]);
+
+  const cartQuantities = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const e of entries) m.set(e.productId, e.quantity);
+    return m;
+  }, [entries]);
+
+  const cartCount = useMemo(
+    () => entries.reduce((sum, e) => sum + e.quantity, 0),
+    [entries],
+  );
+
+  const cartItems: CartItem[] = useMemo(
+    () => entries.map(e => ({
+      id: e.productId,
+      name: e.name,
+      price: e.price,
+      image: e.image,
+      quantity: e.quantity,
+    })),
+    [entries],
+  );
+
+  const addToCart = useCallback((product: Product, quantity = 1) => {
     if (product.hasChildren) return;
-
-    setIsAdding(true);
-
-    const hasExistingOrder = !!weeklyOrder;
-    const defaultAddr = addresses.find(a => a.isDefault) || addresses[0];
-
-    const result = await addToOrder(
-      [{ productId: product.id, name: product.name, image: product.image, quantity }],
-      !hasExistingOrder ? defaultAddr : undefined,
-      !hasExistingOrder ? defaultAddr?.phone : undefined,
-      !hasExistingOrder ? defaultAddr?.email : undefined,
-    );
-
-    setIsAdding(false);
-
-    if (result.error) {
-      if (/address required/i.test(result.error)) {
-        setNeedsAddress(true);
-        showToast(t('toast.addressRequired'), 'warning');
-      } else {
-        showToast(result.error, 'error');
+    setEntries(prev => {
+      const idx = prev.findIndex(e => e.productId === product.id);
+      if (idx >= 0) {
+        const updated = [...prev];
+        updated[idx] = { ...updated[idx], quantity: updated[idx].quantity + quantity, price: product.price, name: product.name, image: product.image };
+        return updated;
       }
+      return [...prev, { productId: product.id, name: product.name, price: product.price, image: product.image, quantity }];
+    });
+  }, []);
+
+  const removeFromCart = useCallback((productId: string, quantity?: number) => {
+    setEntries(prev => {
+      const idx = prev.findIndex(e => e.productId === productId);
+      if (idx < 0) return prev;
+      if (quantity === undefined || prev[idx].quantity <= quantity) {
+        return prev.filter((_, i) => i !== idx);
+      }
+      const updated = [...prev];
+      updated[idx] = { ...updated[idx], quantity: updated[idx].quantity - quantity };
+      return updated;
+    });
+  }, []);
+
+  const setItemQuantity = useCallback((productId: string, quantity: number) => {
+    if (quantity <= 0) {
+      setEntries(prev => prev.filter(e => e.productId !== productId));
       return;
     }
-
-    showToast(t('toast.addedToOrder'), 'success');
-  }, [orderingOpen, isAuthenticated, weeklyOrder, addresses, addToOrder, showToast, t]);
-
-  const handleRemoveFromWeeklyOrder = useCallback(async (productId: string, quantity?: number) => {
-    if (!orderingOpen) {
-      showToast(t('toast.orderingClosed'), 'warning');
-      return;
-    }
-
-    const result = await removeFromOrder(productId, quantity);
-
-    if (result.error) {
-      showToast(result.error, 'error');
-      return;
-    }
-  }, [orderingOpen, removeFromOrder, showToast, t]);
+    setEntries(prev => {
+      const idx = prev.findIndex(e => e.productId === productId);
+      if (idx < 0) return prev;
+      const updated = [...prev];
+      updated[idx] = { ...updated[idx], quantity };
+      return updated;
+    });
+  }, []);
 
   const clearCart = useCallback(() => {
-    // No-op: use cancel order instead
+    setEntries([]);
   }, []);
 
   return (
     <CartContext.Provider
       value={{
+        cartItems,
         cartQuantities,
         cartCount,
-        cartItems,
-        weeklyOrder,
-        isAdding,
-        addToWeeklyOrder: handleAddToWeeklyOrder,
-        removeFromWeeklyOrder: handleRemoveFromWeeklyOrder,
+        addToCart,
+        removeFromCart,
         clearCart,
+        setItemQuantity,
       }}
     >
       {children}

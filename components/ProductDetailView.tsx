@@ -11,14 +11,13 @@ const ProductDetailView: React.FC = () => {
   const navigate = useNavigate();
   const { productId: selectedProductId } = useParams<{ productId: string }>();
   const { productMap, language, orderingOpen } = useProductData();
-  const { cartQuantities, cartCount, addToWeeklyOrder } = useCart();
+  const { cartQuantities, cartCount, addToCart } = useCart();
   const { favorites, toggleFavorite } = useAuth();
 
   const orderingClosed = !orderingOpen;
 
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [localQty, setLocalQty] = useState(1);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const resolvedProduct = useMemo(() => {
     if (!selectedProductId) return null;
@@ -78,15 +77,13 @@ const ProductDetailView: React.FC = () => {
     }, 150);
   };
 
-  const handleAddToCart = async () => {
-    if (!displayProduct || !cartProductId || isOutOfStock || orderingClosed || isSubmitting) return;
+  const handleAddToCart = () => {
+    if (!displayProduct || !cartProductId || isOutOfStock || orderingClosed) return;
     if (resolvedProduct?.hasChildren && !actualChildId) return;
     const cartQty = cartQuantities.get(cartProductId) || 0;
     const canAdd = available !== undefined ? Math.min(localQty, available - cartQty) : localQty;
     if (canAdd > 0) {
-      setIsSubmitting(true);
-      await addToWeeklyOrder(displayProduct, canAdd);
-      setIsSubmitting(false);
+      addToCart(displayProduct, canAdd);
       setLocalQty(1);
     }
   };
@@ -237,14 +234,10 @@ const ProductDetailView: React.FC = () => {
             <button
               className="flex-1 flex items-center justify-center gap-2 bg-primary text-white font-bold py-3 rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={handleAddToCart}
-              disabled={isOutOfStock || atMaxQty || isSubmitting}
+              disabled={isOutOfStock || atMaxQty}
             >
-              {isSubmitting ? (
-                <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>
-              ) : (
-                <span className="material-symbols-outlined text-[20px]">add_shopping_cart</span>
-              )}
-              <span>{t('product.addToOrder')}</span>
+              <span className="material-symbols-outlined text-[20px]">add_shopping_cart</span>
+              <span>{t('product.addToCart')}</span>
             </button>
           </div>
         )}
@@ -252,7 +245,7 @@ const ProductDetailView: React.FC = () => {
         {cartQty > 0 && (
           <div className="flex items-center gap-2 rounded-xl bg-green-50 dark:bg-green-900/20 px-4 py-3 mb-4">
             <span className="material-symbols-outlined text-green-600 dark:text-green-400 text-[18px]">check_circle</span>
-            <span className="text-sm font-medium text-green-700 dark:text-green-300">{t('product.inOrder', { count: cartQty })}</span>
+            <span className="text-sm font-medium text-green-700 dark:text-green-300">{t('product.inCart', { count: cartQty })}</span>
           </div>
         )}
       </div>

@@ -75,9 +75,9 @@
     "description": "Description",
     "productNotFound": "Product not found",
     "productNotFoundDesc": "The product you're looking for doesn't exist or has been removed.",
-    "addToCart": "Add to Order",
+    "addToCart": "Add to Cart",
     "addToOrder": "Add to Order",
-    "inOrder": "{{count}} in your order",
+    "inCart": "{{count}} in your cart",
     "lowStock": "Only {{count}} left in stock",
     "notFound": "Product not found",
     "selectVariant": "Select variant",
@@ -123,10 +123,9 @@
     "checkBack": "Check back soon for new deals!"
   },
   "cart": {
-    "weeklyOrder": "Weekly Order",
-    "emptyCart": "No items in your order",
-    "emptyCartDesc": "Add items to start your weekly order",
-    "orderSummary": "Order Summary",
+    "myCart": "My Cart",
+    "emptyCart": "Your cart is empty",
+    "emptyCartDesc": "Browse our products and add items to your cart",
     "subtotal": "Subtotal",
     "deliveryFee": "Delivery Fee",
     "estimatedTotal": "Estimated Total",
@@ -135,9 +134,12 @@
     "deliveryFeeWarning": "A {{fee}} delivery fee will apply",
     "addMoreToAvoid": "Add {{amount}} more for free delivery",
     "finalTotalNote": "Final total including delivery fee is calculated when ordering closes",
-    "viewOrder": "View My Order",
-    "cancelOrder": "Cancel Order",
-    "exceedsStock": "Max available: {{max}}"
+    "addToOrder": "Add To Order",
+    "clearAll": "Clear All",
+    "exceedsStock": "Max available: {{max}}",
+    "stockChanged": "Some items have limited stock. Quantities have been adjusted.",
+    "orderSuccess": "Items added to your weekly order!",
+    "youMightLike": "You might also like"
   },
   "checkout": {
     "title": "Checkout",
@@ -375,7 +377,7 @@
     "closedCheckout": "Ordering is closed"
   },
   "toast": {
-    "addedToOrder": "Added to your weekly order",
+    "addedToCart": "Added to cart",
     "orderingClosed": "Ordering is currently closed.",
     "addressRequired": "Please save a delivery address first.",
     "loginRequired": "Please sign in to add items."

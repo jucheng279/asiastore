@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useProductData } from '../lib/ProductDataContext';
 import { useAuth } from '../lib/AuthContext';
-import { useCart } from '../lib/CartContext';
+
 import { formatPrice } from '../lib/formatters';
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE, POINTS_DISCOUNT_RATE } from '../lib/businessConstants';
 import type { Address } from '../types';
@@ -14,7 +14,7 @@ const OrdersView: React.FC = () => {
   const { t } = useTranslation();
   const { language, refreshData, orderingOpen } = useProductData();
   const { orders, cancelOrder, addresses, saveAddress, updateOrderAddress, setPaymentMethod, refreshOrders } = useAuth();
-  const { cartCount, weeklyOrder } = useCart();
+
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [confirmingCancelId, setConfirmingCancelId] = useState<string | null>(null);
   const [editingAddress, setEditingAddress] = useState(false);
@@ -29,7 +29,7 @@ const OrdersView: React.FC = () => {
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [addressMode, setAddressMode] = useState<'saved' | 'manual'>('saved');
 
-  const currentOrder = weeklyOrder;
+  const currentOrder = orders.find(o => o.status === 'active') || null;
   const pastOrders = orders.filter(o => o.id !== currentOrder?.id);
   const sortedPastOrders = [...pastOrders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 

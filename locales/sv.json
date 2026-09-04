@@ -75,9 +75,9 @@
     "description": "Beskrivning",
     "productNotFound": "Produkten hittades inte",
     "productNotFoundDesc": "Produkten du soker finns inte eller har tagits bort.",
-    "addToCart": "Lagg till i bestallning",
+    "addToCart": "Lagg i kundvagn",
     "addToOrder": "Lagg till i bestallning",
-    "inOrder": "{{count}} i din bestallning",
+    "inCart": "{{count}} i kundvagnen",
     "lowStock": "Bara {{count}} kvar i lager",
     "notFound": "Produkten hittades inte",
     "selectVariant": "Valj variant",
@@ -123,10 +123,9 @@
     "checkBack": "Kom tillbaka snart for nya erbjudanden!"
   },
   "cart": {
-    "weeklyOrder": "Veckans bestallning",
-    "emptyCart": "Inga varor i din bestallning",
-    "emptyCartDesc": "Lagg till varor for att borja din veckobestallning",
-    "orderSummary": "Orderoversikt",
+    "myCart": "Min kundvagn",
+    "emptyCart": "Din kundvagn ar tom",
+    "emptyCartDesc": "Blaedra bland vara produkter och lagg till varor",
     "subtotal": "Delsumma",
     "deliveryFee": "Leveransavgift",
     "estimatedTotal": "Beraknat totalt",
@@ -135,9 +134,12 @@
     "deliveryFeeWarning": "En leveransavgift pa {{fee}} tillkommer",
     "addMoreToAvoid": "Lagg till {{amount}} till for fri leverans",
     "finalTotalNote": "Slutsumma inklusive leveransavgift beraknas nar bestallningsperioden stanger",
-    "viewOrder": "Visa min bestallning",
-    "cancelOrder": "Avbryt bestallning",
-    "exceedsStock": "Max tillgangligt: {{max}}"
+    "addToOrder": "Lagg till bestallning",
+    "clearAll": "Rensa alla",
+    "exceedsStock": "Max tillgangligt: {{max}}",
+    "stockChanged": "Vissa varor har begransat lager. Antal har justerats.",
+    "orderSuccess": "Varor tillagda i din veckobestallning!",
+    "youMightLike": "Du kanske ocksa gillar"
   },
   "checkout": {
     "title": "Kassa",
@@ -375,7 +377,7 @@
     "closedCheckout": "Bestallning ar stangd"
   },
   "toast": {
-    "addedToOrder": "Tillagd i din veckobestallning",
+    "addedToCart": "Tillagd i kundvagnen",
     "orderingClosed": "Bestallning ar for tillfallet stangd.",
     "addressRequired": "Spara en leveransadress forst.",
     "loginRequired": "Logga in for att lagga till varor."

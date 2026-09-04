@@ -28,7 +28,11 @@ export interface Product {
   availableStock?: number;
 }
 
-export interface CartItem extends Product {
+export interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
   quantity: number;
 }
 
