@@ -53,8 +53,7 @@ export interface Order {
   status: 'active' | 'cancelled' | 'completed';
   paidWithPoints?: boolean;
   pointsAmount?: number;
-  paymentMethod?: 'cashOrSwish' | 'points' | 'payAtStore';
-  mergeCount?: number;
+  paymentMethod?: string;
 }
 
 export interface Address {

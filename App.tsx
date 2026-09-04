@@ -10,12 +10,10 @@ import HomeView from './components/HomeView';
 import ListingView from './components/ListingView';
 import ProductDetailView from './components/ProductDetailView';
 import CartView from './components/CartView';
-import CheckoutView from './components/CheckoutView';
 import DealsView from './components/DealsView';
 import AccountView from './components/AccountView';
 import FavoritesView from './components/FavoritesView';
 import OrdersView from './components/OrdersView';
-import PaymentMethodsView from './components/PaymentMethodsView';
 import AddressesView from './components/AddressesView';
 import NotificationsView from './components/NotificationsView';
 import BestSellersView from './components/BestSellersView';
@@ -51,16 +49,16 @@ const App: React.FC = () => {
                   <Route path="/deals" element={<DealsView />} />
                   <Route path="/best-sellers" element={<BestSellersView />} />
                   <Route path="/contact" element={<ContactUsView />} />
-                  <Route path="/checkout" element={<AuthGuard><CheckoutView /></AuthGuard>} />
+                  <Route path="/checkout" element={<Navigate to="/cart" replace />} />
                   <Route path="/account" element={<AuthGuard><AccountView /></AuthGuard>} />
                   <Route path="/favorites" element={<AuthGuard><FavoritesView /></AuthGuard>} />
                   <Route path="/orders" element={<AuthGuard><OrdersView /></AuthGuard>} />
-                  <Route path="/payment-methods" element={<AuthGuard><PaymentMethodsView /></AuthGuard>} />
+                  <Route path="/payment-methods" element={<Navigate to="/orders" replace />} />
                   <Route path="/addresses" element={<AuthGuard><AddressesView /></AuthGuard>} />
                   <Route path="/notifications" element={<AuthGuard><NotificationsView /></AuthGuard>} />
                   <Route path="/points" element={<AuthGuard><PointsView /></AuthGuard>} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
                 </Route>
-                <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </CartProvider>
           </ToastProvider>

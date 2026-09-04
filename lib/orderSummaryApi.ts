@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from './businessConstants';
 
 export interface OrderSummaryItem {
   productId: string;
@@ -24,9 +25,10 @@ export interface OrderSummaryRow {
   contactPhone: string;
   contactEmail: string;
   paymentMethod: string;
+  subtotal: number;
+  deliveryFee: number;
   total: number;
   orderId: string;
-  mergeCount: number;
   createdAt: string;
 }
 
@@ -136,6 +138,8 @@ export async function fetchOrderSummary(
     const nickname = profile?.nickname || 'Unknown User';
     const addr = (order.shipping_address || {}) as Record<string, unknown>;
     const pm = order.payment_method || (order.paid_with_points ? 'points' : 'cashOrSwish');
+    const subtotal = order.total;
+    const deliveryFee = subtotal < FREE_SHIPPING_THRESHOLD ? SHIPPING_FEE : 0;
 
     return {
       userId: order.user_id,
@@ -153,9 +157,10 @@ export async function fetchOrderSummary(
       contactPhone: order.contact_phone,
       contactEmail: order.contact_email,
       paymentMethod: pm,
-      total: order.total,
+      subtotal,
+      deliveryFee,
+      total: subtotal + deliveryFee,
       orderId: order.id,
-      mergeCount: order.merge_count || 1,
       createdAt: order.created_at,
     };
   });

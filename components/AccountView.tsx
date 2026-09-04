@@ -9,7 +9,6 @@ const MENU_ITEMS = [
   { icon: 'receipt_long', labelKey: 'account.myOrders', path: '/orders' },
   { icon: 'favorite', labelKey: 'nav.favorites', path: '/favorites' },
   { icon: 'local_shipping', labelKey: 'account.deliveryInfo', path: '/addresses' },
-  { icon: 'credit_card', labelKey: 'account.payment', path: '/payment-methods' },
   { icon: 'notifications', labelKey: 'account.notifications', path: '/notifications' },
 ];
 
@@ -17,7 +16,7 @@ const AccountView: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { profile, updateProfile, points, isAdmin, signOut } = useAuth();
-  const { itemCount: cartCount } = useCart();
+  const { cartCount } = useCart();
   const [isEditing, setIsEditing] = useState(false);
   const [editNickname, setEditNickname] = useState('');
   const [editError, setEditError] = useState<string | null>(null);

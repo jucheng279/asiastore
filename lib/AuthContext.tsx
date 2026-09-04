@@ -15,16 +15,17 @@ import {
   removeUserFavorite,
   fetchUserFavorites,
   fetchUserOrders,
-  createUserOrder,
+  addToWeeklyOrder,
+  removeFromWeeklyOrder,
+  updateWeeklyOrderAddress,
+  setOrderPaymentMethod,
   cancelUserOrder,
-  modifyUserOrder,
   dailyCheckin,
   deductPoints,
   fetchUserPoints,
   hasCheckedInToday,
   type UserProfile,
   type UserAddress,
-  type ModifyOrderResult,
 } from './auth';
 import type { User } from '@supabase/supabase-js';
 import type { Address, Order } from '../types';
@@ -44,7 +45,7 @@ function toLocalAddress(ua: UserAddress): Address {
   };
 }
 
-function dbOrderToLocal(dbOrder: { order: { id: string; total: number; contact_email: string; contact_phone: string; shipping_address: Record<string, unknown>; delivery_instructions: string | null; created_at: string; status?: string; paid_with_points?: boolean; points_amount?: number; payment_method?: string; merge_count?: number }; items: { product_id: string; name: string; image: string; price: number; quantity: number }[] }): Order {
+function dbOrderToLocal(dbOrder: { order: { id: string; total: number; contact_email: string; contact_phone: string; shipping_address: Record<string, unknown>; delivery_instructions: string | null; created_at: string; status?: string; paid_with_points?: boolean; points_amount?: number; payment_method?: string }; items: { product_id: string; name: string; image: string; price: number; quantity: number }[] }): Order {
   const o = dbOrder.order;
   const addr = o.shipping_address as Record<string, string | boolean | undefined>;
   return {
@@ -77,8 +78,7 @@ function dbOrderToLocal(dbOrder: { order: { id: string; total: number; contact_e
     status: (o.status as 'active' | 'cancelled' | 'completed') || 'active',
     paidWithPoints: o.paid_with_points || false,
     pointsAmount: o.points_amount || 0,
-    paymentMethod: (o.payment_method as 'cashOrSwish' | 'points' | 'payAtStore') || 'cashOrSwish',
-    mergeCount: o.merge_count || 1,
+    paymentMethod: o.payment_method || '',
   };
 }
 
@@ -108,19 +108,18 @@ interface AuthContextType {
   toggleFavorite: (productId: string) => void;
   performDailyCheckin: () => Promise<{ success: boolean; error: string | null }>;
   deductUserPoints: (amount: number) => Promise<{ success: boolean; error: string | null }>;
-  createOrder: (orderData: {
-    total: number;
-    contactEmail: string;
-    contactPhone: string;
-    shippingAddress: Address;
-    deliveryInstructions?: string;
-    paidWithPoints?: boolean;
-    pointsAmount?: number;
-    paymentMethod?: 'cashOrSwish' | 'points' | 'payAtStore';
-    items: { id: string; name: string; image: string; price: number; quantity: number }[];
-  }) => Promise<{ order: Order | null; error: string | null; merged?: boolean }>;
+  addToOrder: (
+    items: { productId: string; name: string; image: string; quantity: number }[],
+    shippingAddress?: Address,
+    contactPhone?: string,
+    contactEmail?: string,
+    deliveryInstructions?: string,
+  ) => Promise<{ orderId: string | null; error: string | null }>;
+  removeFromOrder: (productId: string, quantity?: number) => Promise<{ error: string | null }>;
+  updateOrderAddress: (orderId: string, address: Address, contactPhone?: string, contactEmail?: string, deliveryInstructions?: string) => Promise<{ error: string | null }>;
+  setPaymentMethod: (orderId: string, method: string) => Promise<{ error: string | null }>;
   cancelOrder: (orderId: string) => Promise<{ success: boolean; error: string | null }>;
-  modifyOrder: (orderId: string, items: { id: string; name: string; image: string; price: number; quantity: number }[]) => Promise<{ result: ModifyOrderResult | null; error: string | null }>;
+  refreshOrders: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -149,10 +148,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfile(p);
   };
 
-  const loadAddresses = async () => {
-    if (!user) return;
-    const addrs = await fetchUserAddresses(user.id);
-    setAddresses(addrs.map(toLocalAddress));
+  const loadOrders = async (userId: string) => {
+    const ordersData = await fetchUserOrders(userId);
+    setOrders(ordersData.map(dbOrderToLocal));
   };
 
   const loadAllUserData = async (userId: string) => {
@@ -258,6 +256,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, [user]);
 
+  const loadAddresses = async () => {
+    if (!user) return;
+    const addrs = await fetchUserAddresses(user.id);
+    setAddresses(addrs.map(toLocalAddress));
+  };
+
   const handleSaveAddress = async (addressData: Omit<Address, 'id'> & { id?: string }) => {
     if (!user) return;
 
@@ -356,160 +360,100 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { success: result.success, error: result.error };
   };
 
-  const handleCreateOrder = async (orderData: {
-    total: number;
-    contactEmail: string;
-    contactPhone: string;
-    shippingAddress: Address;
-    deliveryInstructions?: string;
-    paidWithPoints?: boolean;
-    pointsAmount?: number;
-    paymentMethod?: 'cashOrSwish' | 'points' | 'payAtStore';
-    items: { id: string; name: string; image: string; price: number; quantity: number }[];
-  }): Promise<{ order: Order | null; error: string | null }> => {
-    if (!user) return { order: null, error: 'Not authenticated' };
+  const handleAddToOrder = async (
+    items: { productId: string; name: string; image: string; quantity: number }[],
+    shippingAddress?: Address,
+    contactPhone?: string,
+    contactEmail?: string,
+    deliveryInstructions?: string,
+  ): Promise<{ orderId: string | null; error: string | null }> => {
+    if (!user) return { orderId: null, error: 'Not authenticated' };
 
-    const result = await createUserOrder(user.id, {
-      total: orderData.total,
-      contactEmail: orderData.contactEmail,
-      contactPhone: orderData.contactPhone,
-      shippingAddress: orderData.shippingAddress as unknown as Record<string, unknown>,
-      deliveryInstructions: orderData.deliveryInstructions,
-      paidWithPoints: orderData.paidWithPoints,
-      pointsAmount: orderData.pointsAmount,
-      paymentMethod: orderData.paymentMethod,
-      items: orderData.items.map(item => ({
-        productId: item.id,
-        name: item.name,
-        image: item.image,
-        price: item.price,
-        quantity: item.quantity,
-      })),
-    });
+    const addressPayload = shippingAddress ? {
+      id: shippingAddress.id,
+      label: shippingAddress.label,
+      fullName: shippingAddress.fullName,
+      phone: shippingAddress.phone,
+      email: shippingAddress.email,
+      streetAddress: shippingAddress.streetAddress,
+      city: shippingAddress.city,
+      postalCode: shippingAddress.postalCode,
+      country: shippingAddress.country,
+      isDefault: shippingAddress.isDefault,
+    } : undefined;
 
-    if (result.error || !result.orderId) {
-      return { order: null, error: result.error || 'Order failed' };
-    }
+    const result = await addToWeeklyOrder(
+      items,
+      addressPayload,
+      contactPhone,
+      contactEmail,
+      deliveryInstructions,
+    );
 
-    if (orderData.paidWithPoints && orderData.pointsAmount) {
-      setPoints(prev => Math.max(0, prev - orderData.pointsAmount!));
-    }
+    if (result.error) return { orderId: null, error: result.error };
 
-    const existingOrder = orders.find(o => o.id === result.orderId);
-    if (existingOrder) {
-      const mergedItems = [...existingOrder.items];
-      for (const newItem of orderData.items) {
-        const existing = mergedItems.find(i => i.id === newItem.id);
-        if (existing) {
-          existing.qty += newItem.quantity;
-        } else {
-          mergedItems.push({ id: newItem.id, name: newItem.name, qty: newItem.quantity, image: newItem.image, price: newItem.price });
-        }
-      }
-      const updatedOrder: Order = {
-        ...existingOrder,
-        items: mergedItems,
-        total: existingOrder.total + orderData.total,
-        mergeCount: (existingOrder.mergeCount || 1) + 1,
-      };
-      setOrders(prev => prev.map(o => o.id === result.orderId ? updatedOrder : o));
-      return { order: updatedOrder, error: null, merged: true };
-    }
+    await loadOrders(user.id);
+    return { orderId: result.orderId, error: null };
+  };
 
-    const newOrder: Order = {
-      id: result.orderId,
-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      createdAt: new Date().toISOString(),
-      total: orderData.total,
-      items: orderData.items.map(item => ({
-        id: item.id,
-        name: item.name,
-        qty: item.quantity,
-        image: item.image,
-        price: item.price,
-      })),
-      contactEmail: orderData.contactEmail,
-      contactPhone: orderData.contactPhone,
-      shippingAddress: orderData.shippingAddress,
-      deliveryInstructions: orderData.deliveryInstructions,
-      status: 'active',
-      paidWithPoints: orderData.paidWithPoints,
-      pointsAmount: orderData.pointsAmount,
-      paymentMethod: orderData.paymentMethod || 'cashOrSwish',
-      mergeCount: 1,
+  const handleRemoveFromOrder = async (productId: string, quantity?: number): Promise<{ error: string | null }> => {
+    if (!user) return { error: 'Not authenticated' };
+    const result = await removeFromWeeklyOrder(productId, quantity);
+    if (result.error) return { error: result.error };
+    await loadOrders(user.id);
+    return { error: null };
+  };
+
+  const handleUpdateOrderAddress = async (
+    orderId: string,
+    address: Address,
+    contactPhone?: string,
+    contactEmail?: string,
+    deliveryInstructions?: string,
+  ): Promise<{ error: string | null }> => {
+    if (!user) return { error: 'Not authenticated' };
+    const addressPayload = {
+      id: address.id,
+      label: address.label,
+      fullName: address.fullName,
+      phone: address.phone,
+      email: address.email,
+      streetAddress: address.streetAddress,
+      city: address.city,
+      postalCode: address.postalCode,
+      country: address.country,
+      isDefault: address.isDefault,
     };
+    const result = await updateWeeklyOrderAddress(orderId, addressPayload, contactPhone, contactEmail, deliveryInstructions);
+    if (result.error) return { error: result.error };
+    await loadOrders(user.id);
+    return { error: null };
+  };
 
-    setOrders(prev => [newOrder, ...prev]);
-    return { order: newOrder, error: null };
+  const handleSetPaymentMethod = async (orderId: string, method: string): Promise<{ error: string | null }> => {
+    if (!user) return { error: 'Not authenticated' };
+    const result = await setOrderPaymentMethod(orderId, method);
+    if (result.error) return { error: result.error };
+    await loadOrders(user.id);
+    const pts = await fetchUserPoints(user.id);
+    setPoints(pts?.balance || 0);
+    return { error: null };
   };
 
   const handleCancelOrder = async (orderId: string): Promise<{ success: boolean; error: string | null }> => {
     if (!user) return { success: false, error: 'Not authenticated' };
     const result = await cancelUserOrder(user.id, orderId);
     if (result.success) {
-      setOrders(prev => prev.map(o =>
-        o.id === orderId ? { ...o, status: 'cancelled' as const } : o
-      ));
-      const order = orders.find(o => o.id === orderId);
-      if (order?.paidWithPoints && order.pointsAmount) {
-        setPoints(prev => prev + order.pointsAmount!);
-      }
+      await loadOrders(user.id);
+      const pts = await fetchUserPoints(user.id);
+      setPoints(pts?.balance || 0);
     }
     return result;
   };
 
-  const handleModifyOrder = async (
-    orderId: string,
-    items: { id: string; name: string; image: string; price: number; quantity: number }[]
-  ): Promise<{ result: ModifyOrderResult | null; error: string | null }> => {
-    if (!user) return { result: null, error: 'Not authenticated' };
-
-    const result = await modifyUserOrder(
-      user.id,
-      orderId,
-      items.map(item => ({
-        productId: item.id,
-        name: item.name,
-        image: item.image,
-        price: item.price,
-        quantity: item.quantity,
-      }))
-    );
-
-    if (result.error || !result.result) {
-      return { result: null, error: result.error || 'Modification failed' };
-    }
-
-    const modResult = result.result;
-
-    if (modResult.was_cancelled) {
-      setOrders(prev => prev.map(o =>
-        o.id === orderId ? { ...o, status: 'cancelled' as const } : o
-      ));
-      if (modResult.points_refunded && modResult.points_refunded > 0) {
-        setPoints(prev => prev + modResult.points_refunded!);
-      }
-    } else {
-      setOrders(prev => prev.map(o => {
-        if (o.id !== orderId) return o;
-        return {
-          ...o,
-          total: modResult.new_total,
-          items: modResult.new_items.map(item => ({
-            id: item.product_id,
-            name: item.name,
-            image: item.image,
-            price: item.price,
-            qty: item.quantity,
-          })),
-        };
-      }));
-      if (modResult.points_diff && modResult.points_diff !== 0) {
-        setPoints(prev => prev - modResult.points_diff!);
-      }
-    }
-
-    return result;
+  const handleRefreshOrders = async () => {
+    if (!user) return;
+    await loadOrders(user.id);
   };
 
   return (
@@ -540,9 +484,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         toggleFavorite: handleToggleFavorite,
         performDailyCheckin: handleDailyCheckin,
         deductUserPoints: handleDeductPoints,
-        createOrder: handleCreateOrder,
+        addToOrder: handleAddToOrder,
+        removeFromOrder: handleRemoveFromOrder,
+        updateOrderAddress: handleUpdateOrderAddress,
+        setPaymentMethod: handleSetPaymentMethod,
         cancelOrder: handleCancelOrder,
-        modifyOrder: handleModifyOrder,
+        refreshOrders: handleRefreshOrders,
       }}
     >
       {children}

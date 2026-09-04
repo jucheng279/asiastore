@@ -4,58 +4,42 @@ import { useTranslation } from 'react-i18next';
 import { useProductData } from '../lib/ProductDataContext';
 import { useAuth } from '../lib/AuthContext';
 import { useCart } from '../lib/CartContext';
-import { formatPrice, formatDate } from '../lib/formatters';
-import { Order } from '../types';
-import { fetchStoreSettings, isStoreOpen, type StoreSettings } from '../lib/storeStatus';
-import { calculateOrderingWindow } from '../lib/orderSummaryApi';
+import { formatPrice } from '../lib/formatters';
+import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE, POINTS_DISCOUNT_RATE } from '../lib/businessConstants';
+import type { Address } from '../types';
 import BottomNav from './BottomNav';
-import OrderEditMode from './OrderEditMode';
 
 const OrdersView: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { language, refreshData, orderingOpen } = useProductData();
-  const { orders, cancelOrder } = useAuth();
-  const { buyAgain, cartCount } = useCart();
+  const { orders, cancelOrder, addresses, saveAddress, updateOrderAddress, setPaymentMethod, refreshOrders } = useAuth();
+  const { cartCount, weeklyOrder } = useCart();
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [confirmingCancelId, setConfirmingCancelId] = useState<string | null>(null);
-  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [storeSchedule, setStoreSchedule] = useState({ openDay: 1, openTime: '00:00', closeDay: 5, closeTime: '12:00' });
-  const [storeSettings, setStoreSettings] = useState<StoreSettings | null>(null);
+  const [editingAddress, setEditingAddress] = useState(false);
+  const [settingPayment, setSettingPayment] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  // Address form state
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [streetAddress, setStreetAddress] = useState('');
+  const [postalCode, setPostalCode] = useState('');
+  const [addressLabel, setAddressLabel] = useState('Apartment');
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [addressMode, setAddressMode] = useState<'saved' | 'manual'>('saved');
 
-  useEffect(() => {
-    fetchStoreSettings().then(settings => {
-      setStoreSchedule({
-        openDay: settings.autoOpenDay,
-        openTime: settings.autoOpenTime,
-        closeDay: settings.autoCloseDay,
-        closeTime: settings.autoCloseTime,
-      });
-      setStoreSettings(settings);
-    });
-  }, []);
+  const currentOrder = weeklyOrder;
+  const pastOrders = orders.filter(o => o.id !== currentOrder?.id);
+  const sortedPastOrders = [...pastOrders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-  useEffect(() => {
-    if (successMessage) {
-      const timer = setTimeout(() => setSuccessMessage(null), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [successMessage]);
+  const subtotal = currentOrder?.total || 0;
+  const belowThreshold = subtotal > 0 && subtotal < FREE_SHIPPING_THRESHOLD;
+  const deliveryFee = belowThreshold ? SHIPPING_FEE : 0;
+  const estimatedTotal = subtotal + deliveryFee;
 
-  const canModifyOrder = (order: Order): boolean => {
-    if (order.status !== 'active') return false;
-    if (!storeSettings) return false;
-    if (!isStoreOpen(storeSettings)) return false;
-    const currentWindow = calculateOrderingWindow(
-      storeSchedule.openDay, storeSchedule.openTime,
-      storeSchedule.closeDay, storeSchedule.closeTime, 0
-    );
-    const orderDate = new Date(order.createdAt);
-    return orderDate >= currentWindow.start && orderDate < currentWindow.end;
-  };
-
-  const sortedOrders = [...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const canModifyCurrentOrder = orderingOpen && currentOrder?.status === 'active';
+  const roundClosed = !orderingOpen && currentOrder?.status === 'active';
 
   const handleCancelOrder = async (orderId: string) => {
     setCancellingId(orderId);
@@ -63,22 +47,60 @@ const OrdersView: React.FC = () => {
     refreshData();
     setCancellingId(null);
     setConfirmingCancelId(null);
-    setEditingOrderId(null);
   };
 
-  const handleEditOrder = (order: Order) => {
-    setEditingOrderId(order.id);
+  const startEditAddress = () => {
+    if (!currentOrder) return;
+    const addr = currentOrder.shippingAddress;
+    setFullName(addr.fullName);
+    setPhone(addr.phone);
+    setStreetAddress(addr.streetAddress);
+    setPostalCode(addr.postalCode);
+    setAddressLabel(addr.label || 'Apartment');
+    setEditingAddress(true);
+    setAddressMode(addresses.length > 0 ? 'saved' : 'manual');
+    const match = addresses.find(a =>
+      a.streetAddress === addr.streetAddress && a.postalCode === addr.postalCode
+    );
+    setSelectedAddressId(match?.id || addresses[0]?.id || null);
   };
 
-  const handleEditSuccess = () => {
-    setEditingOrderId(null);
-    setSuccessMessage(t('orders.editSuccess'));
-    refreshData();
+  const handleSaveAddress = async () => {
+    if (!currentOrder) return;
+
+    let address: Address;
+    if (addressMode === 'saved') {
+      const saved = addresses.find(a => a.id === selectedAddressId);
+      if (!saved) return;
+      address = saved;
+    } else {
+      address = {
+        id: Date.now().toString(),
+        label: addressLabel,
+        fullName: fullName.trim(),
+        phone: phone.trim(),
+        streetAddress: streetAddress.trim(),
+        postalCode: postalCode.trim(),
+        city: t('checkout.defaultCity'),
+        country: t('checkout.defaultCountry'),
+        isDefault: false,
+        email: undefined,
+      };
+    }
+
+    await updateOrderAddress(currentOrder.id, address, address.phone, address.email);
+    setEditingAddress(false);
   };
 
-  const handleBuyAgain = (items: Order['items']) => {
-    buyAgain(items.map(i => ({ id: i.id, qty: i.qty })));
-    navigate('/cart');
+  const handleSetPayment = async (method: string) => {
+    if (!currentOrder) return;
+    setSettingPayment(true);
+    setPaymentError(null);
+    const result = await setPaymentMethod(currentOrder.id, method);
+    setSettingPayment(false);
+    if (result.error) {
+      setPaymentError(result.error);
+    }
   };
 
   return (
@@ -93,182 +115,307 @@ const OrdersView: React.FC = () => {
           </button>
           <h1 className="text-2xl font-bold tracking-tight text-text-main dark:text-white">{t('orders.myOrders')}</h1>
         </div>
-        <button
-          className="flex relative items-center justify-center text-text-main dark:text-white"
-          onClick={() => navigate('/cart')}
-        >
-          <span className="material-symbols-outlined text-[26px]">shopping_cart</span>
-          {cartCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-white text-[10px] font-bold">{cartCount}</span>
-          )}
-        </button>
       </header>
 
-      {successMessage && (
-        <div className="mx-4 lg:mx-6 mb-4 px-4 py-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-900/30 flex items-center gap-2">
-          <span className="material-symbols-outlined text-emerald-600 dark:text-emerald-400 text-[18px]">check_circle</span>
-          <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">{successMessage}</p>
-        </div>
-      )}
+      <div className="px-5 lg:px-6 lg:max-w-2xl lg:mx-auto">
+        {/* Current Weekly Order */}
+        {currentOrder ? (
+          <div className="mb-8">
+            <h2 className="text-lg font-bold text-text-main dark:text-white mb-4 flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary text-[22px]">pending_actions</span>
+              {t('orders.currentOrder')}
+            </h2>
 
-      {sortedOrders.length > 0 ? (
-        <div className="flex flex-col lg:grid lg:grid-cols-2 gap-4 px-4 lg:px-6 py-4">
-          {sortedOrders.map((order) => {
-            const isCancelled = order.status === 'cancelled';
-            const isCompleted = order.status === 'completed';
-            const isInactive = isCancelled || isCompleted;
-            const isMerged = (order.mergeCount || 1) > 1;
-            const showEditButton = canModifyOrder(order);
-            const isEditing = editingOrderId === order.id;
-
-            return (
-              <div
-                key={order.id}
-                className={`bg-white dark:bg-white/5 rounded-2xl shadow-sm border overflow-hidden transition-all ${
-                  isEditing
-                    ? 'border-primary/30 dark:border-primary/20 ring-1 ring-primary/10'
-                    : isCancelled
-                      ? 'border-gray-200 dark:border-white/5 opacity-70'
-                      : 'border-gray-100 dark:border-white/5'
-                }`}
-              >
-                <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-white/5">
-                  <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {isCancelled && (
-                        <span className="px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-bold uppercase tracking-wider">
-                          {t('orders.cancelled')}
-                        </span>
-                      )}
-                      {isCompleted && (
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wider">
-                          {t('orders.completed')}
-                        </span>
-                      )}
-                      {isEditing && (
-                        <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-[10px] font-bold uppercase tracking-wider">
-                          {t('common.edit')}
-                        </span>
-                      )}
-                      {isMerged && (
-                        <span className="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-bold">
-                          {order.mergeCount} merged
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-text-sub text-sm">{formatDate(order.date, language)}</p>
+            <div className="rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 shadow-sm overflow-hidden">
+              {/* Delivery fee warning */}
+              {belowThreshold && (
+                <div className="bg-amber-50 dark:bg-amber-900/20 px-4 py-3 border-b border-amber-200 dark:border-amber-700/30">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-amber-500 text-[18px]">local_shipping</span>
+                    <p className="text-sm text-amber-700 dark:text-amber-300">
+                      {t('cart.deliveryFeeWarning', { fee: formatPrice(SHIPPING_FEE, language) })}
+                      {' '}
+                      <span className="font-medium">{t('cart.addMoreToAvoid', { amount: formatPrice(FREE_SHIPPING_THRESHOLD - subtotal, language) })}</span>
+                    </p>
                   </div>
-                  {isEditing && (
-                    <div className="shrink-0">
-                      {confirmingCancelId === order.id ? (
-                        <div className="flex items-center gap-2">
-                          <button
-                            className="px-3 py-1.5 text-xs font-semibold text-red-600 border border-red-300 dark:border-red-700 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
-                            onClick={() => handleCancelOrder(order.id)}
-                            disabled={cancellingId === order.id}
-                          >
-                            {cancellingId === order.id ? t('common.loading') : t('orders.confirmCancel')}
-                          </button>
-                          <button
-                            className="px-3 py-1.5 text-xs font-semibold text-gray-500 border border-gray-200 dark:border-white/10 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
-                            onClick={() => setConfirmingCancelId(null)}
-                          >
-                            {t('common.back')}
-                          </button>
-                        </div>
-                      ) : (
+                </div>
+              )}
+
+              {/* Items */}
+              <div className="p-4">
+                <div className="space-y-3">
+                  {currentOrder.items.map(item => (
+                    <div key={item.id} className="flex items-center gap-3">
+                      <img src={item.image} alt={item.name} className="w-12 h-12 rounded-lg object-cover bg-gray-100 dark:bg-white/10" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-text-main dark:text-white truncate">{item.name}</p>
+                        <p className="text-xs text-text-sub">{item.qty} x {formatPrice(item.price, language)}</p>
+                      </div>
+                      <p className="text-sm font-semibold text-text-main dark:text-white">{formatPrice(item.price * item.qty, language)}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Totals */}
+                <div className="border-t border-slate-100 dark:border-white/10 mt-4 pt-4 space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-text-sub">{t('cart.subtotal')}</span>
+                    <span className="text-text-main dark:text-white">{formatPrice(subtotal, language)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-text-sub">{t('cart.deliveryFee')}</span>
+                    <span className={deliveryFee > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'}>
+                      {deliveryFee > 0 ? formatPrice(deliveryFee, language) : t('cart.free')}
+                    </span>
+                  </div>
+                  <div className="flex justify-between font-bold text-base pt-2 border-t border-slate-100 dark:border-white/10">
+                    <span className="text-text-main dark:text-white">{t('cart.estimatedTotal')}</span>
+                    <span className="text-primary">{formatPrice(estimatedTotal, language)}</span>
+                  </div>
+                  {!roundClosed && (
+                    <p className="text-xs text-text-sub">{t('cart.finalTotalNote')}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Delivery Address */}
+              <div className="border-t border-slate-100 dark:border-white/10 p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold text-text-main dark:text-white">{t('orders.deliveryAddress')}</h3>
+                  {canModifyCurrentOrder && !editingAddress && (
+                    <button
+                      className="text-xs font-medium text-primary hover:text-red-700 transition-colors"
+                      onClick={startEditAddress}
+                    >
+                      {t('common.change')}
+                    </button>
+                  )}
+                </div>
+
+                {editingAddress ? (
+                  <div className="space-y-3">
+                    {addresses.length > 0 && (
+                      <div className="flex gap-2 mb-2">
                         <button
-                          className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                          onClick={() => setConfirmingCancelId(order.id)}
+                          className={`text-xs px-3 py-1.5 rounded-lg font-medium ${addressMode === 'saved' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/10 text-text-main dark:text-white'}`}
+                          onClick={() => setAddressMode('saved')}
+                        >{t('checkout.savedAddress')}</button>
+                        <button
+                          className={`text-xs px-3 py-1.5 rounded-lg font-medium ${addressMode === 'manual' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/10 text-text-main dark:text-white'}`}
+                          onClick={() => setAddressMode('manual')}
+                        >{t('checkout.newAddress')}</button>
+                      </div>
+                    )}
+
+                    {addressMode === 'saved' ? (
+                      <div className="space-y-2">
+                        {addresses.map(addr => (
+                          <button
+                            key={addr.id}
+                            className={`w-full text-left p-3 rounded-xl border transition-colors ${
+                              selectedAddressId === addr.id
+                                ? 'border-primary bg-primary/5'
+                                : 'border-slate-200 dark:border-white/10'
+                            }`}
+                            onClick={() => setSelectedAddressId(addr.id)}
+                          >
+                            <p className="text-sm font-medium text-text-main dark:text-white">{addr.fullName}</p>
+                            <p className="text-xs text-text-sub">{addr.streetAddress}, {addr.postalCode}</p>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <input
+                          className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent text-sm text-text-main dark:text-white"
+                          placeholder={t('checkout.fullName')}
+                          value={fullName}
+                          onChange={e => setFullName(e.target.value)}
+                        />
+                        <input
+                          className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent text-sm text-text-main dark:text-white"
+                          placeholder={t('checkout.phone')}
+                          value={phone}
+                          onChange={e => setPhone(e.target.value)}
+                        />
+                        <input
+                          className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent text-sm text-text-main dark:text-white"
+                          placeholder={t('checkout.streetAddress')}
+                          value={streetAddress}
+                          onChange={e => setStreetAddress(e.target.value)}
+                        />
+                        <input
+                          className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent text-sm text-text-main dark:text-white"
+                          placeholder={t('checkout.postalCode')}
+                          value={postalCode}
+                          onChange={e => setPostalCode(e.target.value)}
+                        />
+                      </div>
+                    )}
+
+                    <div className="flex gap-2 pt-2">
+                      <button
+                        className="flex-1 py-2 bg-primary text-white text-sm font-semibold rounded-lg"
+                        onClick={handleSaveAddress}
+                      >{t('common.save')}</button>
+                      <button
+                        className="flex-1 py-2 bg-gray-100 dark:bg-white/10 text-text-main dark:text-white text-sm font-semibold rounded-lg"
+                        onClick={() => setEditingAddress(false)}
+                      >{t('common.cancel')}</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-sm">
+                    <p className="text-text-main dark:text-white font-medium">{currentOrder.shippingAddress.fullName}</p>
+                    <p className="text-text-sub">{currentOrder.shippingAddress.streetAddress}</p>
+                    <p className="text-text-sub">{currentOrder.shippingAddress.postalCode} {currentOrder.shippingAddress.city}</p>
+                    {currentOrder.contactPhone && (
+                      <p className="text-text-sub mt-1">{currentOrder.contactPhone}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Payment Method - only after round closes */}
+              {roundClosed && (
+                <div className="border-t border-slate-100 dark:border-white/10 p-4">
+                  <h3 className="text-sm font-semibold text-text-main dark:text-white mb-3">{t('orders.choosePayment')}</h3>
+
+                  {currentOrder.paymentMethod && currentOrder.paymentMethod !== '' ? (
+                    <div className="flex items-center gap-2 rounded-xl bg-green-50 dark:bg-green-900/20 px-4 py-3">
+                      <span className="material-symbols-outlined text-green-600 text-[18px]">check_circle</span>
+                      <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                        {currentOrder.paymentMethod === 'cashOrSwish' && t('orders.paymentCashSwish')}
+                        {currentOrder.paymentMethod === 'payAtStore' && t('orders.paymentAtStore')}
+                        {currentOrder.paymentMethod === 'points' && t('orders.paymentPoints')}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {[
+                        { id: 'cashOrSwish', label: t('orders.paymentCashSwish'), icon: 'payments' },
+                        { id: 'payAtStore', label: t('orders.paymentAtStore'), icon: 'store' },
+                        { id: 'points', label: t('orders.paymentPoints'), icon: 'star' },
+                      ].map(option => (
+                        <button
+                          key={option.id}
+                          className="w-full flex items-center gap-3 p-3 rounded-xl border border-slate-200 dark:border-white/10 hover:border-primary hover:bg-primary/5 transition-colors disabled:opacity-50"
+                          onClick={() => handleSetPayment(option.id)}
+                          disabled={settingPayment}
                         >
-                          <span className="material-symbols-outlined text-[14px]">delete</span>
-                          {t('orders.cancel')}
+                          <span className="material-symbols-outlined text-text-sub text-[20px]">{option.icon}</span>
+                          <span className="text-sm font-medium text-text-main dark:text-white">{option.label}</span>
                         </button>
+                      ))}
+                      {paymentError && (
+                        <p className="text-xs text-red-500 mt-1">{paymentError}</p>
                       )}
                     </div>
                   )}
                 </div>
+              )}
 
-                {isEditing ? (
-                  <OrderEditMode
-                    orderId={order.id}
-                    items={order.items}
-                    paidWithPoints={order.paidWithPoints}
-                    originalTotal={order.total}
-                    onClose={() => setEditingOrderId(null)}
-                    onSuccess={handleEditSuccess}
-                  />
-                ) : (
-                  <div className="p-4">
-                    <div className="flex gap-2 mb-4">
-                      {order.items.slice(0, 3).map((item, index) => (
-                        <div
-                          key={index}
-                          className="w-16 h-16 rounded-lg bg-gray-50 dark:bg-white/10 overflow-hidden"
-                        >
-                          <div
-                            className="w-full h-full bg-center bg-no-repeat bg-contain"
-                            style={{ backgroundImage: `url("${item.image}")` }}
-                          ></div>
-                        </div>
-                      ))}
-                      {order.items.length > 3 && (
-                        <div className="w-16 h-16 rounded-lg bg-gray-100 dark:bg-white/10 flex items-center justify-center">
-                          <span className="text-text-sub text-sm font-medium">+{order.items.length - 3}</span>
-                        </div>
-                      )}
+              {/* Actions */}
+              {canModifyCurrentOrder && (
+                <div className="border-t border-slate-100 dark:border-white/10 p-4 flex gap-3">
+                  <button
+                    className="flex-1 py-2.5 bg-primary text-white text-sm font-bold rounded-xl hover:bg-red-700 transition-colors"
+                    onClick={() => navigate('/')}
+                  >
+                    {t('common.continueShopping')}
+                  </button>
+                  <button
+                    className="py-2.5 px-4 border border-red-200 dark:border-red-800/30 text-red-600 dark:text-red-400 text-sm font-semibold rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                    onClick={() => setConfirmingCancelId(currentOrder.id)}
+                    disabled={!!cancellingId}
+                  >
+                    {t('orders.cancel')}
+                  </button>
+                </div>
+              )}
+
+              {/* Cancel confirmation */}
+              {confirmingCancelId === currentOrder.id && (
+                <div className="border-t border-slate-100 dark:border-white/10 p-4 bg-red-50 dark:bg-red-900/10">
+                  <p className="text-sm text-red-700 dark:text-red-300 mb-3">{t('orders.cancelConfirm')}</p>
+                  <div className="flex gap-2">
+                    <button
+                      className="flex-1 py-2 bg-red-600 text-white text-sm font-semibold rounded-lg disabled:opacity-50"
+                      onClick={() => handleCancelOrder(currentOrder.id)}
+                      disabled={!!cancellingId}
+                    >
+                      {cancellingId === currentOrder.id ? t('common.processing') : t('orders.yesCancelOrder')}
+                    </button>
+                    <button
+                      className="flex-1 py-2 bg-gray-100 dark:bg-white/10 text-text-main dark:text-white text-sm font-semibold rounded-lg"
+                      onClick={() => setConfirmingCancelId(null)}
+                    >
+                      {t('orders.keepOrder')}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="mb-8">
+            <div className="rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 shadow-sm p-8 text-center">
+              <div className="w-16 h-16 bg-gray-100 dark:bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="material-symbols-outlined text-gray-400 text-[32px]">receipt_long</span>
+              </div>
+              <h3 className="text-lg font-bold text-text-main dark:text-white mb-2">{t('orders.noCurrentOrder')}</h3>
+              <p className="text-sm text-text-sub mb-4">{t('orders.startShopping')}</p>
+              {orderingOpen && (
+                <button
+                  className="px-6 py-2.5 bg-primary text-white font-bold rounded-xl hover:bg-red-700 transition-colors"
+                  onClick={() => navigate('/')}
+                >
+                  {t('common.continueShopping')}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Past Orders */}
+        {sortedPastOrders.length > 0 && (
+          <div>
+            <h2 className="text-lg font-bold text-text-main dark:text-white mb-4">{t('orders.pastOrders')}</h2>
+            <div className="space-y-4">
+              {sortedPastOrders.map(order => (
+                <div key={order.id} className="rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 shadow-sm p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <p className="text-sm font-semibold text-text-main dark:text-white">{order.date}</p>
+                      <p className="text-xs text-text-sub">{order.items.length} {t('orders.items')}</p>
                     </div>
-
-                    <div className="flex flex-col gap-1 text-sm mb-4">
-                      {order.items.map((item, index) => (
-                        <p key={index} className="text-text-sub">
-                          {item.name} <span className="text-text-main dark:text-white font-medium">x{item.qty}</span>
-                        </p>
-                      ))}
-                    </div>
-
-                    <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-white/5">
-                      <p className="text-text-main dark:text-white font-bold">
-                        {t('orders.total')} <span className={isCancelled ? 'text-gray-400 line-through' : 'text-primary'}>{formatPrice(order.total, language)}</span>
-                      </p>
-                      <div className="flex gap-2 flex-wrap justify-end">
-                        {order.status === 'active' && showEditButton && (
-                          <button
-                            className="px-3 py-2 text-xs font-semibold text-primary border border-primary/30 rounded-lg hover:bg-primary/5 transition-colors"
-                            onClick={() => handleEditOrder(order)}
-                          >
-                            {t('orders.editOrder')}
-                          </button>
-                        )}
-                        <button
-                          className="px-4 py-2 text-sm font-semibold text-primary border border-primary rounded-lg hover:bg-primary/5 transition-colors"
-                          onClick={() => handleBuyAgain(order.items)}
-                        >
-                          {t('orders.buyAgain')}
-                        </button>
-                      </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-text-main dark:text-white">{formatPrice(order.total, language)}</p>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                        order.status === 'completed' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' :
+                        order.status === 'cancelled' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' :
+                        'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                      }`}>
+                        {t(`orders.status.${order.status}`)}
+                      </span>
                     </div>
                   </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center px-8 py-16">
-          <div className="w-24 h-24 bg-gray-100 dark:bg-white/10 rounded-full flex items-center justify-center mb-6">
-            <span className="material-symbols-outlined text-gray-400 text-[48px]">receipt_long</span>
+                  <div className="flex gap-2 overflow-x-auto pb-1">
+                    {order.items.slice(0, 4).map(item => (
+                      <img key={item.id} src={item.image} alt={item.name} className="w-12 h-12 rounded-lg object-cover bg-gray-100 dark:bg-white/10 shrink-0" />
+                    ))}
+                    {order.items.length > 4 && (
+                      <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-white/10 flex items-center justify-center shrink-0">
+                        <span className="text-xs font-bold text-text-sub">+{order.items.length - 4}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          <h3 className="text-text-main dark:text-white text-xl font-bold mb-2">{t('orders.noOrders')}</h3>
-          <p className="text-text-sub text-center mb-6">{t('orders.noOrdersDesc')}</p>
-          <button
-            className="px-6 py-3 bg-primary text-white font-bold rounded-xl hover:bg-red-700 transition-colors"
-            onClick={() => navigate('/')}
-          >
-            {t('common.startShopping')}
-          </button>
-        </div>
-      )}
+        )}
+      </div>
 
       <BottomNav />
     </div>

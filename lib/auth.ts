@@ -1,8 +1,5 @@
 import { supabase } from './supabase';
 
-// Only messages that describe an expected business condition are shown to users.
-// Anything else (database, policy or constraint text) is replaced with a generic
-// message so internal details are not disclosed.
 const SAFE_MESSAGES: [RegExp, string][] = [
   [/ordering is currently closed/i, 'Ordering is currently closed'],
   [/no longer available/i, 'This is no longer available for this order'],
@@ -14,6 +11,10 @@ const SAFE_MESSAGES: [RegExp, string][] = [
   [/already cancelled/i, 'This order is already cancelled'],
   [/authentication required|not authorized/i, 'Please sign in again'],
   [/invalid quantity|no items provided|could not be priced/i, 'Please review the items in your cart'],
+  [/address required/i, 'Please provide a delivery address'],
+  [/invalid payment method/i, 'Invalid payment method'],
+  [/cannot order group products/i, 'This item cannot be ordered directly'],
+  [/item not in order/i, 'Item not found in your order'],
 ];
 
 export function safeErrorMessage(
@@ -43,7 +44,6 @@ export async function signUp(
   });
 
   if (error) {
-    // Do not reveal whether an account already exists for this address.
     if (/already registered|already exists|already been registered/i.test(error.message)) {
       return {
         user: null,
@@ -420,43 +420,90 @@ export async function deductPoints(
   return { success: true, newBalance: data as number, error: null };
 }
 
-export async function createUserOrder(
-  userId: string,
-  orderData: {
-    total: number;
-    contactEmail: string;
-    contactPhone: string;
-    shippingAddress: Record<string, unknown>;
-    deliveryInstructions?: string;
-    paidWithPoints?: boolean;
-    pointsAmount?: number;
-    paymentMethod?: string;
-    items: { productId: string; name: string; image: string; price: number; quantity: number }[];
-  }
-): Promise<{ orderId: string | null; error: string | null }> {
-  const itemsPayload = orderData.items.map(item => ({
+// ---- Weekly Order API ----
+
+export async function addToWeeklyOrder(
+  items: { productId: string; name: string; image: string; quantity: number }[],
+  shippingAddress?: Record<string, unknown>,
+  contactPhone?: string,
+  contactEmail?: string,
+  deliveryInstructions?: string,
+): Promise<{ orderId: string | null; subtotal: number; error: string | null }> {
+  const itemsPayload = items.map(item => ({
     product_id: item.productId,
     name: item.name,
     image: item.image,
-    price: item.price,
     quantity: item.quantity,
   }));
 
-  const { data, error } = await supabase.rpc('create_order_atomic', {
-    p_user_id: userId,
-    p_total: orderData.total,
-    p_contact_email: orderData.contactEmail,
-    p_contact_phone: orderData.contactPhone,
-    p_shipping_address: orderData.shippingAddress,
-    p_delivery_instructions: orderData.deliveryInstructions || null,
-    p_paid_with_points: orderData.paidWithPoints || false,
-    p_points_amount: orderData.pointsAmount || 0,
+  const { data, error } = await supabase.rpc('add_to_weekly_order', {
     p_items: itemsPayload,
-    p_payment_method: orderData.paymentMethod || 'cashOrSwish',
+    p_shipping_address: shippingAddress || null,
+    p_contact_phone: contactPhone || '',
+    p_contact_email: contactEmail || '',
+    p_delivery_instructions: deliveryInstructions || null,
   });
 
-  if (error) return { orderId: null, error: safeErrorMessage(error.message) };
-  return { orderId: data as string, error: null };
+  if (error) return { orderId: null, subtotal: 0, error: safeErrorMessage(error.message) };
+  return {
+    orderId: data?.order_id || null,
+    subtotal: data?.subtotal || 0,
+    error: null,
+  };
+}
+
+export async function removeFromWeeklyOrder(
+  productId: string,
+  quantity?: number,
+): Promise<{ subtotal: number; cancelled: boolean; error: string | null }> {
+  const { data, error } = await supabase.rpc('remove_from_weekly_order', {
+    p_product_id: productId,
+    p_quantity: quantity ?? null,
+  });
+
+  if (error) return { subtotal: 0, cancelled: false, error: safeErrorMessage(error.message) };
+  return {
+    subtotal: data?.subtotal || 0,
+    cancelled: data?.cancelled || false,
+    error: null,
+  };
+}
+
+export async function updateWeeklyOrderAddress(
+  orderId: string,
+  shippingAddress: Record<string, unknown>,
+  contactPhone?: string,
+  contactEmail?: string,
+  deliveryInstructions?: string,
+): Promise<{ error: string | null }> {
+  const { error } = await supabase.rpc('update_weekly_order_address', {
+    p_order_id: orderId,
+    p_shipping_address: shippingAddress,
+    p_contact_phone: contactPhone || null,
+    p_contact_email: contactEmail || null,
+    p_delivery_instructions: deliveryInstructions || null,
+  });
+
+  if (error) return { error: safeErrorMessage(error.message) };
+  return { error: null };
+}
+
+export async function setOrderPaymentMethod(
+  orderId: string,
+  paymentMethod: string,
+): Promise<{ subtotal: number; shipping: number; total: number; error: string | null }> {
+  const { data, error } = await supabase.rpc('set_order_payment_method', {
+    p_order_id: orderId,
+    p_payment_method: paymentMethod,
+  });
+
+  if (error) return { subtotal: 0, shipping: 0, total: 0, error: safeErrorMessage(error.message) };
+  return {
+    subtotal: data?.subtotal || 0,
+    shipping: data?.shipping || 0,
+    total: data?.total || 0,
+    error: null,
+  };
 }
 
 export async function cancelUserOrder(
@@ -470,35 +517,4 @@ export async function cancelUserOrder(
 
   if (error) return { success: false, error: safeErrorMessage(error.message) };
   return { success: true, error: null };
-}
-
-export interface ModifyOrderResult {
-  new_total: number;
-  new_items: { product_id: string; name: string; image: string; price: number; quantity: number }[];
-  was_cancelled: boolean;
-  points_diff?: number;
-  points_refunded?: number;
-}
-
-export async function modifyUserOrder(
-  userId: string,
-  orderId: string,
-  items: { productId: string; name: string; image: string; price: number; quantity: number }[]
-): Promise<{ result: ModifyOrderResult | null; error: string | null }> {
-  const itemsPayload = items.map(item => ({
-    product_id: item.productId,
-    name: item.name,
-    image: item.image,
-    price: item.price,
-    quantity: item.quantity,
-  }));
-
-  const { data, error } = await supabase.rpc('modify_order_atomic', {
-    p_user_id: userId,
-    p_order_id: orderId,
-    p_items: itemsPayload,
-  });
-
-  if (error) return { result: null, error: safeErrorMessage(error.message) };
-  return { result: data as ModifyOrderResult, error: null };
 }
