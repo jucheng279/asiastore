@@ -161,7 +161,7 @@ const FavoritesView: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { productMap, language } = useProductData();
-  const { cartCount, increaseQuantity } = useCart();
+  const { cartCount, addToCart } = useCart();
   const { favorites, toggleFavorite } = useAuth();
 
   const favoriteEntries: { product: Product | null; favoriteId: string }[] = [];
@@ -171,7 +171,7 @@ const FavoritesView: React.FC = () => {
   });
 
   const handleAddToCart = (product: Product) => {
-    increaseQuantity(product.id);
+    addToCart(product, 1);
   };
 
   const handleNavigateToProduct = (id: string) => {

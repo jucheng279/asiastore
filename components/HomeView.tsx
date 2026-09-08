@@ -12,7 +12,7 @@ const HomeView: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { categories, bestSellerProducts, expiryProducts, flashSaleProducts, orderingOpen, closedMessage, nextOpenTime } = useProductData();
-  const { cartQuantities, increaseQuantity, decreaseQuantity, cartCount } = useCart();
+  const { cartQuantities, addToCart, removeFromCart, cartCount } = useCart();
   const { favorites, toggleFavorite } = useAuth();
 
   const orderingClosed = !orderingOpen;
@@ -131,8 +131,8 @@ const HomeView: React.FC = () => {
                 isFavorite={favorites.has(product.id)}
                 onNavigate={() => navigate('/product/' + product.id)}
                 onToggleFavorite={() => toggleFavorite(product.id)}
-                onIncrease={() => increaseQuantity(product.id)}
-                onDecrease={() => decreaseQuantity(product.id)}
+                onIncrease={() => addToCart(product, 1)}
+                onDecrease={() => removeFromCart(product.id, 1)}
                 orderingClosed={orderingClosed}
               />
             </div>
@@ -163,8 +163,8 @@ const HomeView: React.FC = () => {
                   isFavorite={favorites.has(favoriteId)}
                   onNavigate={() => navigate('/product/' + product.id)}
                   onToggleFavorite={() => toggleFavorite(favoriteId)}
-                  onIncrease={() => increaseQuantity(product.id)}
-                  onDecrease={() => decreaseQuantity(product.id)}
+                  onIncrease={() => addToCart(product, 1)}
+                  onDecrease={() => removeFromCart(product.id, 1)}
                   orderingClosed={orderingClosed}
                 />
               </div>
@@ -196,8 +196,8 @@ const HomeView: React.FC = () => {
                   isFavorite={favorites.has(favoriteId)}
                   onNavigate={() => navigate('/product/' + product.id)}
                   onToggleFavorite={() => toggleFavorite(favoriteId)}
-                  onIncrease={() => increaseQuantity(product.id)}
-                  onDecrease={() => decreaseQuantity(product.id)}
+                  onIncrease={() => addToCart(product, 1)}
+                  onDecrease={() => removeFromCart(product.id, 1)}
                   orderingClosed={orderingClosed}
                 />
               </div>

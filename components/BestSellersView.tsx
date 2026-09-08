@@ -11,7 +11,7 @@ const BestSellersView: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { bestSellerProducts, orderingOpen } = useProductData();
-  const { cartQuantities, cartCount, increaseQuantity, decreaseQuantity } = useCart();
+  const { cartQuantities, cartCount, addToCart, removeFromCart } = useCart();
   const { favorites, toggleFavorite } = useAuth();
 
   return (
@@ -57,8 +57,8 @@ const BestSellersView: React.FC = () => {
               isFavorite={favorites.has(product.id)}
               onNavigate={() => navigate('/product/' + product.id)}
               onToggleFavorite={() => toggleFavorite(product.id)}
-              onIncrease={() => increaseQuantity(product.id)}
-              onDecrease={() => decreaseQuantity(product.id)}
+              onIncrease={() => addToCart(product, 1)}
+              onDecrease={() => removeFromCart(product.id, 1)}
               orderingClosed={!orderingOpen}
             />
           ))}

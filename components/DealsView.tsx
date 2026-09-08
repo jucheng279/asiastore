@@ -19,7 +19,7 @@ const DealsView: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { catalogProducts, expiryProducts, flashSaleProducts, orderingOpen } = useProductData();
-  const { cartQuantities, cartCount, increaseQuantity, decreaseQuantity } = useCart();
+  const { cartQuantities, cartCount, addToCart, removeFromCart } = useCart();
   const { favorites, toggleFavorite } = useAuth();
   const [activeTab, setActiveTab] = useState<DealTab>('near-expiry');
 
@@ -136,8 +136,8 @@ const DealsView: React.FC = () => {
                   isFavorite={favorites.has(favoriteId)}
                   onNavigate={() => navigate('/product/' + product.id)}
                   onToggleFavorite={() => toggleFavorite(favoriteId)}
-                  onIncrease={() => increaseQuantity(product.id)}
-                  onDecrease={() => decreaseQuantity(product.id)}
+                  onIncrease={() => addToCart(product, 1)}
+                  onDecrease={() => removeFromCart(product.id, 1)}
                   orderingClosed={!orderingOpen}
                 />
               );
