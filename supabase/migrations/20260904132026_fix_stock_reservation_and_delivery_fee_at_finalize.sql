@@ -160,8 +160,9 @@ BEGIN
       RAISE EXCEPTION 'Invalid quantity';
     END IF;
 
-    SELECT has_children INTO v_has_children
-    FROM products WHERE id = v_pid::uuid;
+    SELECT EXISTS(
+      SELECT 1 FROM products WHERE parent_product_id = v_pid::uuid
+    ) INTO v_has_children;
     IF v_has_children IS TRUE THEN
       RAISE EXCEPTION 'Cannot order group products directly';
     END IF;
