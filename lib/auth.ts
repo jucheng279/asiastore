@@ -469,6 +469,27 @@ export async function removeFromWeeklyOrder(
   };
 }
 
+export async function modifyWeeklyOrder(
+  orderId: string,
+  items: { product_id: string; name: string; image: string; price: number; quantity: number }[],
+): Promise<{ newTotal: number; wasCancelled: boolean; error: string | null }> {
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) return { newTotal: 0, wasCancelled: false, error: 'Not authenticated' };
+
+  const { data, error } = await supabase.rpc('modify_order_atomic', {
+    p_user_id: userData.user.id,
+    p_order_id: orderId,
+    p_items: items,
+  });
+
+  if (error) return { newTotal: 0, wasCancelled: false, error: safeErrorMessage(error.message) };
+  return {
+    newTotal: data?.new_total || 0,
+    wasCancelled: data?.was_cancelled || false,
+    error: null,
+  };
+}
+
 export async function updateWeeklyOrderAddress(
   orderId: string,
   shippingAddress: Record<string, unknown>,

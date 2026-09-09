@@ -17,6 +17,7 @@ import {
   fetchUserOrders,
   addToWeeklyOrder,
   removeFromWeeklyOrder,
+  modifyWeeklyOrder,
   updateWeeklyOrderAddress,
   setOrderPaymentMethod,
   cancelUserOrder,
@@ -116,6 +117,7 @@ interface AuthContextType {
     deliveryInstructions?: string,
   ) => Promise<{ orderId: string | null; error: string | null }>;
   removeFromOrder: (productId: string, quantity?: number) => Promise<{ error: string | null }>;
+  modifyOrder: (orderId: string, items: { product_id: string; name: string; image: string; price: number; quantity: number }[]) => Promise<{ wasCancelled: boolean; error: string | null }>;
   updateOrderAddress: (orderId: string, address: Address, contactPhone?: string, contactEmail?: string, deliveryInstructions?: string) => Promise<{ error: string | null }>;
   setPaymentMethod: (orderId: string, method: string) => Promise<{ error: string | null }>;
   cancelOrder: (orderId: string) => Promise<{ success: boolean; error: string | null }>;
@@ -404,6 +406,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error: null };
   };
 
+  const handleModifyOrder = async (
+    orderId: string,
+    items: { product_id: string; name: string; image: string; price: number; quantity: number }[],
+  ): Promise<{ wasCancelled: boolean; error: string | null }> => {
+    if (!user) return { wasCancelled: false, error: 'Not authenticated' };
+    const result = await modifyWeeklyOrder(orderId, items);
+    if (result.error) return { wasCancelled: false, error: result.error };
+    await loadOrders(user.id);
+    if (result.wasCancelled) {
+      const pts = await fetchUserPoints(user.id);
+      setPoints(pts?.balance || 0);
+    }
+    return { wasCancelled: result.wasCancelled, error: null };
+  };
+
   const handleUpdateOrderAddress = async (
     orderId: string,
     address: Address,
@@ -486,6 +503,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         deductUserPoints: handleDeductPoints,
         addToOrder: handleAddToOrder,
         removeFromOrder: handleRemoveFromOrder,
+        modifyOrder: handleModifyOrder,
         updateOrderAddress: handleUpdateOrderAddress,
         setPaymentMethod: handleSetPaymentMethod,
         cancelOrder: handleCancelOrder,

@@ -13,13 +13,14 @@ const OrdersView: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { language, refreshData, orderingOpen } = useProductData();
-  const { orders, cancelOrder, addresses, saveAddress, updateOrderAddress, setPaymentMethod, refreshOrders } = useAuth();
+  const { orders, cancelOrder, modifyOrder, addresses, saveAddress, updateOrderAddress, setPaymentMethod, refreshOrders } = useAuth();
 
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [confirmingCancelId, setConfirmingCancelId] = useState<string | null>(null);
   const [editingAddress, setEditingAddress] = useState(false);
   const [settingPayment, setSettingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [modifyingItemId, setModifyingItemId] = useState<string | null>(null);
   // Address form state
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
@@ -47,6 +48,23 @@ const OrdersView: React.FC = () => {
     refreshData();
     setCancellingId(null);
     setConfirmingCancelId(null);
+  };
+
+  const handleChangeItemQty = async (targetItemId: string, delta: number) => {
+    if (!currentOrder || modifyingItemId) return;
+    setModifyingItemId(targetItemId);
+
+    const updatedItems = currentOrder.items.map(item => ({
+      product_id: item.id,
+      name: item.name,
+      image: item.image,
+      price: item.price,
+      quantity: item.id === targetItemId ? Math.max(0, item.qty + delta) : item.qty,
+    }));
+
+    await modifyOrder(currentOrder.id, updatedItems);
+    refreshData();
+    setModifyingItemId(null);
   };
 
   const startEditAddress = () => {
@@ -149,9 +167,36 @@ const OrdersView: React.FC = () => {
                       <img src={item.image} alt={item.name} className="w-12 h-12 rounded-lg object-cover bg-gray-100 dark:bg-white/10" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-text-main dark:text-white truncate">{item.name}</p>
-                        <p className="text-xs text-text-sub">{item.qty} x {formatPrice(item.price, language)}</p>
+                        <p className="text-xs text-text-sub">{formatPrice(item.price, language)}</p>
                       </div>
-                      <p className="text-sm font-semibold text-text-main dark:text-white">{formatPrice(item.price * item.qty, language)}</p>
+
+                      {canModifyCurrentOrder ? (
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            className="w-7 h-7 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/15 text-text-sub hover:bg-gray-100 dark:hover:bg-white/10 transition-colors disabled:opacity-40"
+                            onClick={() => handleChangeItemQty(item.id, -1)}
+                            disabled={!!modifyingItemId}
+                          >
+                            <span className="material-symbols-outlined text-[16px]">{item.qty <= 1 ? 'delete' : 'remove'}</span>
+                          </button>
+                          <span className={`text-sm font-semibold w-6 text-center ${modifyingItemId === item.id ? 'text-text-sub animate-pulse' : 'text-text-main dark:text-white'}`}>
+                            {item.qty}
+                          </span>
+                          <button
+                            className="w-7 h-7 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/15 text-text-sub hover:bg-gray-100 dark:hover:bg-white/10 transition-colors disabled:opacity-40"
+                            onClick={() => handleChangeItemQty(item.id, 1)}
+                            disabled={!!modifyingItemId}
+                          >
+                            <span className="material-symbols-outlined text-[16px]">add</span>
+                          </button>
+                          <p className="text-sm font-semibold text-text-main dark:text-white ml-2 w-16 text-right">{formatPrice(item.price * item.qty, language)}</p>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-text-sub">{item.qty}x</span>
+                          <p className="text-sm font-semibold text-text-main dark:text-white">{formatPrice(item.price * item.qty, language)}</p>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
