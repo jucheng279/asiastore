@@ -266,6 +266,12 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
       return;
     }
 
+    if (filteredRows.length < 2) {
+      setRouteError('Route planning needs at least 2 delivery addresses. With only 1 destination, no optimization is needed.');
+      setShowRouteOptions(false);
+      return;
+    }
+
     setIsRouteLoading(true);
     setRouteError(null);
     setRouteResult(null);
