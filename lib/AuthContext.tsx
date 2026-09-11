@@ -76,7 +76,7 @@ function dbOrderToLocal(dbOrder: { order: { id: string; total: number; contact_e
       isDefault: (addr.isDefault as boolean) || false,
     },
     deliveryInstructions: o.delivery_instructions || undefined,
-    status: (o.status as 'active' | 'cancelled' | 'completed') || 'active',
+    status: (o.status as 'active' | 'confirmed' | 'cancelled' | 'completed') || 'active',
     paidWithPoints: o.paid_with_points || false,
     pointsAmount: o.points_amount || 0,
     paymentMethod: o.payment_method || '',

@@ -54,7 +54,7 @@ export interface Order {
   contactPhone: string;
   shippingAddress: Address;
   deliveryInstructions?: string;
-  status: 'active' | 'cancelled' | 'completed';
+  status: 'active' | 'confirmed' | 'cancelled' | 'completed';
   paidWithPoints?: boolean;
   pointsAmount?: number;
   paymentMethod?: string;

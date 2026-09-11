@@ -247,6 +247,7 @@
     "paymentPoints": "Betala med poang (10% rabatt)",
     "status": {
       "active": "Aktiv",
+      "confirmed": "Vantar pa leverans",
       "cancelled": "Avbruten",
       "completed": "Slutford"
     }

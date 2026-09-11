@@ -95,7 +95,7 @@ export async function fetchOrderSummary(
   const { data: orders, error: ordersErr } = await supabase
     .from('user_orders')
     .select('*')
-    .in('status', ['active', 'completed'])
+    .in('status', ['active', 'confirmed', 'completed'])
     .gte('created_at', windowStart.toISOString())
     .lt('created_at', windowEnd.toISOString())
     .order('created_at', { ascending: true });

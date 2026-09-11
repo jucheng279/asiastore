@@ -247,6 +247,7 @@
     "paymentPoints": "Pay with Points (10% off)",
     "status": {
       "active": "Active",
+      "confirmed": "Awaiting Delivery",
       "cancelled": "Cancelled",
       "completed": "Completed"
     }

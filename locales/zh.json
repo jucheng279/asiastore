@@ -247,6 +247,7 @@
     "paymentPoints": "积分支付（享9折）",
     "status": {
       "active": "进行中",
+      "confirmed": "等待配送",
       "cancelled": "已取消",
       "completed": "已完成"
     }

@@ -30,7 +30,7 @@ const OrdersView: React.FC = () => {
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [addressMode, setAddressMode] = useState<'saved' | 'manual'>('saved');
 
-  const currentOrder = orders.find(o => o.status === 'active') || null;
+  const currentOrder = orders.find(o => o.status === 'active' || o.status === 'confirmed') || null;
   const pastOrders = orders.filter(o => o.id !== currentOrder?.id);
   const sortedPastOrders = [...pastOrders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
@@ -40,7 +40,8 @@ const OrdersView: React.FC = () => {
   const estimatedTotal = subtotal + deliveryFee;
 
   const canModifyCurrentOrder = orderingOpen && currentOrder?.status === 'active';
-  const roundClosed = !orderingOpen && currentOrder?.status === 'active';
+  const isConfirmed = currentOrder?.status === 'confirmed';
+  const roundClosed = isConfirmed || (!orderingOpen && currentOrder?.status === 'active');
 
   const handleCancelOrder = async (orderId: string) => {
     setCancellingId(orderId);
@@ -439,6 +440,7 @@ const OrdersView: React.FC = () => {
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                         order.status === 'completed' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' :
                         order.status === 'cancelled' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' :
+                        order.status === 'confirmed' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' :
                         'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
                       }`}>
                         {t(`orders.status.${order.status}`)}
