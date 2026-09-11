@@ -412,5 +412,10 @@
     "rightDelete": "Request deletion of your account and data",
     "contactTitle": "Contact Us",
     "contactDesc": "For any privacy-related questions or to exercise your rights, please contact us at:"
+  },
+  "addressAutocomplete": {
+    "placeholder": "Search your address in Linkoping...",
+    "noResults": "No addresses found in Linkoping area",
+    "selectedAddress": "Selected address"
   }
 }

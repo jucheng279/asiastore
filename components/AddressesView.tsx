@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
 import { Address } from '../types';
 import { LABEL_OPTIONS, getLabelIcon } from '../lib/addressLabels';
+import AddressAutocomplete from './AddressAutocomplete';
 
 interface AddressFormModalProps {
   isOpen: boolean;
@@ -196,52 +197,26 @@ const AddressFormModal: React.FC<AddressFormModalProps> = ({ isOpen, onClose, on
                 <label className="block text-sm font-medium text-text-main dark:text-white mb-2">
                   {t('addresses.streetAddress')}
                 </label>
-                <input
-                  type="text"
-                  value={streetAddress}
-                  onChange={(e) => setStreetAddress(e.target.value)}
-                  className={inputBase}
-                  placeholder={t('addresses.streetAddress')}
+                <AddressAutocomplete
+                  onSelect={(addr) => {
+                    setStreetAddress(addr.streetAddress);
+                    setPostalCode(addr.postalCode);
+                  }}
+                  initialValue={streetAddress}
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-text-main dark:text-white mb-2">
-                    {t('addresses.city')}
-                  </label>
-                  <input
-                    type="text"
-                    defaultValue={t('checkout.defaultCity')}
-                    disabled
-                    className="w-full px-4 py-3 bg-gray-100 dark:bg-white/10 border border-gray-200 dark:border-white/10 rounded-xl text-text-sub cursor-not-allowed"
-                  />
+              {streetAddress && postalCode && (
+                <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/30 rounded-xl p-3">
+                  <div className="flex items-start gap-2">
+                    <span className="material-symbols-outlined text-emerald-600 text-[18px] mt-0.5">check_circle</span>
+                    <div className="text-sm">
+                      <p className="font-medium text-emerald-800 dark:text-emerald-200">{streetAddress}</p>
+                      <p className="text-emerald-700 dark:text-emerald-300">{postalCode} Linkoping, Sweden</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-text-main dark:text-white mb-2">
-                    {t('addresses.postalCode')}
-                  </label>
-                  <input
-                    type="text"
-                    value={postalCode}
-                    onChange={(e) => setPostalCode(e.target.value)}
-                    className={inputBase}
-                    placeholder="581 83"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-text-main dark:text-white mb-2">
-                  {t('addresses.country')}
-                </label>
-                <input
-                  type="text"
-                  defaultValue={t('checkout.defaultCountry')}
-                  disabled
-                  className="w-full px-4 py-3 bg-gray-100 dark:bg-white/10 border border-gray-200 dark:border-white/10 rounded-xl text-text-sub cursor-not-allowed"
-                />
-              </div>
+              )}
 
               <label className="flex items-center gap-3 py-2 cursor-pointer">
                 <div className="relative">

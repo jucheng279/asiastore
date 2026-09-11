@@ -412,5 +412,10 @@
     "rightDelete": "要求删除您的账户和数据",
     "contactTitle": "联系我们",
     "contactDesc": "如有任何隐私相关问题或行使您的权利，请通过以下方式联系我们："
+  },
+  "addressAutocomplete": {
+    "placeholder": "搜索您在林雪平的地址...",
+    "noResults": "未在林雪平地区找到地址",
+    "selectedAddress": "已选地址"
   }
 }

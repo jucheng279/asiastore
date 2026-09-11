@@ -8,6 +8,7 @@ import { formatPrice } from '../lib/formatters';
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE, POINTS_DISCOUNT_RATE } from '../lib/businessConstants';
 import type { Address } from '../types';
 import BottomNav from './BottomNav';
+import AddressAutocomplete from './AddressAutocomplete';
 
 const OrdersView: React.FC = () => {
   const navigate = useNavigate();
@@ -284,18 +285,20 @@ const OrdersView: React.FC = () => {
                           value={phone}
                           onChange={e => setPhone(e.target.value)}
                         />
-                        <input
-                          className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent text-sm text-text-main dark:text-white"
-                          placeholder={t('checkout.streetAddress')}
-                          value={streetAddress}
-                          onChange={e => setStreetAddress(e.target.value)}
+                        <AddressAutocomplete
+                          compact
+                          onSelect={(addr) => {
+                            setStreetAddress(addr.streetAddress);
+                            setPostalCode(addr.postalCode);
+                          }}
+                          initialValue={streetAddress}
                         />
-                        <input
-                          className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent text-sm text-text-main dark:text-white"
-                          placeholder={t('checkout.postalCode')}
-                          value={postalCode}
-                          onChange={e => setPostalCode(e.target.value)}
-                        />
+                        {streetAddress && postalCode && (
+                          <div className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1 px-1">
+                            <span className="material-symbols-outlined text-[14px]">check_circle</span>
+                            {streetAddress}, {postalCode}
+                          </div>
+                        )}
                       </div>
                     )}
 

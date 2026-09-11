@@ -412,5 +412,10 @@
     "rightDelete": "Begara radering av ditt konto och uppgifter",
     "contactTitle": "Kontakta oss",
     "contactDesc": "For fragor om integritet eller for att utova dina rattigheter, kontakta oss pa:"
+  },
+  "addressAutocomplete": {
+    "placeholder": "Sok din adress i Linkoping...",
+    "noResults": "Ingen adress hittades i Linkopingsomradet",
+    "selectedAddress": "Vald adress"
   }
 }
