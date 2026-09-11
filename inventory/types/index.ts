@@ -64,6 +64,14 @@ export interface FlashSaleSettings {
   defaultDiscountPercentage: number;
 }
 
+export interface StoreAddress {
+  street: string;
+  postalCode: string;
+  city: string;
+  lat: number | null;
+  lon: number | null;
+}
+
 export interface AdminStoreSettings {
   orderingMode: 'auto' | 'manual';
   orderingEnabled: boolean;
@@ -74,6 +82,7 @@ export interface AdminStoreSettings {
   closedMessageEn: string;
   closedMessageSv: string;
   closedMessageZh: string;
+  storeAddress: StoreAddress;
 }
 
 export interface SubCategory {

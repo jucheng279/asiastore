@@ -186,6 +186,13 @@ function dbRowToStoreSettings(row: any): AdminStoreSettings {
     closedMessageEn: row?.closed_message_en ?? '',
     closedMessageSv: row?.closed_message_sv ?? '',
     closedMessageZh: row?.closed_message_zh ?? '',
+    storeAddress: {
+      street: row?.store_address_street ?? '',
+      postalCode: row?.store_address_postal_code ?? '',
+      city: row?.store_address_city ?? '',
+      lat: row?.store_address_lat ?? null,
+      lon: row?.store_address_lon ?? null,
+    },
   };
 }
 
@@ -566,6 +573,11 @@ export async function saveDraftStoreSettings(settings: AdminStoreSettings) {
       closed_message_en: settings.closedMessageEn,
       closed_message_sv: settings.closedMessageSv,
       closed_message_zh: settings.closedMessageZh,
+      store_address_street: settings.storeAddress.street,
+      store_address_postal_code: settings.storeAddress.postalCode,
+      store_address_city: settings.storeAddress.city,
+      store_address_lat: settings.storeAddress.lat,
+      store_address_lon: settings.storeAddress.lon,
     });
   } catch (e) {
     console.error('saveDraftStoreSettings failed:', e);
@@ -698,6 +710,11 @@ export async function pushUpdate(): Promise<{ success: boolean; error?: string }
       closed_message_en: draft.storeSettings.closedMessageEn,
       closed_message_sv: draft.storeSettings.closedMessageSv,
       closed_message_zh: draft.storeSettings.closedMessageZh,
+      store_address_street: draft.storeSettings.storeAddress.street,
+      store_address_postal_code: draft.storeSettings.storeAddress.postalCode,
+      store_address_city: draft.storeSettings.storeAddress.city,
+      store_address_lat: draft.storeSettings.storeAddress.lat,
+      store_address_lon: draft.storeSettings.storeAddress.lon,
     });
 
     return { success: true };

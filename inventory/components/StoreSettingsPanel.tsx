@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Clock, ToggleLeft, ToggleRight, CalendarClock, Radio } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Clock, ToggleLeft, ToggleRight, CalendarClock, Radio, MapPin, Search, Loader2 } from 'lucide-react';
 import type { AdminStoreSettings, Language } from '../types';
 import { isStoreOpen } from '../../lib/storeStatus';
 
@@ -17,6 +17,148 @@ const DAY_OPTIONS = [
   { value: 6, en: 'Saturday', sv: 'Lördag', zh: '周六' },
   { value: 7, en: 'Sunday', sv: 'Söndag', zh: '周日' },
 ];
+
+interface AddressSuggestion {
+  street: string;
+  housenumber: string;
+  postcode: string;
+  city: string;
+  formatted: string;
+  lat?: number;
+  lon?: number;
+}
+
+function StoreAddressInput({
+  settings,
+  onUpdate,
+}: {
+  settings: AdminStoreSettings;
+  onUpdate: (updates: Partial<AdminStoreSettings>) => void;
+}) {
+  const addr = settings.storeAddress;
+  const displayValue = addr.street
+    ? `${addr.street}, ${addr.postalCode} ${addr.city}`
+    : '';
+
+  const [query, setQuery] = useState(displayValue);
+  const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSelected, setIsSelected] = useState(!!addr.street);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const abortRef = useRef<AbortController>();
+
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+
+  useEffect(() => {
+    if (addr.street && !isSelected) {
+      setQuery(`${addr.street}, ${addr.postalCode} ${addr.city}`);
+      setIsSelected(true);
+    }
+  }, [addr.street]);
+
+  const fetchSuggestions = useCallback(
+    async (text: string) => {
+      if (text.length < 2) {
+        setSuggestions([]);
+        setIsOpen(false);
+        return;
+      }
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+      setIsLoading(true);
+      try {
+        const params = new URLSearchParams({ text, lang: 'en' });
+        const res = await fetch(
+          `${supabaseUrl}/functions/v1/address-autocomplete?${params}`,
+          { signal: controller.signal },
+        );
+        if (!res.ok) throw new Error('fetch failed');
+        const data = await res.json();
+        setSuggestions(data.results || []);
+        setIsOpen((data.results || []).length > 0);
+      } catch {
+        // aborted or network error
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [supabaseUrl],
+  );
+
+  const handleInputChange = (text: string) => {
+    setQuery(text);
+    setIsSelected(false);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => fetchSuggestions(text), 300);
+  };
+
+  const handleSelect = (s: AddressSuggestion) => {
+    const street = s.housenumber ? `${s.street} ${s.housenumber}` : s.street;
+    setQuery(`${street}, ${s.postcode} ${s.city}`);
+    setIsOpen(false);
+    setIsSelected(true);
+    onUpdate({
+      storeAddress: {
+        street,
+        postalCode: s.postcode,
+        city: s.city,
+        lat: s.lat ?? null,
+        lon: s.lon ?? null,
+      },
+    });
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <div className="relative">
+        <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => handleInputChange(e.target.value)}
+          placeholder="Search for store address..."
+          className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-gray-300 text-sm bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+        />
+        {isLoading && (
+          <Loader2 size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 animate-spin" />
+        )}
+      </div>
+      {isOpen && suggestions.length > 0 && (
+        <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+          {suggestions.map((s, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => handleSelect(s)}
+              className="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0"
+            >
+              {s.formatted}
+            </button>
+          ))}
+        </div>
+      )}
+      {isSelected && addr.street && (
+        <p className="text-xs text-emerald-600 mt-1 flex items-center gap-1">
+          <MapPin size={12} />
+          {addr.street}, {addr.postalCode} {addr.city}
+        </p>
+      )}
+    </div>
+  );
+}
 
 export function StoreSettingsPanel({ settings, onUpdate }: StoreSettingsPanelProps) {
   const [liveOpen, setLiveOpen] = useState(() => isStoreOpen({
@@ -219,6 +361,16 @@ export function StoreSettingsPanel({ settings, onUpdate }: StoreSettingsPanelPro
               />
             </div>
           </div>
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-2">Store Address</h3>
+          <p className="text-xs text-gray-500 mb-4">
+            Used as the starting point for delivery route planning. Search for and select your store's real address.
+          </p>
+          <StoreAddressInput settings={settings} onUpdate={onUpdate} />
         </div>
       </div>
     </div>

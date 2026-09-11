@@ -86,6 +86,7 @@ export function AdminPage({ onSignOut }: AdminPageProps) {
     closedMessageEn: '',
     closedMessageSv: '',
     closedMessageZh: '',
+    storeAddress: { street: '', postalCode: '', city: '', lat: null, lon: null },
   });
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

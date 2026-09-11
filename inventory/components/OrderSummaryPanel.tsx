@@ -1,5 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
-import { ClipboardList, Search, ChevronLeft, ChevronRight, Printer, Package } from 'lucide-react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import {
+  ClipboardList, Search, ChevronLeft, ChevronRight, Printer, Package,
+  Route, MapPin, Loader2, X, RotateCcw, Navigation,
+} from 'lucide-react';
 import {
   fetchOrderSummary,
   calculateOrderingWindow,
@@ -7,14 +10,10 @@ import {
   type OrderingWindow,
 } from '../../lib/orderSummaryApi';
 import { printOrderSummary } from '../utils/printOrderSummary';
+import type { AdminStoreSettings } from '../types';
 
 interface OrderSummaryPanelProps {
-  storeSettings: {
-    autoOpenDay: number;
-    autoOpenTime: string;
-    autoCloseDay: number;
-    autoCloseTime: string;
-  };
+  storeSettings: AdminStoreSettings;
   onOrderCountChange: (count: number) => void;
 }
 
@@ -24,12 +23,131 @@ const PAYMENT_LABELS: Record<string, string> = {
   payAtStore: 'Pay at Store',
 };
 
+type EndMode = 'return_to_start' | 'last_stop' | 'custom';
+
+interface RouteResult {
+  orderedStopIds: string[];
+  totalTimeSeconds: number;
+  totalDistanceMeters: number;
+  failedStops: string[];
+}
+
+interface AddressSuggestion {
+  street: string;
+  housenumber: string;
+  postcode: string;
+  city: string;
+  formatted: string;
+  lat?: number;
+  lon?: number;
+}
+
+function EndAddressInput({
+  onSelect,
+}: {
+  onSelect: (addr: { address: string; lat: number; lon: number }) => void;
+}) {
+  const [query, setQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const abortRef = useRef<AbortController>();
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+
+  const fetchSuggestions = useCallback(async (text: string) => {
+    if (text.length < 2) { setSuggestions([]); setIsOpen(false); return; }
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams({ text, lang: 'en' });
+      const res = await fetch(`${supabaseUrl}/functions/v1/address-autocomplete?${params}`, { signal: controller.signal });
+      if (!res.ok) throw new Error('fail');
+      const data = await res.json();
+      setSuggestions(data.results || []);
+      setIsOpen((data.results || []).length > 0);
+    } catch { /* aborted */ } finally { setIsLoading(false); }
+  }, [supabaseUrl]);
+
+  const handleChange = (text: string) => {
+    setQuery(text);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => fetchSuggestions(text), 300);
+  };
+
+  const handleSelect = (s: AddressSuggestion) => {
+    const street = s.housenumber ? `${s.street} ${s.housenumber}` : s.street;
+    const display = `${street}, ${s.postcode} ${s.city}`;
+    setQuery(display);
+    setIsOpen(false);
+    onSelect({ address: display, lat: s.lat ?? 0, lon: s.lon ?? 0 });
+  };
+
+  useEffect(() => {
+    const handle = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setIsOpen(false);
+    };
+    document.addEventListener('mousedown', handle);
+    return () => document.removeEventListener('mousedown', handle);
+  }, []);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <div className="relative">
+        <MapPin size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => handleChange(e.target.value)}
+          placeholder="Search end address..."
+          className="w-full pl-8 pr-8 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-400"
+        />
+        {isLoading && <Loader2 size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 animate-spin" />}
+      </div>
+      {isOpen && suggestions.length > 0 && (
+        <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg max-h-36 overflow-y-auto">
+          {suggestions.map((s, i) => (
+            <button key={i} type="button" onClick={() => handleSelect(s)}
+              className="w-full text-left px-3 py-1.5 text-xs hover:bg-teal-50 transition-colors border-b border-slate-100 last:border-b-0">
+              {s.formatted}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function formatDuration(seconds: number): string {
+  const mins = Math.round(seconds / 60);
+  if (mins < 60) return `${mins} min`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return m > 0 ? `${h}h ${m}min` : `${h}h`;
+}
+
+function formatDistance(meters: number): string {
+  const km = meters / 1000;
+  return km < 1 ? `${Math.round(meters)} m` : `${km.toFixed(1)} km`;
+}
+
 export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSummaryPanelProps) {
   const [rows, setRows] = useState<OrderSummaryRow[]>([]);
   const [totalOrders, setTotalOrders] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [weekOffset, setWeekOffset] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Route planning state
+  const [routeResult, setRouteResult] = useState<RouteResult | null>(null);
+  const [isRouteLoading, setIsRouteLoading] = useState(false);
+  const [routeError, setRouteError] = useState<string | null>(null);
+  const [endMode, setEndMode] = useState<EndMode>('return_to_start');
+  const [customEndAddress, setCustomEndAddress] = useState<{ address: string; lat: number; lon: number } | null>(null);
+  const [showRouteOptions, setShowRouteOptions] = useState(false);
 
   const window: OrderingWindow = useMemo(
     () =>
@@ -46,6 +164,8 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
   useEffect(() => {
     let cancelled = false;
     setIsLoading(true);
+    setRouteResult(null);
+    setRouteError(null);
     fetchOrderSummary(window.start, window.end).then(result => {
       if (cancelled) return;
       setRows(result.rows);
@@ -67,13 +187,82 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
     );
   }, [rows, searchQuery]);
 
+  // Apply route ordering if available
+  const displayRows = useMemo(() => {
+    if (!routeResult) return filteredRows;
+    const orderMap = new Map(routeResult.orderedStopIds.map((id, idx) => [id, idx]));
+    const sorted = [...filteredRows].sort((a, b) => {
+      const ai = orderMap.get(a.orderId) ?? 9999;
+      const bi = orderMap.get(b.orderId) ?? 9999;
+      return ai - bi;
+    });
+    return sorted;
+  }, [filteredRows, routeResult]);
+
   const grandTotal = useMemo(
     () => filteredRows.reduce((sum, r) => sum + r.total, 0),
     [filteredRows]
   );
 
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+
+  const calculateRoute = async () => {
+    const addr = storeSettings.storeAddress;
+    if (!addr.lat || !addr.lon) {
+      setRouteError('Please set a store address in Store Settings first.');
+      return;
+    }
+
+    setIsRouteLoading(true);
+    setRouteError(null);
+    setRouteResult(null);
+
+    try {
+      const stops = filteredRows.map((row) => ({
+        id: row.orderId,
+        address: `${row.address.streetAddress}, ${row.address.postalCode} ${row.address.city}`,
+        lat: null as number | null,
+        lon: null as number | null,
+      }));
+
+      const body: Record<string, unknown> = {
+        startAddress: { address: `${addr.street}, ${addr.postalCode} ${addr.city}`, lat: addr.lat, lon: addr.lon },
+        endMode,
+        stops,
+      };
+
+      if (endMode === 'custom' && customEndAddress) {
+        body.customEndAddress = customEndAddress;
+      }
+
+      const res = await fetch(`${supabaseUrl}/functions/v1/route-optimize`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({ error: 'Route planning failed' }));
+        throw new Error(errData.error || `Request failed (${res.status})`);
+      }
+
+      const data: RouteResult = await res.json();
+      setRouteResult(data);
+      setShowRouteOptions(false);
+    } catch (err) {
+      setRouteError((err as Error).message);
+    } finally {
+      setIsRouteLoading(false);
+    }
+  };
+
+  const clearRoute = () => {
+    setRouteResult(null);
+    setRouteError(null);
+  };
+
   const handlePrint = () => {
-    printOrderSummary(filteredRows, window.label, grandTotal, filteredRows.length);
+    printOrderSummary(displayRows, window.label, grandTotal, filteredRows.length, routeResult ?? undefined);
   };
 
   if (isLoading) {
@@ -126,6 +315,83 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
               <ChevronRight size={16} className="text-slate-600" />
             </button>
             <div className="w-px h-6 bg-slate-200 mx-1" />
+
+            {/* Route planning buttons */}
+            {filteredRows.length > 0 && !routeResult && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowRouteOptions(!showRouteOptions)}
+                  disabled={isRouteLoading}
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-60"
+                >
+                  {isRouteLoading ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Route size={14} />
+                  )}
+                  Plan Route
+                </button>
+
+                {showRouteOptions && (
+                  <div className="absolute right-0 top-full mt-2 w-72 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-sm font-semibold text-slate-800">Route Options</h4>
+                      <button onClick={() => setShowRouteOptions(false)} className="text-slate-400 hover:text-slate-600">
+                        <X size={14} />
+                      </button>
+                    </div>
+
+                    <div className="space-y-2 mb-4">
+                      <p className="text-xs font-medium text-slate-600">Where should the route end?</p>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="endMode" checked={endMode === 'return_to_start'}
+                          onChange={() => setEndMode('return_to_start')}
+                          className="text-teal-600 focus:ring-teal-500" />
+                        <span className="text-xs text-slate-700">Return to store (round trip)</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="endMode" checked={endMode === 'last_stop'}
+                          onChange={() => setEndMode('last_stop')}
+                          className="text-teal-600 focus:ring-teal-500" />
+                        <span className="text-xs text-slate-700">End at last delivery</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="endMode" checked={endMode === 'custom'}
+                          onChange={() => setEndMode('custom')}
+                          className="text-teal-600 focus:ring-teal-500" />
+                        <span className="text-xs text-slate-700">Custom end address</span>
+                      </label>
+
+                      {endMode === 'custom' && (
+                        <div className="mt-2">
+                          <EndAddressInput onSelect={setCustomEndAddress} />
+                        </div>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={calculateRoute}
+                      disabled={isRouteLoading || (endMode === 'custom' && !customEndAddress)}
+                      className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-60"
+                    >
+                      {isRouteLoading ? <Loader2 size={14} className="animate-spin" /> : <Navigation size={14} />}
+                      Calculate Route
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {routeResult && (
+              <button
+                onClick={clearRoute}
+                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                <RotateCcw size={14} />
+                Clear Route
+              </button>
+            )}
+
             <button
               onClick={handlePrint}
               className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
@@ -135,6 +401,39 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
             </button>
           </div>
         </div>
+
+        {/* Route summary bar */}
+        {routeResult && (
+          <div className="flex items-center gap-4 px-4 py-2.5 bg-teal-50 border border-teal-200 rounded-lg mb-4">
+            <Route size={16} className="text-teal-600 flex-shrink-0" />
+            <div className="flex items-center gap-4 text-sm">
+              <span className="font-semibold text-teal-800">
+                Optimized Route
+              </span>
+              <span className="text-teal-700">
+                {formatDuration(routeResult.totalTimeSeconds)} drive
+              </span>
+              <span className="text-teal-700">
+                {formatDistance(routeResult.totalDistanceMeters)} total
+              </span>
+              <span className="text-teal-700">
+                {routeResult.orderedStopIds.length} stop{routeResult.orderedStopIds.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+            {routeResult.failedStops.length > 0 && (
+              <span className="text-xs text-amber-600 ml-auto">
+                {routeResult.failedStops.length} address{routeResult.failedStops.length !== 1 ? 'es' : ''} could not be located
+              </span>
+            )}
+          </div>
+        )}
+
+        {routeError && (
+          <div className="flex items-center gap-2 px-4 py-2.5 bg-red-50 border border-red-200 rounded-lg mb-4">
+            <X size={14} className="text-red-500 flex-shrink-0" />
+            <p className="text-sm text-red-700">{routeError}</p>
+          </div>
+        )}
 
         <div className="relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -165,6 +464,9 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200">
                   <th className="text-left px-4 py-3 font-semibold text-slate-600 w-10">#</th>
+                  {routeResult && (
+                    <th className="text-left px-4 py-3 font-semibold text-slate-600 w-16">Stop</th>
+                  )}
                   <th className="text-left px-4 py-3 font-semibold text-slate-600 min-w-[120px]">Customer</th>
                   <th className="text-left px-4 py-3 font-semibold text-slate-600 min-w-[200px]">Items</th>
                   <th className="text-left px-4 py-3 font-semibold text-slate-600 min-w-[180px]">Address</th>
@@ -174,66 +476,88 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
                 </tr>
               </thead>
               <tbody>
-                {filteredRows.map((row, idx) => (
-                  <tr
-                    key={row.orderId}
-                    className={`border-b border-slate-200 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}
-                  >
-                    <td className="px-4 py-3 text-slate-500 font-medium align-top">{idx + 1}</td>
-                    <td className="px-4 py-3 align-top">
-                      <span className="font-semibold text-slate-800">{row.nickname}</span>
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      <div className="space-y-0.5">
-                        {row.items.map((item, i) => (
-                          <div key={`${item.productId}-${i}`} className="flex items-start gap-1">
-                            <span className="text-slate-700">{item.name}</span>
-                            <span className="text-slate-400 flex-shrink-0">x{item.quantity}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      <p className="text-slate-800 font-medium">{row.address.fullName}</p>
-                      <p className="text-slate-600">{row.address.streetAddress}</p>
-                      <p className="text-slate-500">{row.address.postalCode} {row.address.city}</p>
-                      {row.deliveryInstructions && (
-                        <p className="text-xs text-amber-600 mt-1 italic">{row.deliveryInstructions}</p>
+                {displayRows.map((row, idx) => {
+                  const stopNumber = routeResult
+                    ? routeResult.orderedStopIds.indexOf(row.orderId) + 1
+                    : 0;
+                  const isFailed = routeResult?.failedStops.includes(row.orderId);
+
+                  return (
+                    <tr
+                      key={row.orderId}
+                      className={`border-b border-slate-200 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}
+                    >
+                      <td className="px-4 py-3 text-slate-500 font-medium align-top">{idx + 1}</td>
+                      {routeResult && (
+                        <td className="px-4 py-3 align-top">
+                          {stopNumber > 0 ? (
+                            <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-teal-600 text-white text-xs font-bold">
+                              {stopNumber}
+                            </span>
+                          ) : isFailed ? (
+                            <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-amber-100 text-amber-600 text-xs font-bold" title="Address could not be located">
+                              ?
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 text-xs">--</span>
+                          )}
+                        </td>
                       )}
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      <p className="text-slate-800 font-medium">{row.contactPhone}</p>
-                      {row.contactEmail && (
-                        <p className="text-slate-500 text-xs truncate max-w-[160px]">{row.contactEmail}</p>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      {row.paymentMethod ? (
-                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-                          row.paymentMethod === 'points'
-                            ? 'bg-amber-100 text-amber-700'
-                            : row.paymentMethod === 'payAtStore'
-                            ? 'bg-blue-100 text-blue-700'
-                            : 'bg-emerald-100 text-emerald-700'
-                        }`}>
-                          {PAYMENT_LABELS[row.paymentMethod] || row.paymentMethod}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-slate-400 italic">Pending</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 align-top text-right">
-                      <span className="font-semibold text-slate-800">{row.subtotal.toFixed(2)} kr</span>
-                      {row.deliveryFee > 0 && (
-                        <p className="text-xs text-amber-600">+{row.deliveryFee.toFixed(0)} kr delivery</p>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                      <td className="px-4 py-3 align-top">
+                        <span className="font-semibold text-slate-800">{row.nickname}</span>
+                      </td>
+                      <td className="px-4 py-3 align-top">
+                        <div className="space-y-0.5">
+                          {row.items.map((item, i) => (
+                            <div key={`${item.productId}-${i}`} className="flex items-start gap-1">
+                              <span className="text-slate-700">{item.name}</span>
+                              <span className="text-slate-400 flex-shrink-0">x{item.quantity}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 align-top">
+                        <p className="text-slate-800 font-medium">{row.address.fullName}</p>
+                        <p className="text-slate-600">{row.address.streetAddress}</p>
+                        <p className="text-slate-500">{row.address.postalCode} {row.address.city}</p>
+                        {row.deliveryInstructions && (
+                          <p className="text-xs text-amber-600 mt-1 italic">{row.deliveryInstructions}</p>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 align-top">
+                        <p className="text-slate-800 font-medium">{row.contactPhone}</p>
+                        {row.contactEmail && (
+                          <p className="text-slate-500 text-xs truncate max-w-[160px]">{row.contactEmail}</p>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 align-top">
+                        {row.paymentMethod ? (
+                          <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
+                            row.paymentMethod === 'points'
+                              ? 'bg-amber-100 text-amber-700'
+                              : row.paymentMethod === 'payAtStore'
+                              ? 'bg-blue-100 text-blue-700'
+                              : 'bg-emerald-100 text-emerald-700'
+                          }`}>
+                            {PAYMENT_LABELS[row.paymentMethod] || row.paymentMethod}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-slate-400 italic">Pending</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 align-top text-right">
+                        <span className="font-semibold text-slate-800">{row.subtotal.toFixed(2)} kr</span>
+                        {row.deliveryFee > 0 && (
+                          <p className="text-xs text-amber-600">+{row.deliveryFee.toFixed(0)} kr delivery</p>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
               <tfoot>
                 <tr className="bg-slate-100 border-t-2 border-slate-300">
-                  <td colSpan={2} className="px-4 py-3 font-semibold text-slate-700">
+                  <td colSpan={routeResult ? 3 : 2} className="px-4 py-3 font-semibold text-slate-700">
                     {filteredRows.length} customer{filteredRows.length !== 1 ? 's' : ''}
                   </td>
                   <td colSpan={4} className="px-4 py-3 text-right font-semibold text-slate-600">

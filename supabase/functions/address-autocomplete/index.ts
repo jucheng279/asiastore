@@ -80,6 +80,8 @@ Deno.serve(async (req: Request) => {
         postcode: r.postcode || "",
         city: r.city || r.town || r.municipality || "Linköping",
         formatted: r.formatted || "",
+        lat: r.lat ?? null,
+        lon: r.lon ?? null,
       }));
 
     return new Response(JSON.stringify({ results: filtered }), {
