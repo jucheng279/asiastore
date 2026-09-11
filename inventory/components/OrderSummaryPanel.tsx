@@ -300,12 +300,21 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
         throw new Error(errData.error || `Request failed (${res.status})`);
       }
 
-      const data: RouteResult = await res.json();
+      const raw = await res.json();
+      const data: RouteResult = {
+        orderedStopIds: Array.isArray(raw.orderedStopIds) ? raw.orderedStopIds : [],
+        totalTimeSeconds: typeof raw.totalTimeSeconds === 'number' ? raw.totalTimeSeconds : 0,
+        totalDistanceMeters: typeof raw.totalDistanceMeters === 'number' ? raw.totalDistanceMeters : 0,
+        failedStops: Array.isArray(raw.failedStops) ? raw.failedStops : [],
+        routeGeometry: Array.isArray(raw.routeGeometry) ? raw.routeGeometry : [],
+        stopCoords: raw.stopCoords && typeof raw.stopCoords === 'object' ? raw.stopCoords : {},
+      };
       setRouteResult(data);
       setShowRouteOptions(false);
 
-      // Save to DB in the background for sharing
-      saveRouteToDb(data);
+      saveRouteToDb(data).catch(() => {
+        setRouteError('Route calculated but could not be saved for sharing.');
+      });
     } catch (err) {
       setRouteError((err as Error).message);
     } finally {

@@ -4,6 +4,7 @@ import { AdminPage } from './components/AdminPage';
 import { AdminLoginPage } from './components/AdminLoginPage';
 import { AdminResetPasswordPage } from './components/AdminResetPasswordPage';
 import { AccessDeniedPage } from './components/AccessDeniedPage';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import type { Session } from '@supabase/supabase-js';
 
 type AuthState = 'loading' | 'unauthenticated' | 'checking_admin' | 'admin' | 'denied' | 'password_recovery';
@@ -82,7 +83,7 @@ function App() {
     return <AccessDeniedPage email={session?.user?.email || ''} />;
   }
 
-  return <AdminPage onSignOut={() => supabase.auth.signOut()} />;
+  return <ErrorBoundary><AdminPage onSignOut={() => supabase.auth.signOut()} /></ErrorBoundary>;
 }
 
 export default App;
