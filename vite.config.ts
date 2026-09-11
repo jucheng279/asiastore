@@ -11,10 +11,19 @@ function spaFallback(): Plugin {
         if (
           req.url &&
           !req.url.startsWith('/inventory') &&
+          !req.url.startsWith('/delivery') &&
           !req.url.includes('.') &&
           req.headers.accept?.includes('text/html')
         ) {
           req.url = '/index.html';
+        }
+        if (
+          req.url &&
+          req.url.startsWith('/delivery/') &&
+          !req.url.includes('.') &&
+          req.headers.accept?.includes('text/html')
+        ) {
+          req.url = '/delivery.html';
         }
         next();
       });
@@ -35,6 +44,7 @@ export default defineConfig(() => {
           input: {
             main: path.resolve(__dirname, 'index.html'),
             inventory: path.resolve(__dirname, 'inventory.html'),
+            delivery: path.resolve(__dirname, 'delivery.html'),
           },
         },
       },

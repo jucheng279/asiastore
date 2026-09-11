@@ -76,7 +76,8 @@ Deno.serve(async (req: Request) => {
     if (!startAddress?.lat || !startAddress?.lon) {
       return new Response(
         JSON.stringify({
-          error: "Store address coordinates are required. Please set a store address in Store Settings.",
+          error:
+            "Store address coordinates are required. Please set a store address in Store Settings.",
         }),
         {
           status: 400,
@@ -95,7 +96,6 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Geocode any stops that don't have coordinates
     const geocodedStops = await Promise.all(
       stops.map(async (stop) => {
         if (stop.lat && stop.lon) {
@@ -129,7 +129,6 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Determine end location
     let endLat = startAddress.lat;
     let endLon = startAddress.lon;
 
@@ -149,9 +148,6 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // Build Geoapify Route Planner request
-    // For "last_stop" mode, we don't set an end location on the agent,
-    // so the route just ends at the last optimized stop.
     const agent: Record<string, unknown> = {
       start_location: [startAddress.lon, startAddress.lat],
     };
@@ -196,17 +192,14 @@ Deno.serve(async (req: Request) => {
 
     const routeData = await routeRes.json();
 
-    // Extract the optimized stop order from the response
     const features = routeData.features || [];
     const routeFeature = features.find(
       (f: Record<string, unknown>) =>
         (f as any).properties?.mode === "drive",
     );
 
-    const actions =
-      (routeFeature as any)?.properties?.actions || [];
+    const actions = (routeFeature as any)?.properties?.actions || [];
 
-    // actions are sequential steps; filter to "job" types to get the stop order
     const orderedStopIds: string[] = [];
     let totalTime = 0;
     let totalDistance = 0;
@@ -219,10 +212,34 @@ Deno.serve(async (req: Request) => {
       if (action.distance != null) totalDistance += action.distance;
     }
 
-    // Get totals from the route properties if available
     const routeProps = (routeFeature as any)?.properties || {};
     const routeTime = routeProps.time ?? totalTime;
     const routeDist = routeProps.distance ?? totalDistance;
+
+    // Extract route geometry (the driving path line)
+    let routeGeometry: number[][] = [];
+    const geom = (routeFeature as any)?.geometry;
+    if (geom) {
+      if (geom.type === "MultiLineString" && Array.isArray(geom.coordinates)) {
+        // Flatten multi-line into a single coordinate array [lon, lat] -> [lat, lon]
+        for (const line of geom.coordinates) {
+          for (const coord of line) {
+            routeGeometry.push([coord[1], coord[0]]);
+          }
+        }
+      } else if (
+        geom.type === "LineString" &&
+        Array.isArray(geom.coordinates)
+      ) {
+        routeGeometry = geom.coordinates.map((c: number[]) => [c[1], c[0]]);
+      }
+    }
+
+    // Build stop coordinates map for the client
+    const stopCoords: Record<string, { lat: number; lon: number }> = {};
+    for (const stop of validStops) {
+      stopCoords[stop.id] = { lat: stop.lat!, lon: stop.lon! };
+    }
 
     return new Response(
       JSON.stringify({
@@ -230,6 +247,8 @@ Deno.serve(async (req: Request) => {
         totalTimeSeconds: routeTime,
         totalDistanceMeters: routeDist,
         failedStops,
+        routeGeometry,
+        stopCoords,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -39,19 +39,30 @@ function generatePrintHtml(
   windowLabel: string,
   grandTotal: number,
   customerCount: number,
-  routeInfo?: RouteInfo
+  routeInfo?: RouteInfo,
+  qrDataUrl?: string,
+  deliveryLink?: string
 ): string {
   const hasRoute = !!routeInfo && routeInfo.orderedStopIds.length > 0;
 
-  const routeSummaryHtml = hasRoute
-    ? `<div class="route-summary">
+  let routeSummaryHtml = '';
+  if (hasRoute) {
+    const qrHtml = qrDataUrl
+      ? `<div class="qr-section"><img src="${qrDataUrl}" class="qr-code" /><span class="qr-label">Scan to open<br/>driver route</span></div>`
+      : '';
+
+    routeSummaryHtml = `<div class="route-summary">
+      <div class="route-info">
         <strong>Optimized Delivery Route</strong> &mdash;
         ${formatDuration(routeInfo!.totalTimeSeconds)} drive &middot;
         ${formatDistance(routeInfo!.totalDistanceMeters)} total &middot;
         ${routeInfo!.orderedStopIds.length} stops
         ${routeInfo!.failedStops.length > 0 ? `<span class="route-warning">(${routeInfo!.failedStops.length} address${routeInfo!.failedStops.length !== 1 ? 'es' : ''} could not be located)</span>` : ''}
-      </div>`
-    : '';
+        ${deliveryLink ? `<br/><span class="route-link">${escapeHtml(deliveryLink)}</span>` : ''}
+      </div>
+      ${qrHtml}
+    </div>`;
+  }
 
   const stopCol = hasRoute ? '<th class="stop-col">Stop</th>' : '';
   const stopFooterSpan = hasRoute ? 3 : 2;
@@ -131,16 +142,23 @@ function generatePrintHtml(
     .header h1 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
     .header p { font-size: 12px; color: #475569; }
     .route-summary {
-      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       margin-bottom: 12px;
-      padding: 8px 12px;
+      padding: 10px 14px;
       background: #f0fdfa;
       border: 1px solid #99f6e4;
       border-radius: 6px;
       font-size: 11px;
       color: #0f766e;
     }
+    .route-info { flex: 1; }
     .route-warning { color: #d97706; margin-left: 4px; }
+    .route-link { font-size: 9px; color: #64748b; word-break: break-all; }
+    .qr-section { display: flex; align-items: center; gap: 8px; margin-left: 16px; }
+    .qr-code { width: 80px; height: 80px; }
+    .qr-label { font-size: 9px; color: #64748b; line-height: 1.3; }
     table { width: 100%; border-collapse: collapse; }
     thead th {
       background: #f1f5f9;
@@ -234,9 +252,11 @@ export function printOrderSummary(
   windowLabel: string,
   grandTotal: number,
   customerCount: number,
-  routeInfo?: RouteInfo
+  routeInfo?: RouteInfo,
+  qrDataUrl?: string,
+  deliveryLink?: string
 ): void {
-  const html = generatePrintHtml(rows, windowLabel, grandTotal, customerCount, routeInfo);
+  const html = generatePrintHtml(rows, windowLabel, grandTotal, customerCount, routeInfo, qrDataUrl, deliveryLink);
   const printWindow = globalThis.open('', '_blank', 'width=900,height=700');
   if (!printWindow) return;
 

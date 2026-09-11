@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   ClipboardList, Search, ChevronLeft, ChevronRight, Printer, Package,
-  Route, MapPin, Loader2, X, RotateCcw, Navigation,
+  Route, MapPin, Loader2, X, RotateCcw, Navigation, Map, Share2, Copy, Check,
 } from 'lucide-react';
 import {
   fetchOrderSummary,
@@ -9,7 +9,10 @@ import {
   type OrderSummaryRow,
   type OrderingWindow,
 } from '../../lib/orderSummaryApi';
+import { supabase } from '../../lib/supabase';
 import { printOrderSummary } from '../utils/printOrderSummary';
+import { generateQrDataUrl } from '../utils/qrcode';
+import { RouteMapModal } from './RouteMapModal';
 import type { AdminStoreSettings } from '../types';
 
 interface OrderSummaryPanelProps {
@@ -30,6 +33,8 @@ interface RouteResult {
   totalTimeSeconds: number;
   totalDistanceMeters: number;
   failedStops: string[];
+  routeGeometry: number[][];
+  stopCoords: Record<string, { lat: number; lon: number }>;
 }
 
 interface AddressSuggestion {
@@ -134,6 +139,13 @@ function formatDistance(meters: number): string {
   return km < 1 ? `${Math.round(meters)} m` : `${km.toFixed(1)} km`;
 }
 
+function generateRouteId(): string {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let id = '';
+  for (let i = 0; i < 8; i++) id += chars[Math.floor(Math.random() * chars.length)];
+  return id;
+}
+
 export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSummaryPanelProps) {
   const [rows, setRows] = useState<OrderSummaryRow[]>([]);
   const [totalOrders, setTotalOrders] = useState(0);
@@ -149,7 +161,13 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
   const [customEndAddress, setCustomEndAddress] = useState<{ address: string; lat: number; lon: number } | null>(null);
   const [showRouteOptions, setShowRouteOptions] = useState(false);
 
-  const window: OrderingWindow = useMemo(
+  // Map + share state
+  const [showMap, setShowMap] = useState(false);
+  const [savedRouteId, setSavedRouteId] = useState<string | null>(null);
+  const [showSharePopover, setShowSharePopover] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  const orderingWindow: OrderingWindow = useMemo(
     () =>
       calculateOrderingWindow(
         storeSettings.autoOpenDay,
@@ -166,7 +184,8 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
     setIsLoading(true);
     setRouteResult(null);
     setRouteError(null);
-    fetchOrderSummary(window.start, window.end).then(result => {
+    setSavedRouteId(null);
+    fetchOrderSummary(orderingWindow.start, orderingWindow.end).then(result => {
       if (cancelled) return;
       setRows(result.rows);
       setTotalOrders(result.totalOrders);
@@ -174,7 +193,7 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
       setIsLoading(false);
     });
     return () => { cancelled = true; };
-  }, [window]);
+  }, [orderingWindow]);
 
   const filteredRows = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -187,7 +206,6 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
     );
   }, [rows, searchQuery]);
 
-  // Apply route ordering if available
   const displayRows = useMemo(() => {
     if (!routeResult) return filteredRows;
     const orderMap = new Map(routeResult.orderedStopIds.map((id, idx) => [id, idx]));
@@ -206,6 +224,41 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 
+  const saveRouteToDb = async (result: RouteResult) => {
+    const addr = storeSettings.storeAddress;
+    const id = generateRouteId();
+
+    const stopsData = result.orderedStopIds.map((orderId, idx) => {
+      const row = filteredRows.find(r => r.orderId === orderId);
+      const coords = result.stopCoords[orderId];
+      return {
+        id: orderId,
+        stopNumber: idx + 1,
+        customerName: row?.nickname ?? 'Unknown',
+        address: row ? `${row.address.streetAddress}, ${row.address.postalCode} ${row.address.city}` : '',
+        phone: row?.contactPhone ?? '',
+        notes: row?.deliveryInstructions ?? '',
+        lat: coords?.lat ?? 0,
+        lon: coords?.lon ?? 0,
+      };
+    });
+
+    const { error } = await supabase.from('delivery_routes').insert({
+      id,
+      window_label: orderingWindow.label,
+      total_time_seconds: result.totalTimeSeconds,
+      total_distance_meters: result.totalDistanceMeters,
+      route_geometry: result.routeGeometry,
+      store_address: { lat: addr.lat, lon: addr.lon, label: `${addr.street}, ${addr.postalCode} ${addr.city}` },
+      end_mode: endMode,
+      stops: stopsData,
+    });
+
+    if (!error) {
+      setSavedRouteId(id);
+    }
+  };
+
   const calculateRoute = async () => {
     const addr = storeSettings.storeAddress;
     if (!addr.lat || !addr.lon) {
@@ -216,6 +269,7 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
     setIsRouteLoading(true);
     setRouteError(null);
     setRouteResult(null);
+    setSavedRouteId(null);
 
     try {
       const stops = filteredRows.map((row) => ({
@@ -249,6 +303,9 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
       const data: RouteResult = await res.json();
       setRouteResult(data);
       setShowRouteOptions(false);
+
+      // Save to DB in the background for sharing
+      saveRouteToDb(data);
     } catch (err) {
       setRouteError((err as Error).message);
     } finally {
@@ -259,11 +316,56 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
   const clearRoute = () => {
     setRouteResult(null);
     setRouteError(null);
+    setSavedRouteId(null);
+    setShowSharePopover(false);
   };
 
-  const handlePrint = () => {
-    printOrderSummary(displayRows, window.label, grandTotal, filteredRows.length, routeResult ?? undefined);
+  const deliveryLink = savedRouteId
+    ? `${window.location.origin}/delivery/${savedRouteId}`
+    : null;
+
+  const copyLink = async () => {
+    if (!deliveryLink) return;
+    try {
+      await navigator.clipboard.writeText(deliveryLink);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      // fallback
+    }
   };
+
+  const handlePrint = async () => {
+    let qrDataUrl: string | undefined;
+    if (deliveryLink) {
+      try {
+        qrDataUrl = await generateQrDataUrl(deliveryLink);
+      } catch { /* skip QR if generation fails */ }
+    }
+    printOrderSummary(displayRows, orderingWindow.label, grandTotal, filteredRows.length, routeResult ?? undefined, qrDataUrl, deliveryLink ?? undefined);
+  };
+
+  // Build map stop data
+  const mapStops = useMemo(() => {
+    if (!routeResult) return [];
+    return routeResult.orderedStopIds
+      .map((orderId, idx) => {
+        const row = filteredRows.find(r => r.orderId === orderId);
+        const coords = routeResult.stopCoords[orderId];
+        if (!row || !coords) return null;
+        return {
+          id: orderId,
+          lat: coords.lat,
+          lon: coords.lon,
+          stopNumber: idx + 1,
+          customerName: row.nickname,
+          address: `${row.address.streetAddress}, ${row.address.postalCode} ${row.address.city}`,
+          phone: row.contactPhone,
+          notes: row.deliveryInstructions,
+        };
+      })
+      .filter(Boolean) as { id: string; lat: number; lon: number; stopNumber: number; customerName: string; address: string; phone: string; notes?: string }[];
+  }, [routeResult, filteredRows]);
 
   if (isLoading) {
     return (
@@ -276,6 +378,8 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
     );
   }
 
+  const storeAddr = storeSettings.storeAddress;
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-slate-50">
       <div className="bg-white border-b border-slate-200 px-6 py-4">
@@ -287,7 +391,7 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
             <div>
               <h2 className="text-lg font-semibold text-slate-800">Order Summary</h2>
               <p className="text-sm text-slate-500">
-                {totalOrders} customer{totalOrders !== 1 ? 's' : ''} &middot; {window.label}
+                {totalOrders} customer{totalOrders !== 1 ? 's' : ''} &middot; {orderingWindow.label}
               </p>
             </div>
           </div>
@@ -383,13 +487,71 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
             )}
 
             {routeResult && (
-              <button
-                onClick={clearRoute}
-                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
-              >
-                <RotateCcw size={14} />
-                Clear Route
-              </button>
+              <>
+                <button
+                  onClick={() => setShowMap(true)}
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors"
+                >
+                  <Map size={14} />
+                  View Map
+                </button>
+
+                <div className="relative">
+                  <button
+                    onClick={() => setShowSharePopover(!showSharePopover)}
+                    className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-teal-700 bg-teal-50 border border-teal-200 rounded-lg hover:bg-teal-100 transition-colors"
+                  >
+                    <Share2 size={14} />
+                    Share Route
+                  </button>
+
+                  {showSharePopover && (
+                    <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="text-sm font-semibold text-slate-800">Share with driver</h4>
+                        <button onClick={() => setShowSharePopover(false)} className="text-slate-400 hover:text-slate-600">
+                          <X size={14} />
+                        </button>
+                      </div>
+                      {savedRouteId ? (
+                        <>
+                          <p className="text-xs text-slate-500 mb-2">
+                            Send this link to the delivery driver. They can open it on their phone for a step-by-step stop list with navigation.
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <input
+                              readOnly
+                              value={deliveryLink ?? ''}
+                              className="flex-1 text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg select-all"
+                              onFocus={(e) => e.target.select()}
+                            />
+                            <button
+                              onClick={copyLink}
+                              className="flex items-center gap-1 px-3 py-2 text-xs font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors"
+                            >
+                              {linkCopied ? <Check size={12} /> : <Copy size={12} />}
+                              {linkCopied ? 'Copied' : 'Copy'}
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                          <Loader2 size={12} className="animate-spin" />
+                          Saving route...
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  onClick={clearRoute}
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                >
+                  <RotateCcw size={14} />
+                  Clear
+                </button>
+              </>
             )}
 
             <button
@@ -572,6 +734,19 @@ export function OrderSummaryPanel({ storeSettings, onOrderCountChange }: OrderSu
           </div>
         )}
       </div>
+
+      {/* Full-screen route map modal */}
+      {routeResult && storeAddr.lat && storeAddr.lon && (
+        <RouteMapModal
+          isOpen={showMap}
+          onClose={() => setShowMap(false)}
+          routeGeometry={routeResult.routeGeometry}
+          stops={mapStops}
+          storeAddress={{ lat: storeAddr.lat, lon: storeAddr.lon, label: `${storeAddr.street}, ${storeAddr.postalCode} ${storeAddr.city}` }}
+          totalTime={routeResult.totalTimeSeconds}
+          totalDistance={routeResult.totalDistanceMeters}
+        />
+      )}
     </div>
   );
 }
