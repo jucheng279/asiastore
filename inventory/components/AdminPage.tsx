@@ -356,6 +356,8 @@ export function AdminPage({ onSignOut }: AdminPageProps) {
       });
     } catch (err) {
       console.error('Category image upload failed:', err);
+      setDraftSaveStatus('error');
+      setTimeout(() => setDraftSaveStatus('idle'), 3000);
     } finally {
       setCategoryImageUploading(false);
     }
