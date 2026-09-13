@@ -166,7 +166,7 @@ const OrdersView: React.FC = () => {
                 <div className="space-y-3">
                   {currentOrder.items.map(item => (
                     <div key={item.id} className="flex items-center gap-3">
-                      <img src={item.image} alt={item.name} className="w-12 h-12 rounded-lg object-cover bg-gray-100 dark:bg-white/10" />
+                      <img src={item.image} alt={item.name} loading="lazy" className="w-12 h-12 rounded-lg object-cover bg-gray-100 dark:bg-white/10" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-text-main dark:text-white truncate">{item.name}</p>
                         <p className="text-xs text-text-sub">{formatPrice(item.price, language)}</p>
@@ -452,7 +452,7 @@ const OrdersView: React.FC = () => {
                   </div>
                   <div className="flex gap-2 overflow-x-auto pb-1">
                     {order.items.slice(0, 4).map(item => (
-                      <img key={item.id} src={item.image} alt={item.name} className="w-12 h-12 rounded-lg object-cover bg-gray-100 dark:bg-white/10 shrink-0" />
+                      <img key={item.id} src={item.image} alt={item.name} loading="lazy" className="w-12 h-12 rounded-lg object-cover bg-gray-100 dark:bg-white/10 shrink-0" />
                     ))}
                     {order.items.length > 4 && (
                       <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-white/10 flex items-center justify-center shrink-0">

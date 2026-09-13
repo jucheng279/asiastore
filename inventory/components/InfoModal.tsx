@@ -1,6 +1,8 @@
 import { useState, useRef } from 'react';
-import { X, Pencil, Check, Upload, Trash2, ChevronLeft, Image as ImageIcon } from 'lucide-react';
+import { X, Pencil, Check, Upload, Trash2, ChevronLeft, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { Product, Language, PhotoFile } from '../types';
+import { supabase } from '../../lib/supabase';
+import { resizeProductImage } from '../utils/imageResize';
 
 interface InfoModalProps {
   isOpen: boolean;
@@ -16,10 +18,25 @@ const languageTabs: { key: Language; label: string }[] = [
   { key: 'zh', label: 'ZH' },
 ];
 
+async function uploadProductPhoto(productId: string, file: File): Promise<string> {
+  const resized = await resizeProductImage(file);
+  const ext = 'jpg';
+  const path = `${productId}/${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabase.storage
+    .from('product-images')
+    .upload(path, resized, { contentType: 'image/jpeg', upsert: false });
+  if (error) throw error;
+  const { data: urlData } = supabase.storage
+    .from('product-images')
+    .getPublicUrl(path);
+  return urlData.publicUrl;
+}
+
 export function InfoModal({ isOpen, product, onClose, onUpdate, hideDescription = false }: InfoModalProps) {
   const [descLang, setDescLang] = useState<Language>('en');
   const [isDescEditing, setIsDescEditing] = useState(false);
   const [isPhotosEditing, setIsPhotosEditing] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [draftDescriptions, setDraftDescriptions] = useState({ ...product.descriptions });
   const [draftPhotos, setDraftPhotos] = useState<PhotoFile[]>([...product.photos]);
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoFile | null>(null);
@@ -49,10 +66,27 @@ export function InfoModal({ isOpen, product, onClose, onUpdate, hideDescription 
     setIsPhotosEditing(true);
   };
 
-  const handlePhotosSave = () => {
-    onUpdate(product.id, { photos: draftPhotos });
-    setAddedPhotoUrls([]);
-    setIsPhotosEditing(false);
+  const handlePhotosSave = async () => {
+    setIsUploading(true);
+    try {
+      const uploaded: PhotoFile[] = [];
+      for (const photo of draftPhotos) {
+        if (photo.url.startsWith('blob:')) {
+          const publicUrl = await uploadProductPhoto(product.id, photo.file);
+          uploaded.push({ id: photo.id, file: new File([], 'uploaded.jpg'), url: publicUrl });
+        } else {
+          uploaded.push(photo);
+        }
+      }
+      onUpdate(product.id, { photos: uploaded });
+      addedPhotoUrls.forEach(url => URL.revokeObjectURL(url));
+      setAddedPhotoUrls([]);
+      setIsPhotosEditing(false);
+    } catch (err) {
+      console.error('Photo upload failed:', err);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handlePhotosCancel = () => {
@@ -83,6 +117,7 @@ export function InfoModal({ isOpen, product, onClose, onUpdate, hideDescription 
   };
 
   const handleClose = () => {
+    if (isUploading) return;
     if (isPhotosEditing) {
       addedPhotoUrls.forEach(url => URL.revokeObjectURL(url));
     }
@@ -104,6 +139,7 @@ export function InfoModal({ isOpen, product, onClose, onUpdate, hideDescription 
           <button
             onClick={handleClose}
             className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
+            disabled={isUploading}
           >
             <X size={18} />
           </button>
@@ -206,20 +242,32 @@ export function InfoModal({ isOpen, product, onClose, onUpdate, hideDescription 
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-md transition-all"
+                    disabled={isUploading}
                   >
                     <Upload size={12} />
                     Upload
                   </button>
                   <button
                     onClick={handlePhotosSave}
-                    className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-md transition-all"
+                    className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-md transition-all disabled:opacity-50"
+                    disabled={isUploading}
                   >
-                    <Check size={12} />
-                    Save
+                    {isUploading ? (
+                      <>
+                        <Loader2 size={12} className="animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Check size={12} />
+                        Save
+                      </>
+                    )}
                   </button>
                   <button
                     onClick={handlePhotosCancel}
                     className="px-2.5 py-1 text-xs font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-all"
+                    disabled={isUploading}
                   >
                     Cancel
                   </button>
@@ -275,6 +323,7 @@ export function InfoModal({ isOpen, product, onClose, onUpdate, hideDescription 
                       <button
                         onClick={() => handlePhotoDraftDelete(photo.id)}
                         className="absolute top-1.5 right-1.5 p-1 bg-red-500 text-white rounded-md opacity-0 group-hover:opacity-100 transition-all shadow-lg hover:bg-red-600 active:scale-95"
+                        disabled={isUploading}
                       >
                         <Trash2 size={10} />
                       </button>

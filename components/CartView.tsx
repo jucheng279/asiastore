@@ -166,7 +166,7 @@ const CartView: React.FC = () => {
                 return (
                   <div key={item.id} className="group relative flex gap-4 rounded-2xl bg-white dark:bg-white/5 p-3 shadow-sm border border-slate-100 dark:border-white/5 transition-transform active:scale-[0.99]">
                     <div className="relative aspect-square w-24 shrink-0 overflow-hidden rounded-xl bg-slate-100 dark:bg-white/10">
-                      <img alt={item.name} className="h-full w-full object-cover" src={item.image} />
+                      <img alt={item.name} loading="lazy" className="h-full w-full object-cover" src={item.image} />
                     </div>
                     <div className="flex flex-1 flex-col justify-between py-1">
                       <div>

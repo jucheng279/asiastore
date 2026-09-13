@@ -64,9 +64,11 @@ function AvailableCard({ product, favoriteId, onToggleFavorite, onAddToCart, onN
         className="relative w-28 h-28 shrink-0 rounded-xl bg-gray-50 dark:bg-white/10 overflow-hidden cursor-pointer"
         onClick={() => onNavigateToProduct(product.id)}
       >
-        <div
-          className="w-full h-full bg-center bg-no-repeat bg-contain"
-          style={{ backgroundImage: `url("${product.image}")` }}
+        <img
+          src={product.image}
+          alt={product.name}
+          loading="lazy"
+          className="w-full h-full object-contain"
         />
         {isOutOfStock && (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/40 rounded-xl">

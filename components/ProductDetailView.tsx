@@ -119,6 +119,7 @@ const ProductDetailView: React.FC = () => {
         <div className="aspect-square w-full overflow-hidden bg-gray-100 dark:bg-white/5 lg:max-w-lg lg:mx-auto lg:rounded-2xl lg:mt-6">
           <img
             alt={displayProduct.name}
+            loading="lazy"
             className={`h-full w-full object-cover transition-opacity duration-150 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}
             src={displayProduct.image}
           />

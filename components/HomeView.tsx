@@ -104,7 +104,7 @@ const HomeView: React.FC = () => {
           <div className="flex min-h-min flex-row items-start justify-start gap-6 lg:flex-wrap">
             {categories.map((cat) => (
               <div key={cat.id} className="flex flex-col items-center gap-2 min-w-[70px] lg:min-w-[80px]" onClick={() => navigate('/products/' + cat.id)}>
-                <div className="w-[60px] h-[60px] lg:w-[70px] lg:h-[70px] bg-center bg-no-repeat bg-cover rounded-full border-2 border-transparent hover:border-primary transition-all cursor-pointer shadow-sm" style={{ backgroundImage: `url("${cat.image_url}")` }}></div>
+                <img src={cat.image_url} alt={cat.name} loading="lazy" className="w-[60px] h-[60px] lg:w-[70px] lg:h-[70px] rounded-full border-2 border-transparent hover:border-primary transition-all cursor-pointer shadow-sm object-cover" />
                 <p className="text-text-main dark:text-white text-xs font-medium leading-normal">{cat.name}</p>
               </div>
             ))}
