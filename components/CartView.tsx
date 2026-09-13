@@ -7,22 +7,32 @@ import { useAuth } from '../lib/AuthContext';
 import { useToast } from '../lib/ToastContext';
 import { formatPrice } from '../lib/formatters';
 import { ProductCarousel } from './ProductGrids';
+import type { Product } from '../types';
+
+interface StockConflict {
+  id: string;
+  name: string;
+  image: string;
+  requested: number;
+  available: number;
+}
 
 const CartView: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { language, orderingOpen, productMap, bestSellerProducts, allProducts } = useProductData();
+  const { language, orderingOpen, productMap, bestSellerProducts, allProducts, refreshData } = useProductData();
   const { cartItems, cartCount, cartQuantities, addToCart, removeFromCart, clearCart, setItemQuantity } = useCart();
   const { isAuthenticated, addresses, addToOrder, refreshOrders } = useAuth();
   const { showToast } = useToast();
 
   const [isOrdering, setIsOrdering] = useState(false);
+  const [isRefreshingStock, setIsRefreshingStock] = useState(false);
   const [stockWarnings, setStockWarnings] = useState<Map<string, number>>(new Map());
+  const [stockConflicts, setStockConflicts] = useState<StockConflict[]>([]);
 
   const isEmpty = cartItems.length === 0;
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  // Recommendations: best sellers not already in cart
   const recommendations = useMemo(() => {
     const cartIds = new Set(cartItems.map(i => i.id));
     const candidates = bestSellerProducts.length > 0 ? bestSellerProducts : allProducts;
@@ -31,7 +41,6 @@ const CartView: React.FC = () => {
       .slice(0, 10);
   }, [cartItems, bestSellerProducts, allProducts]);
 
-  // Check stock availability for cart items against live product data
   const getStockIssues = (): { id: string; name: string; available: number }[] => {
     const issues: { id: string; name: string; available: number }[] = [];
     for (const item of cartItems) {
@@ -43,8 +52,45 @@ const CartView: React.FC = () => {
     return issues;
   };
 
+  const buildConflictsFromFreshData = (freshProductMap: Map<string, Product>): StockConflict[] => {
+    const conflicts: StockConflict[] = [];
+    for (const item of cartItems) {
+      const product = freshProductMap.get(item.id);
+      if (product && product.availableStock !== undefined && item.quantity > product.availableStock) {
+        conflicts.push({
+          id: item.id,
+          name: item.name,
+          image: item.image,
+          requested: item.quantity,
+          available: product.availableStock,
+        });
+      }
+    }
+    return conflicts;
+  };
+
+  const handleAcceptConflicts = () => {
+    for (const conflict of stockConflicts) {
+      if (conflict.available <= 0) {
+        removeFromCart(conflict.id);
+      } else {
+        setItemQuantity(conflict.id, conflict.available);
+      }
+    }
+    setStockConflicts([]);
+    setStockWarnings(new Map());
+  };
+
+  const handleRemoveConflictItems = () => {
+    for (const conflict of stockConflicts) {
+      removeFromCart(conflict.id);
+    }
+    setStockConflicts([]);
+    setStockWarnings(new Map());
+  };
+
   const handleAddToOrder = async () => {
-    if (isOrdering || isEmpty) return;
+    if (isOrdering || isEmpty || isRefreshingStock) return;
 
     if (!isAuthenticated) {
       showToast(t('toast.loginRequired'), 'warning');
@@ -57,14 +103,12 @@ const CartView: React.FC = () => {
       return;
     }
 
-    // Check address requirement
     if (addresses.length === 0) {
       showToast(t('toast.addressRequired'), 'warning');
       navigate('/addresses');
       return;
     }
 
-    // Stock check
     const issues = getStockIssues();
     if (issues.length > 0) {
       const warningMap = new Map<string, number>();
@@ -102,6 +146,28 @@ const CartView: React.FC = () => {
 
     if (result.error) {
       if (/insufficient stock/i.test(result.error)) {
+        setIsRefreshingStock(true);
+        const freshData = await refreshData();
+        setIsRefreshingStock(false);
+
+        if (freshData) {
+          const allChildProducts: Product[] = [];
+          for (const list of [freshData.catalogProducts, freshData.expiryProducts, freshData.flashSaleProducts]) {
+            for (const p of list) {
+              if (p.children) allChildProducts.push(...p.children);
+            }
+          }
+          const all = [...freshData.catalogProducts, ...allChildProducts, ...freshData.expiryProducts, ...freshData.flashSaleProducts];
+          const freshMap = new Map<string, Product>();
+          for (const p of all) freshMap.set(p.id, p);
+
+          const conflicts = buildConflictsFromFreshData(freshMap);
+          if (conflicts.length > 0) {
+            setStockConflicts(conflicts);
+            return;
+          }
+        }
+
         showToast(t('cart.stockChanged'), 'warning');
       } else if (/address required/i.test(result.error)) {
         showToast(t('toast.addressRequired'), 'warning');
@@ -114,7 +180,7 @@ const CartView: React.FC = () => {
 
     clearCart();
     showToast(t('cart.orderSuccess'), 'success');
-    await refreshOrders();
+    await Promise.all([refreshOrders(), refreshData()]);
   };
 
   return (
@@ -138,6 +204,60 @@ const CartView: React.FC = () => {
           </button>
         )}
       </header>
+
+      {/* Stock conflict dialog */}
+      {stockConflicts.length > 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-gray-900 shadow-xl overflow-hidden animate-in fade-in">
+            <div className="px-5 pt-5 pb-3">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="flex size-10 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
+                  <span className="material-symbols-outlined text-amber-600 dark:text-amber-400 text-[22px]">inventory_2</span>
+                </div>
+                <h2 className="text-lg font-bold text-text-main dark:text-white">{t('cart.stockConflictTitle')}</h2>
+              </div>
+              <p className="text-sm text-text-sub mb-4">{t('cart.stockConflictDesc')}</p>
+            </div>
+
+            <div className="max-h-64 overflow-y-auto px-5">
+              <div className="flex flex-col gap-3 pb-3">
+                {stockConflicts.map((conflict) => (
+                  <div key={conflict.id} className="flex items-center gap-3 rounded-xl bg-gray-50 dark:bg-white/5 p-3">
+                    <div className="w-12 h-12 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-white/10">
+                      <img src={conflict.image} alt={conflict.name} className="h-full w-full object-cover" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-text-main dark:text-white truncate">{conflict.name}</p>
+                      {conflict.available <= 0 ? (
+                        <p className="text-xs font-medium text-red-500">{t('cart.stockConflictItemSoldOut')}</p>
+                      ) : (
+                        <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                          {t('cart.stockConflictItemReduced', { available: conflict.available, requested: conflict.requested })}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="px-5 pb-5 pt-2 flex flex-col gap-2">
+              <button
+                className="w-full py-3 bg-primary text-white font-bold rounded-xl hover:bg-red-700 transition-colors"
+                onClick={handleAcceptConflicts}
+              >
+                {t('cart.stockConflictAccept')}
+              </button>
+              <button
+                className="w-full py-3 bg-transparent border border-slate-200 dark:border-white/10 text-text-main dark:text-white font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                onClick={handleRemoveConflictItems}
+              >
+                {t('cart.stockConflictRemoveAll')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isEmpty ? (
         <div className="flex flex-col items-center justify-center px-8 py-16">
@@ -218,14 +338,14 @@ const CartView: React.FC = () => {
               <button
                 className="w-full py-3.5 bg-primary text-white font-bold rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 onClick={handleAddToOrder}
-                disabled={isOrdering || !orderingOpen}
+                disabled={isOrdering || isRefreshingStock || !orderingOpen}
               >
-                {isOrdering ? (
+                {isOrdering || isRefreshingStock ? (
                   <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>
                 ) : (
                   <span className="material-symbols-outlined text-[20px]">shopping_bag</span>
                 )}
-                <span>{t('cart.addToOrder')}</span>
+                <span>{isRefreshingStock ? t('cart.refreshingStock') : t('cart.addToOrder')}</span>
               </button>
 
               {!orderingOpen && (
@@ -243,7 +363,6 @@ const CartView: React.FC = () => {
         </div>
       )}
 
-      {/* Product Recommendations */}
       {recommendations.length > 0 && (
         <div className="mt-8 px-5 lg:px-6">
           <h2 className="text-lg font-bold text-text-main dark:text-white mb-4">{t('cart.youMightLike')}</h2>

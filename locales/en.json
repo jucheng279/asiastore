@@ -138,6 +138,13 @@
     "clearAll": "Clear All",
     "exceedsStock": "Max available: {{max}}",
     "stockChanged": "Some items have limited stock. Quantities have been adjusted.",
+    "stockConflictTitle": "Stock has changed",
+    "stockConflictDesc": "Some items in your cart are no longer available in the requested quantity. Please review the changes below.",
+    "stockConflictItemReduced": "Reduced to {{available}} (you had {{requested}})",
+    "stockConflictItemSoldOut": "Sold out",
+    "stockConflictAccept": "Accept Changes",
+    "stockConflictRemoveAll": "Remove Affected Items",
+    "refreshingStock": "Checking latest stock...",
     "orderSuccess": "Items added to your weekly order!",
     "youMightLike": "You might also like"
   },

@@ -138,6 +138,13 @@
     "clearAll": "清空全部",
     "exceedsStock": "最大可购: {{max}}",
     "stockChanged": "部分商品库存有限，数量已调整。",
+    "stockConflictTitle": "库存已变更",
+    "stockConflictDesc": "您购物车中部分商品的可用数量已发生变化，请查看以下更新。",
+    "stockConflictItemReduced": "减少至 {{available}}（您选择了 {{requested}}）",
+    "stockConflictItemSoldOut": "已售罄",
+    "stockConflictAccept": "接受更改",
+    "stockConflictRemoveAll": "移除受影响商品",
+    "refreshingStock": "正在检查最新库存...",
     "orderSuccess": "商品已添加到您的每周订单！",
     "youMightLike": "你可能还喜欢"
   },

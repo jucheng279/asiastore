@@ -138,6 +138,13 @@
     "clearAll": "Rensa alla",
     "exceedsStock": "Max tillgangligt: {{max}}",
     "stockChanged": "Vissa varor har begransat lager. Antal har justerats.",
+    "stockConflictTitle": "Lagret har andrats",
+    "stockConflictDesc": "Vissa varor i din kundvagn finns inte langre i onskad mangd. Granska andringarna nedan.",
+    "stockConflictItemReduced": "Minskat till {{available}} (du hade {{requested}})",
+    "stockConflictItemSoldOut": "Slutsald",
+    "stockConflictAccept": "Acceptera andringar",
+    "stockConflictRemoveAll": "Ta bort paverkade varor",
+    "refreshingStock": "Kontrollerar senaste lagerstatus...",
     "orderSuccess": "Varor tillagda i din veckobestallning!",
     "youMightLike": "Du kanske ocksa gillar"
   },
